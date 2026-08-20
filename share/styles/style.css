@@ -1,0 +1,403 @@
+/* MiniOS Image Builder. Theme-aware GTK3 workspace styling. */
+
+headerbar.minios-headerbar {
+    border-bottom: 1px solid alpha(@borders, 0.72);
+}
+
+.image-builder,
+.workspace {
+    background-color: @theme_bg_color;
+}
+
+.rail-boundary {
+    background-color: alpha(@borders, 0.72);
+}
+
+.page-eyebrow {
+    color: @theme_selected_bg_color;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+}
+
+.sidebar-step-error .sidebar-marker {
+    color: #c64600;
+}
+
+.sidebar-marker {
+    color: alpha(@theme_fg_color, 0.7);
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.sidebar-label {
+    color: alpha(@theme_fg_color, 0.85);
+    font-size: 13px;
+}
+
+.page-title {
+    color: @theme_fg_color;
+    font-size: 23px;
+    font-weight: 700;
+    letter-spacing: -0.25px;
+}
+
+.page-description {
+    color: alpha(@theme_fg_color, 0.72);
+    font-size: 13px;
+    margin-bottom: 4px;
+}
+
+.section-separator {
+    margin-top: 8px;
+    margin-bottom: 4px;
+    background-color: alpha(@borders, 0.65);
+}
+
+.section-heading {
+    color: @theme_fg_color;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.content-card {
+    border-radius: 6px;
+    border: 1px solid alpha(@borders, 0.65);
+    background-color: alpha(@theme_base_color, 0.35);
+    padding: 2px;
+}
+
+.field-label {
+    color: @theme_fg_color;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.compact-grid .field-label {
+    min-width: 132px;
+}
+
+.compact-grid combobox {
+    margin: 0;
+}
+
+.section-description,
+.field-description,
+.module-description,
+.hero-detail,
+.build-detail,
+.footer-status,
+.empty-note {
+    color: alpha(@theme_fg_color, 0.68);
+    font-size: 12px;
+}
+
+.source-hero,
+.review-hero {
+    padding: 14px 16px;
+    border: 1px solid alpha(@borders, 0.72);
+    border-left-width: 4px;
+    background-color: alpha(@theme_base_color, 0.52);
+}
+
+.source-hero.source-loading {
+    border-left-color: @theme_selected_bg_color;
+}
+
+.source-hero.source-supported,
+.review-hero.review-success {
+    border-left-color: #2d8c49;
+    background-color: alpha(#2d8c49, 0.08);
+}
+
+.source-hero.source-warning {
+    border-left-color: #c47d00;
+    background-color: alpha(#e5a50a, 0.10);
+}
+
+.source-hero.source-error,
+.review-hero.review-error {
+    border-left-color: #c64600;
+    background-color: alpha(#c64600, 0.09);
+}
+
+.hero-title {
+    color: @theme_fg_color;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.metadata-grid,
+.review-grid {
+    padding: 2px 0 4px 0;
+}
+
+.metadata-name {
+    color: alpha(@theme_fg_color, 0.62);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.metadata-value {
+    color: @theme_fg_color;
+    font-size: 12px;
+}
+
+.composition-summary {
+    min-height: 34px;
+    padding: 7px 11px;
+    border-top: 2px solid @theme_selected_bg_color;
+    border-bottom: 1px solid alpha(@borders, 0.72);
+    background-color: alpha(@theme_selected_bg_color, 0.07);
+}
+
+.module-legend-expander {
+    border: 1px solid alpha(@borders, 0.62);
+    background-color: alpha(@theme_base_color, 0.28);
+}
+
+.module-legend-header {
+    padding: 7px 9px;
+}
+
+.module-legend {
+    padding: 9px 11px 10px 11px;
+    border-top: 1px solid alpha(@borders, 0.52);
+}
+
+.module-legend-item {
+    min-height: 28px;
+}
+
+.module-legend-detail {
+    color: alpha(@theme_fg_color, 0.72);
+    font-size: 11px;
+}
+
+.summary-strong {
+    color: @theme_fg_color;
+    font-weight: 700;
+}
+
+.summary-muted,
+.module-size {
+    color: alpha(@theme_fg_color, 0.62);
+    font-size: 11px;
+}
+
+.module-list {
+    border-top: 1px solid alpha(@borders, 0.72);
+    border-bottom: 1px solid alpha(@borders, 0.72);
+    background-color: alpha(@theme_base_color, 0.48);
+}
+
+.module-row {
+    border-bottom: 1px solid alpha(@borders, 0.46);
+    background-color: transparent;
+}
+
+.module-row:last-child {
+    border-bottom: 0;
+}
+
+.module-row:hover {
+    background-color: alpha(@theme_fg_color, 0.035);
+}
+
+.module-row.module-row-collision {
+    background-color: alpha(#c64600, 0.08);
+    border-left: 3px solid #c64600;
+}
+
+.module-title,
+.capability-title,
+.review-list-title {
+    color: @theme_fg_color;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.module-basename,
+.diagnostic-code {
+    color: alpha(@theme_fg_color, 0.78);
+    font-family: monospace;
+    font-size: 11px;
+}
+
+.collision-banner,
+.warning-panel,
+.warning-inline {
+    padding: 9px 11px;
+    border-left: 3px solid #c64600;
+    background-color: alpha(#c64600, 0.08);
+    color: @theme_fg_color;
+}
+
+.banner-title {
+    font-weight: 700;
+}
+
+.capability-row {
+    min-height: 42px;
+    padding: 7px 10px;
+    border-bottom: 1px solid alpha(@borders, 0.48);
+    background-color: alpha(@theme_base_color, 0.35);
+}
+
+.capture-mode-row {
+    min-height: 58px;
+    padding: 9px 10px;
+    border: 1px solid alpha(@borders, 0.58);
+    border-left: 3px solid transparent;
+    background-color: alpha(@theme_base_color, 0.35);
+}
+
+.capture-mode-row:disabled {
+    background-color: alpha(@theme_base_color, 0.20);
+}
+
+.inventory-summary {
+    padding: 10px 12px;
+    border: 1px solid alpha(@borders, 0.64);
+    background-color: alpha(@theme_base_color, 0.42);
+}
+
+.privacy-note {
+    padding-top: 5px;
+    color: alpha(@theme_fg_color, 0.68);
+    font-size: 11px;
+    font-style: italic;
+}
+
+.capture-rule-editor {
+    color: @theme_text_color;
+    background-color: @theme_base_color;
+    font-family: monospace;
+    font-size: 11px;
+}
+
+treeview.view {
+    background-color: alpha(@theme_base_color, 0.58);
+}
+
+.notes-frame {
+    border: 1px solid alpha(@borders, 0.72);
+    background-color: @theme_base_color;
+}
+
+.advanced-expander {
+    margin-top: 7px;
+}
+
+.planning-row {
+    padding: 12px 14px;
+    border-left: 3px solid @theme_selected_bg_color;
+    background-color: alpha(@theme_selected_bg_color, 0.08);
+}
+
+.review-list {
+    padding: 5px 10px 8px 14px;
+    color: alpha(@theme_fg_color, 0.77);
+    font-size: 12px;
+}
+
+.success-inline {
+    padding: 8px 10px;
+    border-left: 3px solid #2d8c49;
+    background-color: alpha(#2d8c49, 0.08);
+    color: @theme_fg_color;
+}
+
+.diagnostic-row {
+    padding: 8px 10px;
+    border-left: 3px solid alpha(@theme_fg_color, 0.3);
+    background-color: alpha(@theme_base_color, 0.42);
+}
+
+.diagnostic-row.diagnostic-error {
+    border-left-color: #c64600;
+    background-color: alpha(#c64600, 0.07);
+}
+
+.diagnostic-row.diagnostic-warning {
+    border-left-color: #c47d00;
+    background-color: alpha(#e5a50a, 0.08);
+}
+
+.diagnostic-row.diagnostic-info {
+    border-left-color: @theme_selected_bg_color;
+}
+
+.diagnostic-path {
+    color: alpha(@theme_fg_color, 0.62);
+    font-family: monospace;
+    font-size: 10px;
+}
+
+.build-phase {
+    color: @theme_fg_color;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+progressbar trough {
+    min-height: 9px;
+    border-radius: 0;
+}
+
+progressbar progress {
+    min-height: 9px;
+    border-radius: 0;
+}
+
+.build-timeline {
+    padding: 9px 12px;
+    border-top: 1px solid alpha(@borders, 0.64);
+    border-bottom: 1px solid alpha(@borders, 0.64);
+}
+
+.milestone-pending {
+    color: alpha(@theme_fg_color, 0.53);
+}
+
+.milestone-complete {
+    color: @theme_fg_color;
+    font-weight: 600;
+}
+
+.result-panel {
+    padding: 12px 14px;
+    border-left: 4px solid #2d8c49;
+    background-color: alpha(#2d8c49, 0.08);
+}
+
+.result-title {
+    color: @theme_fg_color;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.vm-note {
+    padding-top: 5px;
+    color: alpha(@theme_fg_color, 0.68);
+    font-size: 11px;
+    font-style: italic;
+}
+
+.log-view {
+    padding: 4px;
+    color: @theme_text_color;
+    background-color: shade(@theme_base_color, 0.93);
+    font-family: monospace;
+    font-size: 11px;
+}
+
+.action-bar {
+    min-height: 46px;
+    padding-top: 7px;
+    padding-bottom: 7px;
+    border-top: 1px solid alpha(@borders, 0.78);
+    background-color: shade(@theme_bg_color, 0.97);
+}
+
+/* Footer buttons stay theme-native (roominess comes from the shared minios.css). */

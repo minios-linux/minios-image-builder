@@ -1,0 +1,7 @@
+usr/bin/minios-image-builder
+usr/lib/minios-image-builder/*.py
+usr/lib/minios-image-builder/minios-image-builder-read-live-config
+usr/share/applications/minios-image-builder.desktop
+usr/share/polkit-1/actions/org.minios.imagebuilder.read-live-config.policy
+usr/share/minios-image-builder/style.css
+usr/share/locale/*/LC_MESSAGES/minios-image-builder.mo

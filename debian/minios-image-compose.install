@@ -1,0 +1,4 @@
+usr/bin/minios-image-compose
+usr/lib/minios-image-compose/minios_image_compose_engine.py
+usr/share/bash-completion/completions/minios-image-compose
+usr/share/locale/*/LC_MESSAGES/minios-image-compose.mo

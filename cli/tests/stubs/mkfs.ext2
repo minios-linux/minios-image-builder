@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -u
+
+if [[ -n ${TOOL_EUID_LOG:-} ]]; then
+    printf 'mkfs.ext2:%s\n' "$EUID" >>"$TOOL_EUID_LOG"
+fi
+
+if [[ ${MKFS_EXT2_FAIL:-false} == true ]]; then
+    printf 'mkfs.ext2 stub: requested failure\n' >&2
+    exit 1
+fi
+exit 0

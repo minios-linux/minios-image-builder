@@ -1,0 +1,2496 @@
+#!/bin/bash
+# Author of the idea: Tomas M. <http://www.linux-live.org>
+# Author: crims0n <https://minios.dev>
+
+set -Eeuo pipefail
+
+VERSION="1.0.0"
+SYSTEMNAME="MiniOS"
+export TEXTDOMAIN="minios-image-compose"
+
+PROGRAM_NAME=${0##*/}
+START_DIR=$(pwd -P)
+EXCLUDE_REGEX='^$'
+MENU_TYPE="multilang"
+CONFIG_INPUT="/etc/live/config.conf"
+VOLUME_LABEL="MINIOS"
+SOURCE_INPUT=""
+MANIFEST_INPUT=""
+TARGET_INPUT=""
+SOURCE_OPTION_SET=false
+MANIFEST_OPTION_SET=false
+TARGET_OPTION_SET=false
+DISABLE_COLOR=false
+OVERWRITE=false
+CAPTURE_CHANGES=""
+CAPTURE_CHANGES_SET=false
+CAPTURE_SELECTION_INPUT=""
+CAPTURE_SELECTION_SET=false
+CAPTURE_COMPRESSION="zstd"
+CAPTURE_COMPRESSION_SET=false
+BOOT_TIMEOUT=""
+BOOT_TIMEOUT_SET=false
+DEFAULT_BOOT=""
+DEFAULT_BOOT_SET=false
+KERNEL_ARGS=""
+KERNEL_ARGS_SET=false
+BOOT_BACKGROUND_INPUT=""
+BOOT_BACKGROUND_SET=false
+OVERLAY_DIRECTORY_INPUT=""
+OVERLAY_DIRECTORY_SET=false
+CUSTOMIZATION_REQUESTED=false
+SAVECHANGES_BIN=""
+PKEXEC_BIN=""
+PYTHON_BIN=""
+ENV_BIN="/usr/bin/env"
+SETSID_BIN="/usr/bin/setsid"
+MKFS_EXT2_BIN=""
+MKSQUASHFS_BIN=""
+SOURCE_TEST_MODE=false
+
+TEMP_DIR=""
+TARGET=""
+TARGET_CANONICAL=""
+CHILD_PID=""
+ISO_PARENT_FD_OPEN=false
+ISO_WORK_FD_OPEN=false
+ISO_WORK_NAME=""
+ISO_WORK_PATH=""
+ISO_BUILD_PATH=""
+ISO_PARENT_DEVICE=""
+ISO_PARENT_INODE=""
+ISO_WORK_DEVICE=""
+ISO_WORK_INODE=""
+TARGET_INITIAL_STATE=""
+CAPTURE_CANCEL_FILE=""
+CAPTURE_CANCEL_NAME="capture.cancel"
+CAPTURE_CANCEL_FD_OPEN=false
+CAPTURE_CHILD_ACTIVE=false
+CAPTURE_CANCEL_PHASE=false
+
+RED=""
+YELLOW=""
+CYAN=""
+BOLD=""
+ENDCOLOR=""
+
+declare -a MODULE_INPUTS=()
+declare -a MODULES=()
+declare -a GRAFT_DESTINATIONS=()
+declare -a GRAFT_POINTS=()
+declare -a REQUIRED_ISO_PATHS=()
+declare -a SOURCE_MODULE_PATHS=()
+declare -a SOURCE_SYMLINK_DESTINATIONS=()
+declare -a SOURCE_SYMLINK_TARGETS=()
+declare -a KERNEL_DESTINATIONS=()
+declare -a INITRAMFS_DESTINATIONS=()
+declare -a VERSIONED_KERNEL_DESTINATIONS=()
+declare -a VERSIONED_INITRAMFS_DESTINATIONS=()
+declare -A GRAFT_SOURCES=()
+declare -A GRAFT_PRESENT=()
+declare -A REQUIRED_ISO_PRESENT=()
+declare -A MODULE_DESTINATION_FOLDS=()
+declare -A MODULE_BASENAME_FOLDS=()
+
+help() {
+    printf '%s: %s [OPTIONS]... [MODULE.SB]...\n' "$(gettext "Usage")" "$PROGRAM_NAME"
+    printf '%s\n\n' "$(gettext "Generate MiniOS ISO image, adding specified modules.")"
+    printf '%s:\n' "$(gettext "Options")"
+    printf '  -e, --exclude REGEX       %s\n' "$(gettext "Exclude any existing path or file matching REGEX")"
+    printf '  -n, --name NAME           %s\n' "$(gettext "Specify output ISO filename (default: minios-YYYYMMDD_HHMM.iso)")"
+    printf '      --source MINIOS_DIR   %s\n' "$(gettext "Use this MiniOS content root instead of live-system discovery")"
+    printf '      --config FILE         %s\n' "$(gettext "Graft FILE as minios/config.conf (default: /etc/live/config.conf)")"
+    printf '      --volume-label LABEL  %s\n' "$(gettext "Set the ISO volume label (default: MINIOS)")"
+    printf '      --manifest FILE       %s\n' "$(gettext "Graft a JSON manifest as minios/build-manifest.json")"
+    printf '      --capture-changes MODE\n'
+    printf '                            %s\n' "$(gettext "Capture session changes: exact, clean, or selected")"
+    printf '      --capture-selection FILE\n'
+    printf '                            %s\n' "$(gettext "Selection JSON required by selected session capture")"
+    printf '      --capture-compression TYPE\n'
+    printf '                            %s\n' "$(gettext "Session module compression: zstd, gzip, lzo, or xz")"
+    printf '      --boot-timeout SECONDS\n'
+    printf '                            %s\n' "$(gettext "Set effective GRUB and SYSLINUX timeout (0 to 300 seconds)")"
+    printf '      --default-boot MODE   %s\n' "$(gettext "Default session: resume, new, choose, fresh, or toram")"
+    printf '      --kernel-args TEXT    %s\n' "$(gettext "Append safe kernel arguments to every effective kernel line")"
+    printf '      --boot-background PNG %s\n' "$(gettext "Use a validated PNG for MiniOS boot backgrounds")"
+    printf '      --overlay-directory DIR\n'
+    printf '                            %s\n' "$(gettext "Package one absolute directory tree as an image overlay module")"
+    printf '      --menu TYPE           %s\n' "$(gettext "Set menu type: multilang or language code")"
+    printf '                            %s\n' "$(gettext "multilang: menu with language selection (default)")"
+    printf '                            %s\n' "$(gettext "language: specific language (en_US, ru_RU, de_DE, etc.)")"
+    printf '      --overwrite           %s\n' "$(gettext "Replace an existing output file")"
+    printf '      --no-color            %s\n' "$(gettext "Disable colored output")"
+    printf '      --help                %s\n' "$(gettext "Display this help and exit")"
+    printf '      --version             %s\n\n' "$(gettext "Display version information and exit")"
+    printf '%s:\n' "$(gettext "Examples")"
+    printf '  %s\n' "$PROGRAM_NAME"
+    printf '  %s --source /media/minios --config ./config.conf --name ./custom.iso\n' "$PROGRAM_NAME"
+    printf '  %s --exclude '\''firefox|libreoffice'\'' --name ./minios-slim.iso\n' "$PROGRAM_NAME"
+    printf '  %s --manifest ./build.json --volume-label '\''MINIOS LAB'\'' ./addon.sb\n' "$PROGRAM_NAME"
+    printf '  %s --capture-changes clean --name ./shareable.iso\n' "$PROGRAM_NAME"
+}
+
+brief_help() {
+    printf '%s: %s [OPTIONS]... [MODULE.SB]...\n' "$(gettext "Usage")" "$PROGRAM_NAME" >&2
+    printf "%s '%s --help' %s\n" "$(gettext "Try")" "$PROGRAM_NAME" "$(gettext "for more information.")" >&2
+}
+
+version() {
+    printf '%s %s\n' "$PROGRAM_NAME" "$VERSION"
+}
+
+console_colors() {
+    if [[ "$DISABLE_COLOR" == false && -z ${NO_COLOR:-} &&
+          ( ${OUTPUT_MODE:-} == "console" || -t 1 ) ]]; then
+        RED=$'\e[31m'
+        YELLOW=$'\e[33m'
+        CYAN=$'\e[36m'
+        BOLD=$'\e[1m'
+        ENDCOLOR=$'\e[0m'
+    fi
+}
+
+error() {
+    printf '%s%sE:%s %s\n' "$BOLD" "$RED" "$ENDCOLOR" "$*" >&2
+}
+
+warning() {
+    printf '%s%sW:%s %s\n' "$BOLD" "$YELLOW" "$ENDCOLOR" "$*"
+}
+
+information() {
+    printf '%s%sI:%s %s\n' "$BOLD" "$CYAN" "$ENDCOLOR" "$*"
+}
+
+phase() {
+    local phase_id=$1
+    shift
+    printf 'P:%s\n' "$phase_id"
+    information "$*"
+}
+
+child_tree_alive() {
+    [[ -n $CHILD_PID ]] || return 1
+    kill -0 -- "-$CHILD_PID" 2>/dev/null || kill -0 "$CHILD_PID" 2>/dev/null ||
+        child_process_running "$CHILD_PID" || process_group_running "$CHILD_PID"
+}
+
+child_process_running() {
+    local process_id=$1
+    local stat_line state_fields state
+    [[ -r /proc/$process_id/stat ]] || return 1
+    IFS= read -r stat_line <"/proc/$process_id/stat" || return 1
+    state_fields=${stat_line##*) }
+    state=${state_fields%% *}
+    [[ $state != Z && $state != X ]]
+}
+
+process_group_running() {
+    local process_group=$1
+    local stat_file stat_line state_fields state _parent group
+    for stat_file in /proc/[0-9]*/stat; do
+        [[ -r $stat_file ]] || continue
+        IFS= read -r stat_line <"$stat_file" || continue
+        state_fields=${stat_line##*) }
+        read -r state _parent group _ <<<"$state_fields"
+        if [[ $group == "$process_group" && $state != Z && $state != X ]]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+request_capture_cancellation() {
+    local marker
+    [[ $CAPTURE_CHILD_ACTIVE == true && $CAPTURE_CANCEL_FD_OPEN == true ]] || return 0
+    marker=/proc/self/fd/7/$CAPTURE_CANCEL_NAME
+    if ( set -o noclobber; : >"$marker" ) 2>/dev/null || [[ -e $marker || -L $marker ]]; then
+        if [[ $CAPTURE_CANCEL_PHASE == false ]]; then
+            printf 'P:cancelled\n'
+            CAPTURE_CANCEL_PHASE=true
+        fi
+        return 0
+    fi
+    error "$(gettext "Cannot request privileged capture cancellation")"
+    return 1
+}
+
+stop_child_tree() {
+    local signal_name=${1:-TERM}
+    local stopped=false
+    [[ -n $CHILD_PID ]] || return 0
+    kill -s "$signal_name" -- "-$CHILD_PID" 2>/dev/null ||
+        kill -s "$signal_name" "$CHILD_PID" 2>/dev/null || true
+    for _ in {1..80}; do
+        if ! child_tree_alive; then
+            stopped=true
+            break
+        fi
+        sleep 0.05
+    done
+    if [[ $stopped != true ]] && child_tree_alive; then
+        kill -KILL -- "-$CHILD_PID" 2>/dev/null || kill -KILL "$CHILD_PID" 2>/dev/null || true
+    fi
+    for _ in {1..160}; do
+        if ! child_tree_alive; then
+            stopped=true
+            break
+        fi
+        sleep 0.05
+    done
+    if [[ $stopped == true ]] || ! child_tree_alive; then
+        stopped=true
+        wait "$CHILD_PID" 2>/dev/null || true
+    else
+        error "$(gettext "Child process did not exit after bounded cancellation wait")"
+    fi
+    CHILD_PID=""
+    [[ $stopped == true ]]
+}
+
+finish_child_command() {
+    local status=$1
+    if child_tree_alive; then
+        error "$(gettext "Child command exited while descendant processes remained")"
+        request_capture_cancellation || true
+        stop_child_tree TERM || return 1
+        (( status != 0 )) || status=125
+    else
+        CHILD_PID=""
+    fi
+    return "$status"
+}
+
+cleanup() {
+    local status=$?
+    trap - EXIT
+    trap '' INT TERM
+
+    stop_child_tree TERM || status=1
+
+    if [[ $ISO_PARENT_FD_OPEN == true && $ISO_WORK_FD_OPEN == true ]]; then
+        cleanup_iso_output || status=1
+        exec 9<&-
+        exec 8<&-
+        ISO_WORK_FD_OPEN=false
+        ISO_PARENT_FD_OPEN=false
+    fi
+
+    if [[ $CAPTURE_CANCEL_FD_OPEN == true ]]; then
+        exec 7<&-
+        CAPTURE_CANCEL_FD_OPEN=false
+    fi
+
+    if [[ -n "$TEMP_DIR" && -d "$TEMP_DIR" ]]; then
+        if ! rm -rf -- "$TEMP_DIR"; then
+            error "$(gettext "Cannot remove temporary directory:") $TEMP_DIR"
+            status=1
+        fi
+    fi
+
+    exit "$status"
+}
+
+handle_signal() {
+    local signal_name=$1
+    trap '' INT TERM
+    request_capture_cancellation || true
+    stop_child_tree "$signal_name" || true
+    exit 130
+}
+
+trap cleanup EXIT
+trap 'handle_signal INT' INT
+trap 'handle_signal TERM' TERM
+
+run_command() {
+    local status
+
+    "$SETSID_BIN" "$@" &
+    CHILD_PID=$!
+    if wait "$CHILD_PID"; then
+        status=0
+    else
+        status=$?
+    fi
+    finish_child_command "$status"
+}
+
+run_command_to_file() {
+    local output_file=$1
+    local status
+    shift
+
+    if ! : >"$output_file"; then
+        return 1
+    fi
+    "$SETSID_BIN" "$@" >"$output_file" &
+    CHILD_PID=$!
+    if wait "$CHILD_PID"; then
+        status=0
+    else
+        status=$?
+    fi
+    finish_child_command "$status"
+}
+
+run_capture_command() {
+    local status
+    CAPTURE_CHILD_ACTIVE=true
+    if run_command "$@"; then
+        status=0
+    else
+        status=$?
+    fi
+    CAPTURE_CHILD_ACTIVE=false
+    return "$status"
+}
+
+die() {
+    local status=$1
+    shift
+    error "$*"
+    exit "$status"
+}
+
+require_value() {
+    local option=$1
+    local count=$2
+    if (( count < 2 )); then
+        error "$(gettext "Option requires an argument:") $option"
+        brief_help
+        exit 1
+    fi
+}
+
+contains_line_break() {
+    [[ $1 == *$'\n'* || $1 == *$'\r'* ]]
+}
+
+validate_no_line_break() {
+    local description=$1
+    local value=$2
+    if contains_line_break "$value"; then
+        die 1 "$description $(gettext "must not contain newline characters")"
+    fi
+}
+
+trusted_executable() {
+    local requested=$1
+    local resolved owner mode
+    [[ -e $requested ]] || return 1
+    resolved=$(/usr/bin/readlink -f -- "$requested") || return 1
+    [[ -f $resolved && -x $resolved ]] || return 1
+    read -r owner mode < <(/usr/bin/stat -c '%u %a' -- "$resolved") || return 1
+    [[ $owner == 0 && $mode =~ ^[0-7]+$ ]] || return 1
+    (( (8#$mode & 0022) == 0 )) || return 1
+    printf '%s\n' "$resolved"
+}
+
+
+run_isolated_python() {
+    run_command "$ENV_BIN" -i PATH=/usr/sbin:/usr/bin:/sbin:/bin LC_ALL=C.UTF-8 LANG=C.UTF-8 \
+        "$PYTHON_BIN" -I "$COMPOSE_ENGINE" "$@"
+}
+
+run_isolated_python_to_file() {
+    local output_file=$1
+    shift
+    run_command_to_file "$output_file" "$ENV_BIN" -i \
+        PATH=/usr/sbin:/usr/bin:/sbin:/bin LC_ALL=C.UTF-8 LANG=C.UTF-8 \
+        "$PYTHON_BIN" -I "$COMPOSE_ENGINE" "$@"
+}
+
+cleanup_iso_output() {
+    "$ENV_BIN" -i PATH=/usr/sbin:/usr/bin:/sbin:/bin LC_ALL=C.UTF-8 LANG=C.UTF-8 \
+        "$PYTHON_BIN" -I "$COMPOSE_ENGINE" cleanup 8 9 \
+        "$ISO_PARENT_DEVICE" "$ISO_PARENT_INODE" "$ISO_WORK_NAME" \
+        "$ISO_WORK_DEVICE" "$ISO_WORK_INODE" >/dev/null 2>&1
+}
+
+while (( $# > 0 )); do
+    case $1 in
+    -e | --exclude)
+        require_value "$1" "$#"
+        EXCLUDE_REGEX=$2
+        shift 2
+        ;;
+    --exclude=*)
+        EXCLUDE_REGEX=${1#*=}
+        shift
+        ;;
+    -n | --name)
+        require_value "$1" "$#"
+        TARGET_OPTION_SET=true
+        TARGET_INPUT=$2
+        shift 2
+        ;;
+    --name=*)
+        TARGET_OPTION_SET=true
+        TARGET_INPUT=${1#*=}
+        shift
+        ;;
+    --source)
+        require_value "$1" "$#"
+        SOURCE_OPTION_SET=true
+        SOURCE_INPUT=$2
+        shift 2
+        ;;
+    --source=*)
+        SOURCE_OPTION_SET=true
+        SOURCE_INPUT=${1#*=}
+        shift
+        ;;
+    --config)
+        require_value "$1" "$#"
+        CONFIG_INPUT=$2
+        shift 2
+        ;;
+    --config=*)
+        CONFIG_INPUT=${1#*=}
+        shift
+        ;;
+    --volume-label)
+        require_value "$1" "$#"
+        VOLUME_LABEL=$2
+        shift 2
+        ;;
+    --volume-label=*)
+        VOLUME_LABEL=${1#*=}
+        shift
+        ;;
+    --manifest)
+        require_value "$1" "$#"
+        MANIFEST_OPTION_SET=true
+        MANIFEST_INPUT=$2
+        shift 2
+        ;;
+    --manifest=*)
+        MANIFEST_OPTION_SET=true
+        MANIFEST_INPUT=${1#*=}
+        shift
+        ;;
+    --capture-changes)
+        require_value "$1" "$#"
+        CAPTURE_CHANGES_SET=true
+        CAPTURE_CHANGES=$2
+        shift 2
+        ;;
+    --capture-changes=*)
+        CAPTURE_CHANGES_SET=true
+        CAPTURE_CHANGES=${1#*=}
+        shift
+        ;;
+    --capture-selection)
+        require_value "$1" "$#"
+        CAPTURE_SELECTION_SET=true
+        CAPTURE_SELECTION_INPUT=$2
+        shift 2
+        ;;
+    --capture-selection=*)
+        CAPTURE_SELECTION_SET=true
+        CAPTURE_SELECTION_INPUT=${1#*=}
+        shift
+        ;;
+    --capture-compression)
+        require_value "$1" "$#"
+        CAPTURE_COMPRESSION_SET=true
+        CAPTURE_COMPRESSION=$2
+        shift 2
+        ;;
+    --capture-compression=*)
+        CAPTURE_COMPRESSION_SET=true
+        CAPTURE_COMPRESSION=${1#*=}
+        shift
+        ;;
+    --boot-timeout)
+        require_value "$1" "$#"
+        BOOT_TIMEOUT_SET=true
+        BOOT_TIMEOUT=$2
+        shift 2
+        ;;
+    --boot-timeout=*) BOOT_TIMEOUT_SET=true; BOOT_TIMEOUT=${1#*=}; shift ;;
+    --default-boot)
+        require_value "$1" "$#"
+        DEFAULT_BOOT_SET=true
+        DEFAULT_BOOT=$2
+        shift 2
+        ;;
+    --default-boot=*) DEFAULT_BOOT_SET=true; DEFAULT_BOOT=${1#*=}; shift ;;
+    --kernel-args)
+        require_value "$1" "$#"
+        KERNEL_ARGS_SET=true
+        KERNEL_ARGS=$2
+        shift 2
+        ;;
+    --kernel-args=*) KERNEL_ARGS_SET=true; KERNEL_ARGS=${1#*=}; shift ;;
+    --boot-background)
+        require_value "$1" "$#"
+        BOOT_BACKGROUND_SET=true
+        BOOT_BACKGROUND_INPUT=$2
+        shift 2
+        ;;
+    --boot-background=*) BOOT_BACKGROUND_SET=true; BOOT_BACKGROUND_INPUT=${1#*=}; shift ;;
+    --overlay-directory)
+        require_value "$1" "$#"
+        OVERLAY_DIRECTORY_SET=true
+        OVERLAY_DIRECTORY_INPUT=$2
+        shift 2
+        ;;
+    --overlay-directory=*) OVERLAY_DIRECTORY_SET=true; OVERLAY_DIRECTORY_INPUT=${1#*=}; shift ;;
+    --menu)
+        require_value "$1" "$#"
+        MENU_TYPE=$2
+        shift 2
+        ;;
+    --menu=*)
+        MENU_TYPE=${1#*=}
+        shift
+        ;;
+    --overwrite)
+        OVERWRITE=true
+        shift
+        ;;
+    --no-color)
+        DISABLE_COLOR=true
+        shift
+        ;;
+    --help)
+        help
+        exit 0
+        ;;
+    --version)
+        version
+        exit 0
+        ;;
+    --)
+        shift
+        MODULE_INPUTS+=("$@")
+        break
+        ;;
+    -*)
+        error "$(gettext "Unknown option:") $1"
+        brief_help
+        exit 1
+        ;;
+    *)
+        MODULE_INPUTS+=("$1")
+        shift
+        ;;
+    esac
+done
+
+console_colors
+
+SCRIPT_PATH=$(/usr/bin/readlink -f -- "${BASH_SOURCE[0]}") || die 1 "$(gettext "Cannot resolve script path")"
+SOURCE_TEST_MARKER=${SCRIPT_PATH%/*}/../tests/.source-test-context
+if (( EUID != 0 )) && [[ ${MINIOS_TOOLS_TEST_ALLOW_NON_ROOT:-0} == 1 &&
+      -n ${MINIOS_TOOLS_TEST_ROOT:-} && -f $SOURCE_TEST_MARKER && ! -L $SOURCE_TEST_MARKER &&
+      $(<"$SOURCE_TEST_MARKER") == minios-tools-source-test-v1 ]]; then
+    SOURCE_TEST_MODE=true
+fi
+if [[ -n ${COMPOSE_TEST_SAVECHANGES:-}${COMPOSE_TEST_PKEXEC:-}${COMPOSE_TEST_CHANGES_ROOT:-}\
+${COMPOSE_TEST_MKSQUASHFS:-}${COMPOSE_TEST_OVERLAY_PAUSE:-} &&
+      $SOURCE_TEST_MODE != true ]]; then
+    die 1 "$(gettext "Source-test overrides are unavailable in this invocation")"
+fi
+
+# Locate the isolated Python helper engine. It lives beside the script in
+# development (cli/lib) and is installed to /usr/lib/minios-image-compose.
+compose_self=$(readlink -f -- "$0" 2>/dev/null || true)
+[ -n "$compose_self" ] || compose_self=$(command -v -- "$0" 2>/dev/null || printf '%s' "$0")
+compose_bin_dir=$(dirname -- "$compose_self")
+COMPOSE_ENGINE=""
+for compose_engine_candidate in \
+    "$compose_bin_dir/../lib/minios_image_compose_engine.py" \
+    "/usr/lib/minios-image-compose/minios_image_compose_engine.py"; do
+    if [ -f "$compose_engine_candidate" ]; then
+        COMPOSE_ENGINE=$(readlink -f -- "$compose_engine_candidate")
+        break
+    fi
+done
+[ -n "$COMPOSE_ENGINE" ] || die 1 "$(gettext "minios-image-compose helper engine not found")"
+SYSTEM_TOOL_PATH=/usr/sbin:/usr/bin:/sbin:/bin
+if [[ $SOURCE_TEST_MODE != true ]]; then
+    PATH=$SYSTEM_TOOL_PATH
+    export PATH
+fi
+
+case $CAPTURE_CHANGES in
+"" | exact | clean | selected) ;;
+*) die 1 "$(gettext "Invalid session capture mode:") $CAPTURE_CHANGES" ;;
+esac
+if [[ $CAPTURE_CHANGES_SET == true && -z $CAPTURE_CHANGES ]]; then
+    die 1 "$(gettext "Invalid session capture mode: empty value")"
+fi
+if [[ $CAPTURE_CHANGES == selected && $CAPTURE_SELECTION_SET != true ]]; then
+    die 1 "$(gettext "--capture-changes selected requires --capture-selection")"
+fi
+if [[ $CAPTURE_CHANGES != selected && $CAPTURE_SELECTION_SET == true ]]; then
+    die 1 "$(gettext "--capture-selection is only valid with --capture-changes selected")"
+fi
+if [[ -z $CAPTURE_CHANGES && $CAPTURE_COMPRESSION_SET == true ]]; then
+    die 1 "$(gettext "--capture-compression requires --capture-changes")"
+fi
+case $CAPTURE_COMPRESSION in
+zstd | gzip | lzo | xz) ;;
+*) die 1 "$(gettext "Invalid session capture compression:") $CAPTURE_COMPRESSION" ;;
+esac
+if [[ $BOOT_TIMEOUT_SET == true ]]; then
+    [[ $BOOT_TIMEOUT =~ ^[0-9]+$ ]] || die 1 "$(gettext "Boot timeout must be an integer from 0 to 300")"
+    (( 10#$BOOT_TIMEOUT <= 300 )) || die 1 "$(gettext "Boot timeout must be an integer from 0 to 300")"
+    BOOT_TIMEOUT=$((10#$BOOT_TIMEOUT))
+fi
+if [[ $DEFAULT_BOOT_SET == true ]]; then
+    case $DEFAULT_BOOT in
+    resume | new | choose | fresh | toram) ;;
+    *) die 1 "$(gettext "Invalid default boot mode:") $DEFAULT_BOOT" ;;
+    esac
+fi
+if [[ $KERNEL_ARGS_SET == true ]]; then
+    [[ -n $KERNEL_ARGS ]] || die 1 "$(gettext "Kernel arguments must not be empty")"
+    validate_no_line_break "$(gettext "Kernel arguments")" "$KERNEL_ARGS"
+    kernel_args_bytes=$(LC_ALL=C; printf '%s' "$KERNEL_ARGS" | wc -c)
+    (( kernel_args_bytes <= 4096 )) || die 1 "$(gettext "Kernel arguments exceed 4096 UTF-8 bytes")"
+fi
+if [[ $BOOT_BACKGROUND_SET == true ]]; then
+    [[ -n $BOOT_BACKGROUND_INPUT ]] || die 1 "$(gettext "Boot background path must not be empty")"
+    validate_no_line_break "$(gettext "Boot background path")" "$BOOT_BACKGROUND_INPUT"
+fi
+if [[ $OVERLAY_DIRECTORY_SET == true ]]; then
+    [[ -n $OVERLAY_DIRECTORY_INPUT ]] || die 1 "$(gettext "Overlay directory path must not be empty")"
+    validate_no_line_break "$(gettext "Overlay directory path")" "$OVERLAY_DIRECTORY_INPUT"
+fi
+if [[ $BOOT_TIMEOUT_SET == true || $DEFAULT_BOOT_SET == true || $KERNEL_ARGS_SET == true ||
+      $BOOT_BACKGROUND_SET == true || $OVERLAY_DIRECTORY_SET == true ]]; then
+    CUSTOMIZATION_REQUESTED=true
+fi
+case $MENU_TYPE in
+multilang | en_US | ru_RU | de_DE | es_ES | it_IT | id_ID | pt_BR | pt_PT | fr_FR) ;;
+*)
+    die 1 "$(gettext "Invalid menu type:") $MENU_TYPE. $(gettext "Valid types: multilang, en_US, ru_RU, de_DE, es_ES, it_IT, id_ID, pt_BR, pt_PT, fr_FR")"
+    ;;
+esac
+
+validate_no_line_break "$(gettext "Exclusion regex")" "$EXCLUDE_REGEX"
+
+is_printable_ascii() {
+    local LC_ALL=C
+    local pattern='^[ -~]+$'
+    [[ $1 =~ $pattern ]]
+}
+
+if (( ${#VOLUME_LABEL} < 1 || ${#VOLUME_LABEL} > 32 )) ||
+   ! is_printable_ascii "$VOLUME_LABEL"; then
+    die 1 "$(gettext "ISO volume label must contain 1 to 32 printable ASCII characters")"
+fi
+if [[ $VOLUME_LABEL == *[!A-Z0-9_]* ]]; then
+    warning "$(gettext "The volume label is accepted by xorriso but is outside the strict ISO 9660 A-Z, 0-9, underscore set")"
+fi
+
+for required_tool in xorriso unsquashfs mktemp find realpath readlink stat grep dd awk sed gettext date chmod mkdir rm ln cp sleep wc; do
+    if ! command -v "$required_tool" >/dev/null 2>&1; then
+        die 1 "$(gettext "Required command not found:") $required_tool"
+    fi
+done
+if [[ $SOURCE_TEST_MODE == true ]]; then
+    mkfs_ext2_candidate=$(command -v mkfs.ext2 2>/dev/null) ||
+        die 1 "$(gettext "Required command not found:") mkfs.ext2"
+    MKFS_EXT2_BIN=$(realpath -e -- "$mkfs_ext2_candidate") ||
+        die 1 "$(gettext "Cannot canonicalize mkfs.ext2")"
+else
+    mkfs_ext2_candidate=$(PATH=$SYSTEM_TOOL_PATH command -v mkfs.ext2 2>/dev/null) ||
+        die 1 "$(gettext "Required command not found:") mkfs.ext2"
+    MKFS_EXT2_BIN=$(trusted_executable "$mkfs_ext2_candidate") ||
+        die 1 "$(gettext "Trusted system mkfs.ext2 is unavailable")"
+fi
+PYTHON_BIN=$(trusted_executable /usr/bin/python3) ||
+    die 1 "$(gettext "Trusted /usr/bin/python3 is unavailable")"
+ENV_BIN=$(trusted_executable /usr/bin/env) || die 1 "$(gettext "Trusted /usr/bin/env is unavailable")"
+SETSID_BIN=$(trusted_executable /usr/bin/setsid) || die 1 "$(gettext "Trusted /usr/bin/setsid is unavailable")"
+if [[ $OVERLAY_DIRECTORY_SET == true ]]; then
+    if [[ $SOURCE_TEST_MODE == true ]]; then
+        overlay_mks_candidate=${COMPOSE_TEST_MKSQUASHFS:-}
+        [[ -n $overlay_mks_candidate ]] || overlay_mks_candidate=$(command -v mksquashfs 2>/dev/null) ||
+            die 1 "$(gettext "Required command not found:") mksquashfs"
+        MKSQUASHFS_BIN=$(realpath -e -- "$overlay_mks_candidate") ||
+            die 1 "$(gettext "Cannot canonicalize test mksquashfs")"
+        [[ -f $MKSQUASHFS_BIN && -x $MKSQUASHFS_BIN && ! -L $MKSQUASHFS_BIN ]] ||
+            die 1 "$(gettext "Invalid test mksquashfs")"
+    else
+        overlay_mks_candidate=$(PATH=$SYSTEM_TOOL_PATH command -v mksquashfs 2>/dev/null) ||
+            die 1 "$(gettext "Required command not found:") mksquashfs"
+        MKSQUASHFS_BIN=$(trusted_executable "$overlay_mks_candidate") ||
+            die 1 "$(gettext "Trusted system mksquashfs is unavailable")"
+    fi
+fi
+if [[ -n $CAPTURE_CHANGES ]]; then
+    command -v sha256sum >/dev/null 2>&1 ||
+        die 1 "$(gettext "Required command not found:") sha256sum"
+    if [[ $SOURCE_TEST_MODE == true && -n ${COMPOSE_TEST_SAVECHANGES:-} ]]; then
+        savechanges_candidate=$COMPOSE_TEST_SAVECHANGES
+    else
+        savechanges_candidate=/usr/bin/savechanges
+    fi
+    validate_no_line_break "$(gettext "savechanges executable path")" "$savechanges_candidate"
+    [[ ! -L $savechanges_candidate && -f $savechanges_candidate && -x $savechanges_candidate ]] ||
+        die 1 "$(gettext "savechanges is not an executable non-symlink regular file:") $savechanges_candidate"
+    SAVECHANGES_BIN=$(realpath -e -- "$savechanges_candidate") ||
+        die 1 "$(gettext "Cannot canonicalize savechanges executable:") $savechanges_candidate"
+    if [[ $SOURCE_TEST_MODE != true || -z ${COMPOSE_TEST_SAVECHANGES:-} ]]; then
+        trusted_savechanges=$(trusted_executable /usr/bin/savechanges) ||
+            die 1 "$(gettext "Trusted /usr/bin/savechanges is unavailable")"
+        [[ $SAVECHANGES_BIN == "$trusted_savechanges" ]] || die 1 "$(gettext "savechanges trust check failed")"
+    fi
+    savechanges_version=$(LC_ALL=C "$SAVECHANGES_BIN" --version 2>/dev/null) ||
+        die 1 "$(gettext "savechanges version probe failed")"
+    if [[ $savechanges_version =~ ^savechanges[[:space:]]+([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+        savechanges_major=${BASH_REMATCH[1]}
+        savechanges_minor=${BASH_REMATCH[2]}
+    else
+        die 1 "$(gettext "savechanges version is invalid")"
+    fi
+    if (( savechanges_major < 1 ||
+          (savechanges_major == 1 && savechanges_minor < 3) )); then
+        die 1 "$(gettext "savechanges 1.3.0 or newer is required for capture")"
+    fi
+    if (( EUID != 0 )); then
+        if [[ $SOURCE_TEST_MODE == true && -n ${COMPOSE_TEST_PKEXEC:-} ]]; then
+            PKEXEC_BIN=$(realpath -e -- "$COMPOSE_TEST_PKEXEC") || die 1 "$(gettext "Invalid test pkexec")"
+        else
+            PKEXEC_BIN=$(trusted_executable /usr/bin/pkexec) ||
+                die 1 "$(gettext "Session capture requires trusted /usr/bin/pkexec for its narrow privileged stage")"
+        fi
+    fi
+fi
+
+set +e
+grep -E -q -- "$EXCLUDE_REGEX" </dev/null
+regex_status=$?
+set -e
+if (( regex_status > 1 )); then
+    die 1 "$(gettext "Invalid exclusion regular expression:") $EXCLUDE_REGEX"
+fi
+
+phase prepare "$(gettext "Preparing ISO build")"
+
+find_minios_source() {
+    local root=""
+    local candidate
+    local boot_dir
+    local -a kernels
+    local -a initramfs
+
+    if [[ -d /run/initramfs/memory ]]; then
+        root=/run/initramfs/memory
+    elif [[ -d /lib/live/mount ]]; then
+        root=/lib/live/mount
+    else
+        return 1
+    fi
+
+    shopt -s nullglob
+    for candidate in "$root/data/minios" "$root/medium/minios" "$root/iso/minios"; do
+        boot_dir=$candidate/boot
+        [[ -d $boot_dir ]] || continue
+        kernels=("$boot_dir"/vmlinuz*)
+        initramfs=("$boot_dir"/initrfs* "$boot_dir"/initrd*)
+        if (( ${#kernels[@]} > 0 && ${#initramfs[@]} > 0 )); then
+            printf '%s\n' "$candidate"
+            shopt -u nullglob
+            return 0
+        fi
+    done
+    shopt -u nullglob
+    return 1
+}
+
+if [[ $SOURCE_OPTION_SET == true ]]; then
+    validate_no_line_break "$(gettext "Source path")" "$SOURCE_INPUT"
+    if [[ -L $SOURCE_INPUT ]]; then
+        die 2 "$(gettext "MiniOS source must not be a symbolic link:") $SOURCE_INPUT"
+    fi
+    [[ -d $SOURCE_INPUT ]] || die 2 "$(gettext "MiniOS source is not a directory:") $SOURCE_INPUT"
+    if ! MINIOS=$(realpath -e -- "$SOURCE_INPUT"); then
+        die 2 "$(gettext "Cannot canonicalize MiniOS source:") $SOURCE_INPUT"
+    fi
+else
+    if ! discovered_source=$(find_minios_source); then
+        die 2 "$(gettext "Cannot find MiniOS source directory with boot files")"
+    fi
+    if ! MINIOS=$(realpath -e -- "$discovered_source"); then
+        die 2 "$(gettext "Cannot canonicalize MiniOS source:") $discovered_source"
+    fi
+fi
+
+CAPTURE_SOURCE_IS_RUNNING=false
+if [[ -n $CAPTURE_CHANGES ]]; then
+    if running_source_candidate=$(find_minios_source 2>/dev/null) &&
+       running_source_canonical=$(realpath -e -- "$running_source_candidate" 2>/dev/null) &&
+       [[ $running_source_canonical == "$MINIOS" ]]; then
+        CAPTURE_SOURCE_IS_RUNNING=true
+    elif [[ $SOURCE_OPTION_SET == false ]]; then
+        CAPTURE_SOURCE_IS_RUNNING=true
+    fi
+fi
+
+[[ -d $MINIOS/boot && ! -L $MINIOS/boot && -r $MINIOS/boot && -x $MINIOS/boot ]] ||
+    die 2 "$(gettext "MiniOS source has no readable boot directory:") $MINIOS/boot"
+if [[ -e $MINIOS/modules || -L $MINIOS/modules ]]; then
+    [[ -d $MINIOS/modules && ! -L $MINIOS/modules && -r $MINIOS/modules && -x $MINIOS/modules ]] ||
+        die 2 "$(gettext "MiniOS modules path is not a readable directory:") $MINIOS/modules"
+fi
+
+validate_regular_input() {
+    local description=$1
+    local input_path=$2
+    local reject_symlink=$3
+    local canonical
+
+    validate_no_line_break "$description" "$input_path"
+    if [[ $reject_symlink == true && -L $input_path ]]; then
+        die 1 "$description $(gettext "must not be a symbolic link:") $input_path"
+    fi
+    [[ -f $input_path && -r $input_path ]] ||
+        die 1 "$description $(gettext "must be a readable regular file:") $input_path"
+    if ! canonical=$(realpath -e -- "$input_path"); then
+        die 1 "$(gettext "Cannot canonicalize input file:") $input_path"
+    fi
+    printf '%s\n' "$canonical"
+}
+
+CONFIG_FILE=$(validate_regular_input "$(gettext "Configuration file")" "$CONFIG_INPUT" true)
+
+MANIFEST_FILE=""
+if [[ $MANIFEST_OPTION_SET == true ]]; then
+    MANIFEST_FILE=$(validate_regular_input "$(gettext "Manifest file")" "$MANIFEST_INPUT" true)
+    if ! run_isolated_python validate-json "$MANIFEST_FILE"; then
+        die 1 "$(gettext "Manifest is not valid JSON:") $MANIFEST_FILE"
+    fi
+fi
+
+CAPTURE_SELECTION_FILE=""
+if [[ $CAPTURE_SELECTION_SET == true ]]; then
+    CAPTURE_SELECTION_FILE=$(validate_regular_input "$(gettext "Session selection file")" "$CAPTURE_SELECTION_INPUT" true)
+fi
+
+BOOT_BACKGROUND_FILE=""
+if [[ $BOOT_BACKGROUND_SET == true ]]; then
+    BOOT_BACKGROUND_FILE=$(validate_regular_input "$(gettext "Boot background")" "$BOOT_BACKGROUND_INPUT" true)
+fi
+
+OVERLAY_DIRECTORY_PATH=""
+OVERLAY_DIRECTORY_CANONICAL=""
+if [[ $OVERLAY_DIRECTORY_SET == true ]]; then
+    validate_no_line_break "$(gettext "Overlay directory path")" "$OVERLAY_DIRECTORY_INPUT"
+    # The overlay path is resolved independently of the current directory so
+    # the frontend can run minios-image-compose from a private job directory.
+    [[ $OVERLAY_DIRECTORY_INPUT == /* ]] ||
+        die 1 "$(gettext "Overlay directory must be an absolute path")"
+    case $OVERLAY_DIRECTORY_INPUT in
+    */. | */.. | */./* | */../* | *//* )
+        die 1 "$(gettext "Overlay directory path must be normalized")"
+        ;;
+    esac
+    [[ ! -L $OVERLAY_DIRECTORY_INPUT && -d $OVERLAY_DIRECTORY_INPUT &&
+       -r $OVERLAY_DIRECTORY_INPUT && -x $OVERLAY_DIRECTORY_INPUT ]] ||
+        die 1 "$(gettext "Overlay directory must be a readable real directory")"
+    OVERLAY_DIRECTORY_PATH=$OVERLAY_DIRECTORY_INPUT
+    OVERLAY_DIRECTORY_CANONICAL=$(realpath -e -- "$OVERLAY_DIRECTORY_PATH") ||
+        die 1 "$(gettext "Cannot canonicalize overlay directory")"
+    # cwd-independent safety guards: the overlay must not overlap the MiniOS
+    # source tree in either direction. Output and temporary-directory overlap
+    # are rejected once those canonical paths are known below.
+    case $OVERLAY_DIRECTORY_CANONICAL in
+    "$MINIOS" | "$MINIOS"/*)
+        die 1 "$(gettext "Overlay directory must not be inside the MiniOS source tree")"
+        ;;
+    esac
+    case $MINIOS in
+    "$OVERLAY_DIRECTORY_CANONICAL"/*)
+        die 1 "$(gettext "Overlay directory must not contain the MiniOS source tree")"
+        ;;
+    esac
+fi
+
+validate_module_basename() {
+    local basename=$1
+    local status=${2:-3}
+    if contains_line_break "$basename" ||
+       [[ ! $basename =~ ^[A-Za-z0-9][A-Za-z0-9._+-]*\.sb$ ]]; then
+        die "$status" "$(gettext "Unsafe module basename (expected a portable .sb name):") $basename"
+    fi
+}
+
+declare -A MODULE_REAL_PATHS=()
+for module_input in "${MODULE_INPUTS[@]}"; do
+    validate_no_line_break "$(gettext "Module path")" "$module_input"
+    [[ ! -L $module_input ]] ||
+        die 3 "$(gettext "Additional module must not be a symbolic link:") $module_input"
+    [[ -f $module_input && -r $module_input ]] ||
+        die 3 "$(gettext "Additional module must be a readable regular file:") $module_input"
+    if ! module_path=$(realpath -e -- "$module_input"); then
+        die 3 "$(gettext "Cannot canonicalize additional module:") $module_input"
+    fi
+    module_basename=${module_path##*/}
+    validate_module_basename "$module_basename"
+    if [[ -n ${MODULE_REAL_PATHS[$module_path]:-} ]]; then
+        die 3 "$(gettext "Additional module was specified more than once:") $module_path"
+    fi
+    MODULE_REAL_PATHS["$module_path"]=1
+    if ! run_command unsquashfs -s "$module_path"; then
+        die 3 "$(gettext "Additional module is not valid SquashFS:") $module_path"
+    fi
+    MODULES+=("$module_path")
+done
+
+if [[ $TARGET_OPTION_SET == false ]]; then
+    TARGET_INPUT="$START_DIR/minios-$(date +%Y%m%d_%H%M).iso"
+fi
+validate_no_line_break "$(gettext "Output path")" "$TARGET_INPUT"
+[[ -n $TARGET_INPUT && $TARGET_INPUT != */ ]] || die 1 "$(gettext "Invalid output filename")"
+
+if [[ $TARGET_INPUT == /* ]]; then
+    TARGET=$TARGET_INPUT
+else
+    TARGET=$START_DIR/$TARGET_INPUT
+fi
+target_basename=${TARGET##*/}
+[[ -n $target_basename && $target_basename != . && $target_basename != .. ]] ||
+    die 1 "$(gettext "Invalid output filename:") $TARGET_INPUT"
+target_parent=${TARGET%/*}
+[[ $target_parent != "$TARGET" ]] || target_parent=$START_DIR
+[[ -n $target_parent ]] || target_parent=/
+[[ -d $target_parent ]] || die 1 "$(gettext "Output directory does not exist:") $target_parent"
+[[ -w $target_parent && -x $target_parent ]] ||
+    die 1 "$(gettext "Output directory is not writable:") $target_parent"
+if ! target_parent_canonical=$(realpath -e -- "$target_parent"); then
+    die 1 "$(gettext "Cannot canonicalize output directory:") $target_parent"
+fi
+if [[ $target_parent_canonical == / ]]; then
+    TARGET_CANONICAL=/$target_basename
+else
+    TARGET_CANONICAL=$target_parent_canonical/$target_basename
+fi
+
+case $TARGET_CANONICAL in
+"$MINIOS" | "$MINIOS"/*)
+    die 1 "$(gettext "Output must not be inside the MiniOS source tree:") $TARGET"
+    ;;
+esac
+for protected_input in "$CONFIG_FILE" "$MANIFEST_FILE" "$CAPTURE_SELECTION_FILE" \
+    "$BOOT_BACKGROUND_FILE" "${MODULES[@]}"; do
+    [[ -n $protected_input ]] || continue
+    if [[ $TARGET_CANONICAL == "$protected_input" ]]; then
+        die 1 "$(gettext "Output must not replace an input file:") $protected_input"
+    fi
+done
+if [[ -n $OVERLAY_DIRECTORY_CANONICAL ]]; then
+    case $TARGET_CANONICAL in
+    "$OVERLAY_DIRECTORY_CANONICAL" | "$OVERLAY_DIRECTORY_CANONICAL"/*)
+        die 1 "$(gettext "Output must not be inside the overlay directory")"
+        ;;
+    esac
+fi
+
+if [[ -e $TARGET || -L $TARGET ]]; then
+    [[ ! -d $TARGET ]] || die 1 "$(gettext "Output path is a directory:") $TARGET"
+    if [[ $OVERWRITE != true ]]; then
+        die 1 "$(gettext "Output already exists; use --overwrite to replace it:") $TARGET"
+    fi
+fi
+
+tmp_parent=${TMPDIR:-/tmp}
+validate_no_line_break "$(gettext "Temporary directory path")" "$tmp_parent"
+[[ -d $tmp_parent && -w $tmp_parent && -x $tmp_parent ]] ||
+    die 4 "$(gettext "Temporary directory is not writable:") $tmp_parent"
+tmp_parent_canonical=$(realpath -e -- "$tmp_parent") ||
+    die 4 "$(gettext "Cannot canonicalize temporary directory:") $tmp_parent"
+
+test_path_is_within() {
+    local root=$1
+    local candidate=$2
+    [[ $candidate == "$root" || $candidate == "$root"/* ]]
+}
+
+if [[ $SOURCE_TEST_MODE == true ]]; then
+    test_root=${MINIOS_TOOLS_TEST_ROOT:-}
+    [[ -n $test_root && ! -L $test_root && -d $test_root ]] ||
+        die 1 "$(gettext "Invalid capture test root")"
+    test_root=$(realpath -e -- "$test_root") || die 1 "$(gettext "Cannot canonicalize capture test root")"
+    for test_input in "$MINIOS" "$CONFIG_FILE" "$TARGET_CANONICAL" "$tmp_parent_canonical" \
+        "$SAVECHANGES_BIN" "$PKEXEC_BIN" "$MANIFEST_FILE" "$CAPTURE_SELECTION_FILE" \
+        "$BOOT_BACKGROUND_FILE" "$OVERLAY_DIRECTORY_CANONICAL" \
+        "${COMPOSE_TEST_MKSQUASHFS:-}" "${COMPOSE_TEST_OVERLAY_PAUSE:-}" "${MODULES[@]}"; do
+        [[ -n $test_input ]] || continue
+        test_path_is_within "$test_root" "$test_input" ||
+            die 1 "$(gettext "Non-root test capture is confined to MINIOS_TOOLS_TEST_ROOT")"
+    done
+    if [[ -n ${COMPOSE_TEST_CHANGES_ROOT:-} ]]; then
+        test_changes_root=$(realpath -e -- "$COMPOSE_TEST_CHANGES_ROOT") ||
+            die 1 "$(gettext "Cannot canonicalize test capture changes root")"
+        test_path_is_within "$test_root" "$test_changes_root" ||
+            die 1 "$(gettext "Test capture changes root is outside MINIOS_TOOLS_TEST_ROOT")"
+    fi
+fi
+if ! TEMP_DIR=$(mktemp -d -- "$tmp_parent_canonical/minios-image-compose.XXXXXXXX"); then
+    die 4 "$(gettext "Cannot create temporary work directory")"
+fi
+if ! chmod 0700 "$TEMP_DIR"; then
+    die 4 "$(gettext "Cannot secure temporary work directory:") $TEMP_DIR"
+fi
+if [[ -n $OVERLAY_DIRECTORY_CANONICAL ]]; then
+    temp_dir_canonical=$(realpath -e -- "$TEMP_DIR") ||
+        die 4 "$(gettext "Cannot canonicalize temporary work directory:") $TEMP_DIR"
+    case $OVERLAY_DIRECTORY_CANONICAL in
+    "$temp_dir_canonical" | "$temp_dir_canonical"/*)
+        die 1 "$(gettext "Overlay directory must not be inside the work directory")"
+        ;;
+    esac
+    case $temp_dir_canonical in
+    "$OVERLAY_DIRECTORY_CANONICAL"/*)
+        die 1 "$(gettext "Overlay directory must not contain the work directory")"
+        ;;
+    esac
+fi
+if [[ -n $CAPTURE_CHANGES ]]; then
+    exec 7<"$TEMP_DIR" || die 4 "$(gettext "Cannot retain capture cancellation directory")"
+    CAPTURE_CANCEL_FD_OPEN=true
+    CAPTURE_CANCEL_FILE=$TEMP_DIR/$CAPTURE_CANCEL_NAME
+fi
+
+output_state_file=$TEMP_DIR/output-state
+if ! run_isolated_python_to_file "$output_state_file" prepare-output \
+    "$target_parent_canonical" "$target_basename" "$OVERWRITE"; then
+    die 1 "$(gettext "Cannot prepare retained same-filesystem ISO output")"
+fi
+mapfile -t output_state <"$output_state_file"
+(( ${#output_state[@]} == 7 )) || die 1 "$(gettext "Invalid retained output state")"
+target_parent_canonical=${output_state[0]}
+ISO_PARENT_DEVICE=${output_state[1]}
+ISO_PARENT_INODE=${output_state[2]}
+ISO_WORK_NAME=${output_state[3]}
+ISO_WORK_DEVICE=${output_state[4]}
+ISO_WORK_INODE=${output_state[5]}
+TARGET_INITIAL_STATE=${output_state[6]}
+ISO_WORK_PATH=$target_parent_canonical/$ISO_WORK_NAME
+exec 8<"$target_parent_canonical" || die 1 "$(gettext "Cannot retain output parent directory")"
+ISO_PARENT_FD_OPEN=true
+exec 9<"$ISO_WORK_PATH" || die 1 "$(gettext "Cannot retain private ISO directory")"
+ISO_WORK_FD_OPEN=true
+if ! run_isolated_python check-fds 8 9 "$ISO_PARENT_DEVICE" "$ISO_PARENT_INODE" \
+    "$ISO_WORK_NAME" "$ISO_WORK_DEVICE" "$ISO_WORK_INODE"; then
+    die 1 "$(gettext "Retained ISO output identity check failed")"
+fi
+ISO_BUILD_PATH=/proc/self/fd/9/image.iso
+
+detect_bootloader_type() {
+    local has_syslinux=false
+    local has_grub_chain=false
+    local has_grub_native=false
+
+    [[ -d $MINIOS/boot/syslinux ]] && has_syslinux=true
+    [[ -f $MINIOS/boot/grub/i386-pc/lnxboot.img &&
+       -f $MINIOS/boot/grub/i386-pc/core.img ]] && has_grub_chain=true
+    [[ -f $MINIOS/boot/grub/i386-pc/eltorito.img &&
+       -f $MINIOS/boot/grub/i386-pc/boot_hybrid.img ]] && has_grub_native=true
+    if [[ $has_syslinux == true && $has_grub_chain == true ]]; then
+        printf '%s\n' syslinux-grub
+    elif [[ $has_syslinux == true ]]; then
+        printf '%s\n' syslinux-native
+    elif [[ $has_grub_native == true ]]; then
+        printf '%s\n' grub-only
+    else
+        return 1
+    fi
+}
+
+if ! BOOTLOADER_TYPE=$(detect_bootloader_type); then
+    die 2 "$(gettext "Cannot detect a supported BIOS bootloader in:") $MINIOS/boot"
+fi
+information "$(gettext "Detected bootloader type:") $BOOTLOADER_TYPE"
+
+case $BOOTLOADER_TYPE in
+grub-only)
+    REQUIRED_BOOT_RELATIVE=(
+        "boot/grub/i386-pc/eltorito.img"
+        "boot/grub/i386-pc/boot_hybrid.img"
+        "boot/grub/efi.img"
+        "boot/grub/grub.cfg"
+    )
+    ;;
+syslinux-native)
+    REQUIRED_BOOT_RELATIVE=(
+        "boot/syslinux/isolinux.bin"
+        "boot/syslinux/isohdpfx.bin"
+        "boot/syslinux/syslinux.cfg"
+        "boot/grub/efi.img"
+    )
+    ;;
+syslinux-grub)
+    REQUIRED_BOOT_RELATIVE=(
+        "boot/syslinux/isolinux.bin"
+        "boot/syslinux/isohdpfx.bin"
+        "boot/syslinux/syslinux.cfg"
+        "boot/grub/efi.img"
+        "boot/grub/grub.cfg"
+        "boot/grub/i386-pc/lnxboot.img"
+        "boot/grub/i386-pc/core.img"
+    )
+    ;;
+esac
+
+matches_user_exclusion() {
+    local relative_path=$1
+    local status
+
+    if printf '%s\n' "$relative_path" | grep -E -q -- "$EXCLUDE_REGEX"; then
+        return 0
+    else
+        status=$?
+        if (( status == 1 )); then
+            return 1
+        fi
+        die 1 "$(gettext "Cannot evaluate exclusion regular expression")"
+    fi
+}
+
+source_path_is_ignored() {
+    case $1 in
+    config.conf | changes | changes/* | boot/active-kernel | kernels | kernels/*) return 0 ;;
+    esac
+    matches_user_exclusion "$1"
+}
+
+source_path_is_baseline_ignored() {
+    case $1 in
+    config.conf | changes | changes/* | boot/active-kernel | kernels | kernels/*) return 0 ;;
+    esac
+    return 1
+}
+
+add_graft() {
+    local destination=$1
+    local source_path=$2
+
+    validate_no_line_break "$(gettext "ISO destination")" "$destination"
+    if [[ -n ${GRAFT_PRESENT[$destination]:-} ]]; then
+        if [[ ${GRAFT_SOURCES[$destination]} != "$source_path" ]]; then
+            die 1 "$(gettext "Multiple inputs would be written to ISO path:") $destination"
+        fi
+        return 0
+    fi
+    GRAFT_PRESENT["$destination"]=1
+    GRAFT_SOURCES["$destination"]=$source_path
+    GRAFT_DESTINATIONS+=("$destination")
+}
+
+replace_graft() {
+    local destination=$1
+    local source_path=$2
+    if [[ -n ${GRAFT_PRESENT[$destination]:-} ]]; then
+        GRAFT_SOURCES["$destination"]=$source_path
+    fi
+}
+
+add_required_iso_path() {
+    local destination=$1
+    if [[ -z ${REQUIRED_ISO_PRESENT[$destination]:-} ]]; then
+        REQUIRED_ISO_PRESENT["$destination"]=1
+        REQUIRED_ISO_PATHS+=("$destination")
+    fi
+}
+
+register_module_destination() {
+    local destination=$1
+    local status=${2:-3}
+    local folded=${destination,,}
+    local basename=${destination##*/}
+    local basename_folded=${basename,,}
+    local existing=${MODULE_DESTINATION_FOLDS[$folded]:-}
+    local basename_existing=${MODULE_BASENAME_FOLDS[$basename_folded]:-}
+
+    if [[ -n $existing && $existing != "$destination" ]]; then
+        die "$status" "$(gettext "Module destinations differ only by case:") $existing, $destination"
+    fi
+    if [[ -n $basename_existing && $basename_existing != "$destination" ]]; then
+        die "$status" "$(gettext "Duplicate module basename after runtime flattening:") $basename_existing, $destination"
+    fi
+    MODULE_DESTINATION_FOLDS["$folded"]=$destination
+    MODULE_BASENAME_FOLDS["$basename_folded"]=$destination
+}
+
+module_role() {
+    local basename=$1
+    local lower=${basename,,}
+    local prefix=${basename%%[-_.]*}
+    local order=""
+
+    if [[ $prefix =~ ^[0-9]{1,6}$ ]]; then
+        order=$((10#$prefix))
+    fi
+    if [[ $lower == *core* || $lower == *minios* || $order == 0 ]]; then
+        printf '%s\n' core
+    elif [[ $lower == *kernel* || $order == 1 ]]; then
+        printf '%s\n' kernel
+    else
+        printf '%s\n' other
+    fi
+}
+
+is_source_module() {
+    local relative_path=$1
+    if [[ $relative_path == *.sb && $relative_path != */* ]]; then
+        return 0
+    fi
+    if [[ $relative_path == modules/*.sb ]]; then
+        return 0
+    fi
+    return 1
+}
+
+validate_source_symlink() {
+    local path=$1
+    local relative_path=$2
+    local record_link=$3
+    local link_file=$TEMP_DIR/link-target
+    local link_target
+    local link_parent
+    local immediate
+    local immediate_relative
+    local component
+    local component_path=""
+    local -a link_components=()
+    local resolved
+    local resolved_relative
+
+    if ! readlink -z -- "$path" >"$link_file"; then
+        die 2 "$(gettext "Cannot read source symbolic link:") $path"
+    fi
+    if ! IFS= read -r -d '' link_target <"$link_file"; then
+        die 2 "$(gettext "Cannot parse source symbolic link:") $path"
+    fi
+    if contains_line_break "$link_target" || [[ $link_target == /* ]]; then
+        die 2 "$(gettext "Unsafe source symbolic link:") $relative_path"
+    fi
+    link_parent=${relative_path%/*}
+    [[ $link_parent != "$relative_path" ]] || link_parent=.
+    if ! immediate=$(realpath -m -s -- "$MINIOS/$link_parent/$link_target"); then
+        die 2 "$(gettext "Cannot normalize source symbolic link target:") $relative_path"
+    fi
+    case $immediate in
+    "$MINIOS") immediate_relative=. ;;
+    "$MINIOS"/*) immediate_relative=${immediate#"$MINIOS"/} ;;
+    *) die 2 "$(gettext "Source symbolic link escapes the MiniOS tree:") $relative_path" ;;
+    esac
+    IFS=/ read -r -a link_components <<<"$immediate_relative"
+    for component in "${link_components[@]}"; do
+        [[ -n $component && $component != . ]] || continue
+        if [[ -n $component_path ]]; then
+            component_path+=/$component
+        else
+            component_path=$component
+        fi
+        if source_path_is_ignored "$component_path"; then
+            die 2 "$(gettext "Source symbolic link chain contains an excluded path:") $relative_path"
+        fi
+    done
+    if ! resolved=$(realpath -e -- "$path"); then
+        die 2 "$(gettext "Dangling source symbolic link:") $relative_path"
+    fi
+    case $resolved in
+    "$MINIOS" | "$MINIOS"/*) ;;
+    *) die 2 "$(gettext "Source symbolic link escapes the MiniOS tree:") $relative_path" ;;
+    esac
+    if [[ $resolved == "$MINIOS" ]]; then
+        resolved_relative=.
+    else
+        resolved_relative=${resolved#"$MINIOS"/}
+    fi
+    if source_path_is_ignored "$resolved_relative"; then
+        die 2 "$(gettext "Source symbolic link points to an excluded path:") $relative_path"
+    fi
+    if [[ $record_link == true ]]; then
+        SOURCE_SYMLINK_DESTINATIONS+=("minios/$relative_path")
+        SOURCE_SYMLINK_TARGETS+=("$immediate_relative")
+    fi
+}
+
+inventory_file=$TEMP_DIR/source.inventory
+if ! run_command_to_file "$inventory_file" find "$MINIOS" -mindepth 1 \( -type f -o -type l \) -print0; then
+    die 2 "$(gettext "Cannot inventory MiniOS source:") $MINIOS"
+fi
+
+core_module_count=0
+kernel_module_count=0
+while IFS= read -r -d '' source_path; do
+    relative_path=${source_path#"$MINIOS"/}
+    validate_no_line_break "$(gettext "Source path")" "$relative_path"
+
+    role=other
+    if is_source_module "$relative_path"; then
+        role=$(module_role "${relative_path##*/}")
+        if [[ $role == core ]]; then
+            core_module_count=$((core_module_count + 1))
+        elif [[ $role == kernel ]]; then
+            kernel_module_count=$((kernel_module_count + 1))
+        fi
+    fi
+
+    if source_path_is_baseline_ignored "$relative_path"; then
+        continue
+    fi
+
+    excluded=false
+    if matches_user_exclusion "$relative_path"; then
+        excluded=true
+    fi
+
+    if [[ -L $source_path ]]; then
+        record_link=true
+        [[ $excluded == false ]] || record_link=false
+        validate_source_symlink "$source_path" "$relative_path" "$record_link"
+    fi
+
+    if [[ $excluded == true ]]; then
+        if [[ $role == core || $role == kernel ]]; then
+            die 2 "$(gettext "Exclusion removes a required source module:") $relative_path"
+        fi
+        case $relative_path in
+        boot/vmlinuz | boot/vmlinuz-* | boot/initrfs.img | boot/initrd.img | \
+            boot/initrfs-* | boot/initrd-* | boot/initrd.img-*)
+            die 2 "$(gettext "Exclusion removes a required kernel or initramfs file:") $relative_path"
+            ;;
+        esac
+        continue
+    fi
+
+    if [[ ! -L $source_path && ( ! -f $source_path || ! -r $source_path ) ]]; then
+        die 2 "$(gettext "Source file is not a readable regular file:") $relative_path"
+    fi
+
+    if [[ $relative_path == config.conf ||
+          ( $relative_path == build-manifest.json && -n $MANIFEST_FILE ) ]]; then
+        continue
+    fi
+
+    add_graft "minios/$relative_path" "$source_path"
+
+    if [[ $relative_path == boot/EFI/* ]]; then
+        if [[ ! -L $source_path ]]; then
+            add_graft "EFI/${relative_path#boot/EFI/}" "$source_path"
+        else
+            resolved_target=${SOURCE_SYMLINK_TARGETS[${#SOURCE_SYMLINK_TARGETS[@]}-1]}
+            if [[ $resolved_target == boot/EFI/* ]]; then
+                add_graft "EFI/${relative_path#boot/EFI/}" "$source_path"
+            else
+                warning "$(gettext "Not duplicating EFI symlink whose relative target would change:") $relative_path"
+            fi
+        fi
+    fi
+
+    case $relative_path in
+    boot/vmlinuz | boot/vmlinuz-*)
+        KERNEL_DESTINATIONS+=("minios/$relative_path")
+        [[ $relative_path == boot/vmlinuz-* ]] && VERSIONED_KERNEL_DESTINATIONS+=("minios/$relative_path")
+        ;;
+    boot/initrfs.img | boot/initrd.img | boot/initrfs-* | boot/initrd-* | boot/initrd.img-*)
+        INITRAMFS_DESTINATIONS+=("minios/$relative_path")
+        if [[ $relative_path == boot/initrfs-* || $relative_path == boot/initrd-* ||
+              $relative_path == boot/initrd.img-* ]]; then
+            VERSIONED_INITRAMFS_DESTINATIONS+=("minios/$relative_path")
+        fi
+        ;;
+    esac
+
+    if is_source_module "$relative_path"; then
+        validate_module_basename "${relative_path##*/}" 2
+        SOURCE_MODULE_PATHS+=("$source_path")
+        register_module_destination "minios/$relative_path" 2
+    fi
+    if [[ $role == core || $role == kernel ]]; then
+        add_required_iso_path "minios/$relative_path"
+    fi
+done <"$inventory_file"
+
+(( core_module_count > 0 )) || die 2 "$(gettext "MiniOS source has no core module")"
+(( kernel_module_count > 0 )) || die 2 "$(gettext "MiniOS source has no kernel module")"
+(( ${#KERNEL_DESTINATIONS[@]} > 0 )) || die 2 "$(gettext "No kernel image remains after exclusions")"
+(( ${#INITRAMFS_DESTINATIONS[@]} > 0 )) || die 2 "$(gettext "No initramfs image remains after exclusions")"
+
+declare -A KERNEL_VERSIONS=()
+declare -A INITRAMFS_VERSIONS=()
+generic_kernel=false
+generic_initramfs=false
+for destination in "${KERNEL_DESTINATIONS[@]}"; do
+    boot_basename=${destination##*/}
+    if [[ $boot_basename == vmlinuz ]]; then
+        generic_kernel=true
+    else
+        KERNEL_VERSIONS["${boot_basename#vmlinuz-}"]=1
+    fi
+done
+for destination in "${INITRAMFS_DESTINATIONS[@]}"; do
+    boot_basename=${destination##*/}
+    initramfs_version=""
+    case $boot_basename in
+    initrfs.img | initrd.img) generic_initramfs=true ;;
+    initrfs-*.img)
+        initramfs_version=${boot_basename#initrfs-}
+        initramfs_version=${initramfs_version%.img}
+        ;;
+    initrd.img-*) initramfs_version=${boot_basename#initrd.img-} ;;
+    initrd-*)
+        initramfs_version=${boot_basename#initrd-}
+        initramfs_version=${initramfs_version%.img}
+        ;;
+    esac
+    [[ -z $initramfs_version ]] || INITRAMFS_VERSIONS["$initramfs_version"]=1
+done
+
+if (( ${#KERNEL_VERSIONS[@]} > 0 || ${#INITRAMFS_VERSIONS[@]} > 0 )); then
+    if (( ${#KERNEL_VERSIONS[@]} != ${#INITRAMFS_VERSIONS[@]} )); then
+        die 2 "$(gettext "Kernel and initramfs versions do not match after exclusions")"
+    fi
+    for kernel_version in "${!KERNEL_VERSIONS[@]}"; do
+        [[ -n ${INITRAMFS_VERSIONS[$kernel_version]:-} ]] ||
+            die 2 "$(gettext "Kernel and initramfs versions do not match after exclusions")"
+    done
+elif [[ $generic_kernel != true || $generic_initramfs != true ]]; then
+    die 2 "$(gettext "No coherent kernel and initramfs pair remains after exclusions")"
+fi
+
+for source_module in "${SOURCE_MODULE_PATHS[@]}"; do
+    if ! run_command unsquashfs -s "$source_module"; then
+        die 2 "$(gettext "Included source module is not valid SquashFS:") $source_module"
+    fi
+done
+
+for index in "${!SOURCE_SYMLINK_DESTINATIONS[@]}"; do
+    symlink_target=${SOURCE_SYMLINK_TARGETS[$index]}
+    symlink_target_destination=minios/$symlink_target
+    if [[ -f $MINIOS/$symlink_target && -z ${GRAFT_PRESENT[$symlink_target_destination]:-} &&
+          $symlink_target != config.conf &&
+          ! ( $symlink_target == build-manifest.json && -n $MANIFEST_FILE ) ]]; then
+        die 2 "$(gettext "Included symbolic link target is absent from the ISO inventory:") ${SOURCE_SYMLINK_DESTINATIONS[$index]}"
+    fi
+    if [[ $symlink_target != . && -d $MINIOS/$symlink_target ]]; then
+        symlink_directory_present=false
+        for existing_destination in "${GRAFT_DESTINATIONS[@]}"; do
+            if [[ $existing_destination == "$symlink_target_destination" ||
+                  $existing_destination == "$symlink_target_destination/"* ]]; then
+                symlink_directory_present=true
+                break
+            fi
+        done
+        if [[ $symlink_directory_present == false ]]; then
+            empty_directory=$TEMP_DIR/empty-symlink-target-$index
+            if ! mkdir -p "$empty_directory"; then
+                die 4 "$(gettext "Cannot preserve an empty symbolic-link target directory")"
+            fi
+            add_graft "$symlink_target_destination" "$empty_directory"
+        fi
+    fi
+done
+
+for required_relative in "${REQUIRED_BOOT_RELATIVE[@]}"; do
+    if [[ -z ${GRAFT_PRESENT[minios/$required_relative]:-} ]]; then
+        die 2 "$(gettext "Required boot file is missing or excluded:") $required_relative"
+    fi
+    add_required_iso_path "minios/$required_relative"
+done
+for destination in "${KERNEL_DESTINATIONS[@]}" "${INITRAMFS_DESTINATIONS[@]}"; do
+    add_required_iso_path "$destination"
+done
+
+if matches_user_exclusion config.conf || matches_user_exclusion minios/config.conf; then
+    die 2 "$(gettext "Exclusion would remove minios/config.conf")"
+fi
+if [[ -n $MANIFEST_FILE ]] &&
+   { matches_user_exclusion build-manifest.json || matches_user_exclusion minios/build-manifest.json; }; then
+    die 2 "$(gettext "Exclusion would remove minios/build-manifest.json")"
+fi
+
+info_file=$TEMP_DIR/info
+if ! printf '%s\n' "$SYSTEMNAME" >"$info_file"; then
+    die 4 "$(gettext "Cannot create ISO information file")"
+fi
+if ! chmod 0600 "$info_file"; then
+    die 4 "$(gettext "Cannot secure ISO information file")"
+fi
+add_graft .disk/info "$info_file"
+add_graft minios/config.conf "$CONFIG_FILE"
+add_required_iso_path minios/config.conf
+if [[ -n $MANIFEST_FILE ]]; then
+    add_graft minios/build-manifest.json "$MANIFEST_FILE"
+    add_required_iso_path minios/build-manifest.json
+fi
+
+declare -A ADDITIONAL_TARGETS=()
+for module_path in "${MODULES[@]}"; do
+    module_basename=${module_path##*/}
+    if [[ $module_basename =~ ^[0-9]{2}- ]]; then
+        module_destination=minios/$module_basename
+    else
+        module_destination=minios/modules/$module_basename
+    fi
+    if [[ -n ${GRAFT_PRESENT[$module_destination]:-} ||
+          -n ${ADDITIONAL_TARGETS[$module_destination]:-} ]]; then
+        die 3 "$(gettext "Additional module destination collides with another input:") $module_destination"
+    fi
+    register_module_destination "$module_destination"
+    ADDITIONAL_TARGETS["$module_destination"]=$module_path
+    add_graft "$module_destination" "$module_path"
+    add_required_iso_path "$module_destination"
+done
+
+original_input_list=$TEMP_DIR/original-inputs.paths
+: >"$original_input_list"
+for destination in "${GRAFT_DESTINATIONS[@]}"; do
+    input_source=${GRAFT_SOURCES[$destination]}
+    case $input_source in
+    "$TEMP_DIR" | "$TEMP_DIR"/*) continue ;;
+    esac
+    printf '%s\0' "$input_source" >>"$original_input_list"
+done
+if [[ -n $CAPTURE_SELECTION_FILE ]]; then
+    printf '%s\0' "$CAPTURE_SELECTION_FILE" >>"$original_input_list"
+fi
+if [[ -n $BOOT_BACKGROUND_FILE ]]; then
+    printf '%s\0' "$BOOT_BACKGROUND_FILE" >>"$original_input_list"
+fi
+input_records=$TEMP_DIR/input-identities.json
+if ! run_isolated_python record-inputs "$original_input_list" "$input_records"; then
+    die 2 "$(gettext "Cannot record original build input identities and digests")"
+fi
+
+source_module_fingerprint=""
+if [[ -n $CAPTURE_CHANGES ]]; then
+    source_module_list=$TEMP_DIR/source-modules.paths
+    : >"$source_module_list"
+    for source_module in "${SOURCE_MODULE_PATHS[@]}"; do
+        printf '%s\0' "$source_module" >>"$source_module_list"
+    done
+    source_module_fingerprint_file=$TEMP_DIR/source-module-fingerprint
+    if ! run_isolated_python_to_file "$source_module_fingerprint_file" module-fingerprint \
+        "$input_records" "$source_module_list"; then
+        die 2 "$(gettext "Cannot fingerprint effective MiniOS source modules")"
+    fi
+    IFS= read -r source_module_fingerprint <"$source_module_fingerprint_file" || true
+    [[ $source_module_fingerprint =~ ^[0-9a-f]{64}$ ]] ||
+        die 2 "$(gettext "Invalid MiniOS source module fingerprint")"
+fi
+
+module_max_order=0
+for destination in "${GRAFT_DESTINATIONS[@]}"; do
+    [[ $destination == *.sb ]] || continue
+    ordered_basename=${destination##*/}
+    if [[ $ordered_basename =~ ^([0-9]+) ]]; then
+        order_digits=${BASH_REMATCH[1]}
+        (( ${#order_digits} <= 6 )) ||
+            die 3 "$(gettext "Numeric module order exceeds the supported six-digit range:") $ordered_basename"
+        module_order=$((10#$order_digits))
+        (( module_order <= module_max_order )) || module_max_order=$module_order
+    fi
+done
+
+kernel_args_count=""
+kernel_args_digest=""
+boot_attestation_present=false
+boot_plan_size=""
+boot_plan_digest=""
+boot_target_count=0
+boot_target_digest=""
+background_metadata=""
+background_targets_file=""
+background_snapshot=""
+background_attestation_present=false
+background_width=""
+background_height=""
+background_size=""
+background_digest=""
+background_target_count=0
+background_target_digest=""
+overlay_metadata=""
+overlay_snapshot=""
+overlay_module=""
+overlay_target=""
+overlay_order=""
+overlay_attestation_present=false
+overlay_module_size=""
+overlay_module_digest=""
+overlay_input_fingerprint=""
+overlay_entry_count=""
+if [[ $CUSTOMIZATION_REQUESTED == true ]]; then
+    phase customize "$(gettext "Preparing image-specific customization")"
+fi
+if [[ $KERNEL_ARGS_SET == true ]]; then
+    kernel_args_values_file=$TEMP_DIR/kernel-args.values
+    if ! run_isolated_python_to_file "$kernel_args_values_file" validate-kernel-args "$KERNEL_ARGS"; then
+        die 1 "$(gettext "Kernel arguments contain syntax unsafe for GRUB or SYSLINUX")"
+    fi
+    mapfile -t kernel_args_values <"$kernel_args_values_file"
+    (( ${#kernel_args_values[@]} == 2 )) || die 1 "$(gettext "Invalid kernel argument validation result")"
+    kernel_args_count=${kernel_args_values[0]}
+    kernel_args_digest=${kernel_args_values[1]}
+    information "$(gettext "Kernel argument UTF-8 bytes/SHA256:") $kernel_args_count/$kernel_args_digest"
+fi
+if [[ $BOOT_BACKGROUND_SET == true ]]; then
+    background_snapshot=$TEMP_DIR/boot-background.png
+    if ! run_isolated_python snapshot-file "$BOOT_BACKGROUND_FILE" "$background_snapshot"; then
+        die 1 "$(gettext "Cannot create a private boot background snapshot")"
+    fi
+    background_metadata=$TEMP_DIR/boot-background.json
+    background_values_file=$TEMP_DIR/boot-background.values
+    if ! run_isolated_python_to_file "$background_values_file" validate-png \
+        "$background_snapshot" "$background_metadata"; then
+        die 1 "$(gettext "Boot background is not a supported PNG")"
+    fi
+    mapfile -t background_values <"$background_values_file"
+    (( ${#background_values[@]} == 4 )) || die 1 "$(gettext "Invalid boot background validation result")"
+    background_attestation_present=true
+    background_width=${background_values[0]}
+    background_height=${background_values[1]}
+    background_size=${background_values[2]}
+    background_digest=${background_values[3]}
+    background_targets_file=$TEMP_DIR/boot-background.targets
+    : >"$background_targets_file"
+    declare -A BACKGROUND_TARGET_SEEN=()
+    for destination in "${GRAFT_DESTINATIONS[@]}"; do
+        case $destination in
+        minios/boot/bootlogo*.png)
+            replace_graft "$destination" "$background_snapshot"
+            BACKGROUND_TARGET_SEEN["$destination"]=1
+            printf '%s\0' "$destination" >>"$background_targets_file"
+            add_required_iso_path "$destination"
+            ;;
+        esac
+    done
+    if [[ -z ${BACKGROUND_TARGET_SEEN[minios/boot/bootlogo791.png]:-} ]]; then
+        add_graft minios/boot/bootlogo791.png "$background_snapshot"
+        printf '%s\0' minios/boot/bootlogo791.png >>"$background_targets_file"
+        add_required_iso_path minios/boot/bootlogo791.png
+    fi
+    background_target_identity_file=$TEMP_DIR/boot-background-target.identity
+    if ! run_isolated_python_to_file "$background_target_identity_file" target-set \
+        "$background_targets_file" 1; then
+        die 1 "$(gettext "Cannot bind boot background targets to immutable intent")"
+    fi
+    mapfile -t background_target_identity <"$background_target_identity_file"
+    (( ${#background_target_identity[@]} == 2 )) ||
+        die 1 "$(gettext "Invalid boot background target identity")"
+    background_target_count=${background_target_identity[0]}
+    background_target_digest=${background_target_identity[1]}
+    information "$(gettext "Boot background dimensions/bytes/SHA256:") ${background_values[0]}x${background_values[1]}/${background_values[2]}/${background_values[3]}"
+fi
+if [[ $OVERLAY_DIRECTORY_SET == true ]]; then
+    (( module_max_order <= 999998 )) ||
+        die 3 "$(gettext "No safe numeric order remains for an image overlay module")"
+    overlay_order=$((module_max_order + 1))
+    module_max_order=$overlay_order
+    printf -v overlay_prefix '%02d' "$overlay_order"
+    overlay_basename=$overlay_prefix-image-overlay.sb
+    overlay_target=minios/$overlay_basename
+    register_module_destination "$overlay_target" 3
+    overlay_snapshot=$TEMP_DIR/image-overlay-tree
+    overlay_metadata=$TEMP_DIR/image-overlay-input.json
+    overlay_values_file=$TEMP_DIR/image-overlay.values
+    if ! run_isolated_python_to_file "$overlay_values_file" snapshot-overlay \
+        "$OVERLAY_DIRECTORY_PATH" "$overlay_snapshot" "$overlay_metadata" \
+        "${COMPOSE_TEST_OVERLAY_PAUSE:-}"; then
+        die 1 "$(gettext "Overlay directory could not be snapshotted safely")"
+    fi
+    mapfile -t overlay_values <"$overlay_values_file"
+    (( ${#overlay_values[@]} == 3 )) || die 1 "$(gettext "Invalid overlay snapshot result")"
+    overlay_attestation_present=true
+    overlay_input_fingerprint=${overlay_values[0]}
+    overlay_entry_count=${overlay_values[1]}
+    overlay_module=$TEMP_DIR/$overlay_basename
+    if ! run_command "$MKSQUASHFS_BIN" "$overlay_snapshot" "$overlay_module" \
+        -comp zstd -b 1024K -always-use-fragments -noappend -all-root; then
+        die 1 "$(gettext "Failed to create image overlay module")"
+    fi
+    [[ -f $overlay_module && ! -L $overlay_module && -s $overlay_module ]] ||
+        die 1 "$(gettext "Image overlay builder did not create a nonempty regular module")"
+    if ! run_command unsquashfs -s "$overlay_module"; then
+        die 1 "$(gettext "Image overlay module is not valid SquashFS")"
+    fi
+    overlay_verify_tree=$TEMP_DIR/image-overlay-generated-tree
+    if ! run_command unsquashfs -d "$overlay_verify_tree" "$overlay_module" ||
+       ! run_isolated_python verify-overlay-tree "$overlay_metadata" "$overlay_verify_tree"; then
+        die 1 "$(gettext "Image overlay module does not match the captured input manifest")"
+    fi
+    overlay_module_identity_file=$TEMP_DIR/image-overlay.identity
+    if ! run_isolated_python_to_file "$overlay_module_identity_file" hash-file "$overlay_module"; then
+        die 1 "$(gettext "Cannot bind image overlay module to immutable intent")"
+    fi
+    mapfile -t overlay_module_identity <"$overlay_module_identity_file"
+    (( ${#overlay_module_identity[@]} == 2 )) ||
+        die 1 "$(gettext "Invalid image overlay module identity")"
+    overlay_module_size=${overlay_module_identity[0]}
+    overlay_module_digest=${overlay_module_identity[1]}
+    add_graft "$overlay_target" "$overlay_module"
+    add_required_iso_path "$overlay_target"
+    information "$(gettext "Image overlay order/entries/input bytes/fingerprint:") $overlay_order/${overlay_values[1]}/${overlay_values[2]}/${overlay_values[0]}"
+fi
+
+if [[ -n $CAPTURE_CHANGES ]]; then
+    (( module_max_order <= 999998 )) ||
+        die 3 "$(gettext "No safe numeric order remains for a last-loaded capture module")"
+    capture_order=$((module_max_order + 1))
+    printf -v capture_prefix '%02d' "$capture_order"
+    capture_basename=$capture_prefix-session-changes.sb
+    capture_destination=minios/$capture_basename
+    register_module_destination "$capture_destination" 3
+
+    phase capture "$(gettext "Capturing writable session changes")"
+    capture_selection_digest=""
+    capture_selection_copy=""
+    if [[ $CAPTURE_CHANGES == selected ]]; then
+        capture_selection_copy=$TEMP_DIR/session-selection.json
+        if ! run_isolated_python snapshot-file "$CAPTURE_SELECTION_FILE" "$capture_selection_copy"; then
+            die 4 "$(gettext "Cannot make a private copy of the session selection")"
+        fi
+        selection_hash_file=$TEMP_DIR/selection-hash
+        run_isolated_python_to_file "$selection_hash_file" hash-file "$capture_selection_copy" ||
+            die 1 "$(gettext "Cannot hash the session selection")"
+        mapfile -t selection_hash_values <"$selection_hash_file"
+        (( ${#selection_hash_values[@]} == 2 )) || die 1 "$(gettext "Invalid session selection hash result")"
+        capture_selection_digest=${selection_hash_values[1]}
+        [[ $capture_selection_digest =~ ^[0-9a-f]{64}$ ]] ||
+            die 1 "$(gettext "Invalid session selection digest")"
+        information "$(gettext "Session selection SHA256:") $capture_selection_digest"
+    fi
+
+    capture_module=$TEMP_DIR/$capture_basename
+    capture_metadata=$TEMP_DIR/session-capture-metadata.json
+    capture_arguments=(
+        --no-color
+        --profile "$CAPTURE_CHANGES"
+        --comp "$CAPTURE_COMPRESSION"
+        --work-parent "$TEMP_DIR"
+        --metadata-json "$capture_metadata"
+        --cancel-file "$CAPTURE_CANCEL_FILE"
+    )
+    if [[ -n $capture_selection_copy ]]; then
+        capture_arguments+=(--selection "$capture_selection_copy")
+    fi
+    capture_arguments+=("$capture_module")
+    if [[ $SOURCE_TEST_MODE == true && -n ${COMPOSE_TEST_CHANGES_ROOT:-} ]]; then
+        capture_arguments+=("$COMPOSE_TEST_CHANGES_ROOT")
+    fi
+    if (( EUID == 0 )); then
+        capture_command=("$SAVECHANGES_BIN" "${capture_arguments[@]}")
+    else
+        capture_command=("$PKEXEC_BIN" "$SAVECHANGES_BIN" "${capture_arguments[@]}")
+    fi
+    if ! run_capture_command "${capture_command[@]}"; then
+        die 1 "$(gettext "Failed to capture writable session changes")"
+    fi
+    [[ -f $capture_module && ! -L $capture_module && -s $capture_module &&
+       -f $capture_metadata && ! -L $capture_metadata && -s $capture_metadata ]] ||
+        die 1 "$(gettext "savechanges did not create a nonempty regular capture module")"
+    if ! run_command unsquashfs -s "$capture_module"; then
+        die 1 "$(gettext "Captured session module is not valid SquashFS")"
+    fi
+    capture_listing=$TEMP_DIR/capture-squashfs-list
+    if ! run_command_to_file "$capture_listing" unsquashfs -ll "$capture_module" || [[ ! -s $capture_listing ]]; then
+        die 1 "$(gettext "Captured session module failed full SquashFS listing verification")"
+    fi
+
+    capture_report=$TEMP_DIR/session-capture.json
+    report_values_file=$TEMP_DIR/capture-report-values
+    if ! run_isolated_python_to_file "$report_values_file" generate-report \
+        "$capture_metadata" "$capture_module" "$capture_destination" \
+        "$capture_selection_digest" "$capture_order" "$CAPTURE_CHANGES" "$capture_report" \
+        "$source_module_fingerprint" \
+        "$([[ $CAPTURE_SOURCE_IS_RUNNING == true ]] && printf false || printf true)"; then
+        die 1 "$(gettext "Cannot validate privileged capture metadata or create report")"
+    fi
+    mapfile -t report_values <"$report_values_file"
+    (( ${#report_values[@]} == 6 )) || die 1 "$(gettext "Invalid capture report values")"
+    capture_size=${report_values[0]}
+    capture_hash=${report_values[1]}
+    capture_union_backend=${report_values[2]}
+    capture_source_fingerprint=${report_values[3]}
+    capture_boot_id=${report_values[4]}
+    capture_base_module_fingerprint=${report_values[5]}
+    information "$(gettext "Session capture profile:") $CAPTURE_CHANGES"
+    information "$(gettext "Session capture union backend:") $capture_union_backend"
+    information "$(gettext "Session capture source fingerprint:") $capture_source_fingerprint"
+    information "$(gettext "Session capture boot ID:") $capture_boot_id"
+    if [[ -n $capture_base_module_fingerprint ]]; then
+        information "$(gettext "Session capture base module fingerprint:") $capture_base_module_fingerprint"
+    else
+        warning "$(gettext "Session capture has no reliable base module fingerprint")"
+    fi
+    information "$(gettext "Session capture module order:") $capture_order"
+    information "$(gettext "Session capture module target:") $capture_destination"
+    information "$(gettext "Session capture module size:") $capture_size"
+    information "$(gettext "Session capture module SHA256:") $capture_hash"
+
+    add_graft "$capture_destination" "$capture_module"
+    add_required_iso_path "$capture_destination"
+
+    if [[ -n ${GRAFT_PRESENT[minios/session-capture.json]:-} ]]; then
+        replace_graft minios/session-capture.json "$capture_report"
+    else
+        add_graft minios/session-capture.json "$capture_report"
+    fi
+    add_required_iso_path minios/session-capture.json
+fi
+
+# Parse a GRUB .po file into simple msgid|||msgstr records.
+parse_po_file() {
+    local po_file=$1
+    local output_file
+
+    [[ -f $po_file && -r $po_file ]] || return 1
+    if ! output_file=$(mktemp -- "$TEMP_DIR/translations.XXXXXXXX"); then
+        return 1
+    fi
+    if ! awk '
+    BEGIN { msgid = ""; msgstr = ""; in_msgid = 0; in_msgstr = 0; }
+    /^msgid / {
+        if (msgid != "" && msgstr != "") {
+            gsub(/^"|"$/, "", msgid); gsub(/\\n/, "\n", msgid); gsub(/\\"/, "\"", msgid);
+            gsub(/^"|"$/, "", msgstr); gsub(/\\n/, "\n", msgstr); gsub(/\\"/, "\"", msgstr);
+            if (msgid != "" && msgstr != "") print msgid "|||" msgstr;
+        }
+        msgid = substr($0, 7); in_msgid = 1; in_msgstr = 0;
+    }
+    /^msgstr / { msgstr = substr($0, 8); in_msgstr = 1; in_msgid = 0; }
+    /^"/ {
+        if (in_msgid) msgid = msgid substr($0, 2, length($0) - 2);
+        else if (in_msgstr) msgstr = msgstr substr($0, 2, length($0) - 2);
+    }
+    /^$/ { in_msgid = 0; in_msgstr = 0; }
+    END {
+        if (msgid != "" && msgstr != "") {
+            gsub(/^"|"$/, "", msgid); gsub(/\\n/, "\n", msgid); gsub(/\\"/, "\"", msgid);
+            gsub(/^"|"$/, "", msgstr); gsub(/\\n/, "\n", msgstr); gsub(/\\"/, "\"", msgstr);
+            if (msgid != "" && msgstr != "") print msgid "|||" msgstr;
+        }
+    }
+    ' "$po_file" >"$output_file"; then
+        rm -f -- "$output_file" || true
+        return 1
+    fi
+    [[ -s $output_file ]] || return 1
+    printf '%s\n' "$output_file"
+}
+
+get_translation() {
+    local translations_file=$1
+    local msgid=$2
+    local line
+
+    while IFS= read -r line; do
+        if [[ $line == "$msgid|||"* ]]; then
+            printf '%s\n' "${line#*|||}"
+            return 0
+        fi
+    done <"$translations_file"
+    printf '%s\n' "$msgid"
+}
+
+generate_localized_grub_config() {
+    local grub_dir=$1
+    local language=$2
+    local output_file=$3
+    local po_file=$grub_dir/po/$language.po
+    local template_file=$grub_dir/grub.template.cfg
+    local translations_file
+    local content
+    local english_text
+    local variable_name
+    local localized_text
+    local locale_utf=$language.UTF-8
+    local extra_params=""
+    local index
+    local -a english_texts=(
+        "Resume previous session"
+        "Start a new session"
+        "Choose session during startup"
+        "Fresh start"
+        "Copy to RAM"
+        "Loading kernel and ramdisk..."
+        "MiniOS"
+    )
+    local -a variable_names=(resume newsession choosesession freshstart copyram loading OS)
+
+    if ! translations_file=$(parse_po_file "$po_file"); then
+        warning "$(gettext "No translations found; using source menu for:") $language"
+        return 1
+    fi
+    if [[ ! -f $template_file || ! -r $template_file ]]; then
+        warning "$(gettext "GRUB menu template not found:") $template_file"
+        return 1
+    fi
+    if ! content=$(<"$template_file"); then
+        return 1
+    fi
+
+    for index in "${!english_texts[@]}"; do
+        english_text=${english_texts[$index]}
+        variable_name=${variable_names[$index]}
+        localized_text=$(get_translation "$translations_file" "$english_text")
+        if [[ $localized_text != "$english_text" ]]; then
+            content=${content//menuentry \"$english_text\"/menuentry \"$localized_text\"}
+            content=${content//set $variable_name=\"$english_text\"/set $variable_name=\"$localized_text\"}
+        fi
+    done
+
+    if [[ -f $grub_dir/minios-theme/theme_$language.txt ]]; then
+        content=${content//set theme=\/minios\/boot\/grub\/minios-theme\/theme.txt/set theme=\/minios\/boot\/grub\/minios-theme\/theme_$language.txt}
+    fi
+
+    case $language in
+    ru_RU) extra_params="timezone=Europe/Moscow keyboard-layouts=us,ru" ;;
+    de_DE) extra_params="timezone=Europe/Berlin keyboard-layouts=us,de" ;;
+    es_ES) extra_params="timezone=Europe/Madrid keyboard-layouts=us,es" ;;
+    fr_FR) extra_params="timezone=Europe/Paris keyboard-layouts=us,fr" ;;
+    id_ID) extra_params="timezone=Asia/Jakarta keyboard-layouts=id" ;;
+    it_IT) extra_params="timezone=Europe/Rome keyboard-layouts=us,it" ;;
+    pt_BR) extra_params="timezone=America/Sao_Paulo keyboard-layouts=us,br" ;;
+    pt_PT) extra_params="timezone=Europe/Lisbon keyboard-layouts=us,pt" ;;
+    esac
+    if [[ -n $extra_params ]]; then
+        extra_params=" $extra_params"
+    fi
+    if ! content=$(printf '%s\n' "$content" | sed -E "s|(linux .*/vmlinuz[^ ]* .*)|\\1 locales=${locale_utf}${extra_params}|g"); then
+        return 1
+    fi
+    printf '%s\n' "$content" >"$output_file"
+}
+
+phase boot-copy "$(gettext "Preparing boot files and menu configuration")"
+if ! mkdir -p "$TEMP_DIR/boot"; then
+    die 4 "$(gettext "Cannot create temporary boot directory")"
+fi
+
+if [[ $BOOTLOADER_TYPE == grub-only ]]; then
+    boot_image_destination=minios/boot/grub/i386-pc/eltorito.img
+else
+    boot_image_destination=minios/boot/syslinux/isolinux.bin
+fi
+boot_image_copy=$TEMP_DIR/boot/bios-boot.img
+if ! cp --preserve=mode,timestamps -- "${GRAFT_SOURCES[$boot_image_destination]}" \
+    "$boot_image_copy"; then
+    die 4 "$(gettext "Cannot copy the BIOS boot image into temporary storage")"
+fi
+replace_graft "$boot_image_destination" "$boot_image_copy"
+
+case $MENU_TYPE in
+multilang)
+    information "$(gettext "Using multilingual menu")"
+    grub_multilang=$MINIOS/boot/grub/grub.multilang.cfg
+    if [[ -f $grub_multilang && -r $grub_multilang ]]; then
+        if matches_user_exclusion boot/grub/grub.multilang.cfg; then
+            die 2 "$(gettext "Exclusion removes the selected multilingual GRUB menu")"
+        fi
+        if [[ -n ${GRAFT_PRESENT[minios/boot/grub/grub.cfg]:-} ]]; then
+            replace_graft minios/boot/grub/grub.cfg "$grub_multilang"
+        else
+            add_graft minios/boot/grub/grub.cfg "$grub_multilang"
+        fi
+    elif [[ -z ${GRAFT_PRESENT[minios/boot/grub/grub.cfg]:-} ]]; then
+        die 2 "$(gettext "Selected GRUB menu is missing or excluded")"
+    fi
+    add_required_iso_path minios/boot/grub/grub.cfg
+    if [[ $BOOTLOADER_TYPE == syslinux-native ]]; then
+        syslinux_multilang=$MINIOS/boot/syslinux/syslinux.multilang.cfg
+        if [[ -f $syslinux_multilang && -r $syslinux_multilang ]]; then
+            if matches_user_exclusion boot/syslinux/syslinux.multilang.cfg; then
+                die 2 "$(gettext "Exclusion removes the selected multilingual SYSLINUX menu")"
+            fi
+            replace_graft minios/boot/syslinux/syslinux.cfg "$syslinux_multilang"
+        elif [[ -z ${GRAFT_PRESENT[minios/boot/syslinux/syslinux.cfg]:-} ]]; then
+            die 2 "$(gettext "Selected SYSLINUX menu is missing or excluded")"
+        fi
+        add_required_iso_path minios/boot/syslinux/syslinux.cfg
+    fi
+    ;;
+*)
+    information "$(gettext "Configuring localized menu for:") $MENU_TYPE"
+    if [[ -z ${GRAFT_PRESENT[minios/boot/grub/grub.cfg]:-} ]]; then
+        die 2 "$(gettext "Selected GRUB menu is missing or excluded")"
+    fi
+    add_required_iso_path minios/boot/grub/grub.cfg
+    localized_grub=$(mktemp -- "$TEMP_DIR/grub-menu.XXXXXXXX") ||
+        die 4 "$(gettext "Cannot create temporary GRUB configuration")"
+    if generate_localized_grub_config "$MINIOS/boot/grub" "$MENU_TYPE" "$localized_grub"; then
+        replace_graft minios/boot/grub/grub.cfg "$localized_grub"
+    elif generate_localized_grub_config "$MINIOS/boot/grub" en_US "$localized_grub"; then
+        replace_graft minios/boot/grub/grub.cfg "$localized_grub"
+    fi
+    if [[ $BOOTLOADER_TYPE == syslinux-native ]]; then
+        localized_syslinux=$MINIOS/boot/syslinux/lang/$MENU_TYPE.cfg
+        fallback_syslinux=$MINIOS/boot/syslinux/lang/en_US.cfg
+        if [[ -f $localized_syslinux && -r $localized_syslinux ]]; then
+            if matches_user_exclusion "boot/syslinux/lang/$MENU_TYPE.cfg"; then
+                die 2 "$(gettext "Exclusion removes the selected localized SYSLINUX menu")"
+            fi
+            replace_graft minios/boot/syslinux/syslinux.cfg "$localized_syslinux"
+        elif [[ -f $fallback_syslinux && -r $fallback_syslinux ]] &&
+             ! matches_user_exclusion boot/syslinux/lang/en_US.cfg; then
+            replace_graft minios/boot/syslinux/syslinux.cfg "$fallback_syslinux"
+        fi
+        [[ -n ${GRAFT_PRESENT[minios/boot/syslinux/syslinux.cfg]:-} ]] ||
+            die 2 "$(gettext "Selected SYSLINUX menu is missing or excluded")"
+        add_required_iso_path minios/boot/syslinux/syslinux.cfg
+    fi
+    ;;
+esac
+
+boot_records=""
+boot_plan=""
+boot_output_mapping=""
+if [[ $BOOT_TIMEOUT_SET == true || $DEFAULT_BOOT_SET == true || $KERNEL_ARGS_SET == true ]]; then
+    boot_input_mapping=$TEMP_DIR/boot-config-inputs
+    boot_roots=$TEMP_DIR/boot-config-roots
+    : >"$boot_input_mapping"
+    : >"$boot_roots"
+    for destination in "${GRAFT_DESTINATIONS[@]}"; do
+        config_kind=""
+        case $destination in
+        minios/boot/grub/*.cfg) config_kind=grub ;;
+        minios/boot/syslinux/*.cfg) config_kind=syslinux ;;
+        esac
+        [[ -n $config_kind ]] || continue
+        printf '%s\0%s\0%s\0' "$destination" "${GRAFT_SOURCES[$destination]}" \
+            "$config_kind" >>"$boot_input_mapping"
+    done
+    if [[ -n ${GRAFT_PRESENT[minios/boot/grub/grub.cfg]:-} ]]; then
+        printf '%s\0' minios/boot/grub/grub.cfg >>"$boot_roots"
+    fi
+    if [[ $BOOTLOADER_TYPE == syslinux-grub ]]; then
+        if ! run_isolated_python validate-syslinux-grub \
+            "${GRAFT_SOURCES[minios/boot/syslinux/syslinux.cfg]}"; then
+            die 2 "$(gettext "SYSLINUX configuration is not a provable GRUB chainloader")"
+        fi
+    elif [[ $BOOTLOADER_TYPE == syslinux-native &&
+          -n ${GRAFT_PRESENT[minios/boot/syslinux/syslinux.cfg]:-} ]]; then
+        printf '%s\0' minios/boot/syslinux/syslinux.cfg >>"$boot_roots"
+    fi
+    [[ -s $boot_roots ]] || die 2 "$(gettext "No effective boot configuration is available for customization")"
+    boot_output_directory=$TEMP_DIR/customized-boot-configs
+    boot_plan=$TEMP_DIR/boot-customization-plan.json
+    boot_records=$TEMP_DIR/boot-customization-records.json
+    boot_output_mapping=$TEMP_DIR/boot-customization.mapping
+    if ! run_isolated_python customize-boot "$boot_input_mapping" "$boot_roots" \
+        "$boot_output_directory" "$boot_plan" "$boot_records" "$boot_output_mapping" \
+        "$BOOT_TIMEOUT" "$DEFAULT_BOOT" "$KERNEL_ARGS"; then
+        die 2 "$(gettext "Effective boot configuration cannot represent the requested customization")"
+    fi
+    mapfile -d '' -t boot_output_values <"$boot_output_mapping"
+    (( ${#boot_output_values[@]} % 2 == 0 && ${#boot_output_values[@]} > 0 )) ||
+        die 1 "$(gettext "Invalid customized boot config mapping")"
+    for ((index = 0; index < ${#boot_output_values[@]}; index += 2)); do
+        replace_graft "${boot_output_values[$index]}" "${boot_output_values[$((index + 1))]}"
+        add_required_iso_path "${boot_output_values[$index]}"
+    done
+    boot_plan_identity_file=$TEMP_DIR/boot-customization-plan.identity
+    if ! run_isolated_python_to_file "$boot_plan_identity_file" hash-file "$boot_plan"; then
+        die 1 "$(gettext "Cannot bind boot customization plan to immutable intent")"
+    fi
+    mapfile -t boot_plan_identity <"$boot_plan_identity_file"
+    (( ${#boot_plan_identity[@]} == 2 )) ||
+        die 1 "$(gettext "Invalid boot customization plan identity")"
+    boot_plan_size=${boot_plan_identity[0]}
+    boot_plan_digest=${boot_plan_identity[1]}
+    boot_target_identity_file=$TEMP_DIR/boot-customization-target.identity
+    if ! run_isolated_python_to_file "$boot_target_identity_file" target-set \
+        "$boot_output_mapping" 2; then
+        die 1 "$(gettext "Cannot bind boot config targets to immutable intent")"
+    fi
+    mapfile -t boot_target_identity <"$boot_target_identity_file"
+    (( ${#boot_target_identity[@]} == 2 )) ||
+        die 1 "$(gettext "Invalid boot config target identity")"
+    boot_target_count=${boot_target_identity[0]}
+    boot_target_digest=${boot_target_identity[1]}
+    boot_attestation_present=true
+    [[ $BOOT_TIMEOUT_SET != true ]] || information "$(gettext "Boot timeout seconds:") $BOOT_TIMEOUT"
+    [[ $DEFAULT_BOOT_SET != true ]] || information "$(gettext "Default MiniOS session:") $DEFAULT_BOOT"
+fi
+
+customization_report=""
+if [[ $CUSTOMIZATION_REQUESTED == true ]]; then
+    customization_report=$TEMP_DIR/image-customization.json
+    if ! run_isolated_python generate-customization-report "$customization_report" \
+        "$boot_records" "$BOOT_TIMEOUT" "$DEFAULT_BOOT" "$kernel_args_count" \
+        "$kernel_args_digest" "$background_metadata" "$background_targets_file" \
+        "$overlay_metadata" "$overlay_module" "$overlay_target" "$overlay_order"; then
+        die 1 "$(gettext "Cannot generate image customization report")"
+    fi
+    if [[ -n ${GRAFT_PRESENT[minios/image-customization.json]:-} ]]; then
+        replace_graft minios/image-customization.json "$customization_report"
+    else
+        add_graft minios/image-customization.json "$customization_report"
+    fi
+    add_required_iso_path minios/image-customization.json
+fi
+
+ventoy_kernel_destination=""
+ventoy_initramfs_destination=""
+for kernel_destination in "${VERSIONED_KERNEL_DESTINATIONS[@]}"; do
+    kernel_version=${kernel_destination##*/vmlinuz-}
+    for initramfs_destination in "${VERSIONED_INITRAMFS_DESTINATIONS[@]}"; do
+        initramfs_basename=${initramfs_destination##*/}
+        initramfs_version=""
+        case $initramfs_basename in
+        initrfs-*.img)
+            initramfs_version=${initramfs_basename#initrfs-}
+            initramfs_version=${initramfs_version%.img}
+            ;;
+        initrd.img-*) initramfs_version=${initramfs_basename#initrd.img-} ;;
+        initrd-*)
+            initramfs_version=${initramfs_basename#initrd-}
+            initramfs_version=${initramfs_version%.img}
+            ;;
+        esac
+        if [[ $kernel_version == "$initramfs_version" ]]; then
+            ventoy_kernel_destination=$kernel_destination
+            ventoy_initramfs_destination=$initramfs_destination
+            break 2
+        fi
+    done
+done
+
+if [[ -n $ventoy_kernel_destination && -n $ventoy_initramfs_destination ]]; then
+    versioned_kernel=${ventoy_kernel_destination##*/}
+    versioned_initramfs=${ventoy_initramfs_destination##*/}
+    if ! ln -s -- "$versioned_kernel" "$TEMP_DIR/boot/vmlinuz" ||
+       ! ln -s -- "$versioned_initramfs" "$TEMP_DIR/boot/initrfs.img"; then
+        die 4 "$(gettext "Cannot create Ventoy compatibility symbolic links")"
+    fi
+    if [[ -n ${GRAFT_PRESENT[minios/boot/vmlinuz]:-} ]]; then
+        replace_graft minios/boot/vmlinuz "$TEMP_DIR/boot/vmlinuz"
+    else
+        add_graft minios/boot/vmlinuz "$TEMP_DIR/boot/vmlinuz"
+    fi
+    if [[ -n ${GRAFT_PRESENT[minios/boot/initrfs.img]:-} ]]; then
+        replace_graft minios/boot/initrfs.img "$TEMP_DIR/boot/initrfs.img"
+    else
+        add_graft minios/boot/initrfs.img "$TEMP_DIR/boot/initrfs.img"
+    fi
+    add_required_iso_path minios/boot/vmlinuz
+    add_required_iso_path minios/boot/initrfs.img
+    information "$(gettext "Created Ventoy compatibility symlinks in ISO")"
+fi
+
+estimated_bytes=131072
+for destination in "${GRAFT_DESTINATIONS[@]}"; do
+    graft_source=${GRAFT_SOURCES[$destination]}
+    if ! source_size=$(stat -c '%s' -- "$graft_source"); then
+        die 1 "$(gettext "Cannot determine input size:") $graft_source"
+    fi
+    [[ $source_size =~ ^[0-9]+$ ]] || die 1 "$(gettext "Invalid input size reported for:") $graft_source"
+    estimated_bytes=$((estimated_bytes + source_size))
+done
+snapshot_fallback_file=$TEMP_DIR/input-snapshot-fallback-size
+if ! run_isolated_python_to_file "$snapshot_fallback_file" snapshot-space \
+    "$input_records" "$original_input_list"; then
+    die 1 "$(gettext "Cannot estimate private input snapshot space")"
+fi
+IFS= read -r snapshot_fallback_bytes <"$snapshot_fallback_file" || true
+[[ $snapshot_fallback_bytes =~ ^[0-9]+$ ]] ||
+    die 1 "$(gettext "Invalid private input snapshot space estimate")"
+if ! free_blocks=$(stat -f -c '%a' -- "/proc/$$/fd/8") ||
+   ! free_block_size=$(stat -f -c '%S' -- "/proc/$$/fd/8"); then
+    die 1 "$(gettext "Cannot determine free space in output directory:") $target_parent_canonical"
+fi
+[[ $free_blocks =~ ^[0-9]+$ && $free_block_size =~ ^[0-9]+$ ]] ||
+    die 1 "$(gettext "Invalid free-space information for output directory")"
+free_bytes=$((free_blocks * free_block_size))
+headroom=$(((estimated_bytes + snapshot_fallback_bytes) / 20))
+(( headroom >= 1048576 )) || headroom=1048576
+required_bytes=$((estimated_bytes + snapshot_fallback_bytes + headroom))
+if (( free_bytes < required_bytes )); then
+    die 1 "$(gettext "Insufficient free space; bytes available/required:") $free_bytes/$required_bytes"
+fi
+
+phase persistence "$(gettext "Creating and formatting temporary persistence image")"
+persistence_image=$TEMP_DIR/persistence.img
+if ! : >"$persistence_image" || ! chmod 0600 "$persistence_image"; then
+    die 4 "$(gettext "Cannot create secure persistence image")"
+fi
+information "$(gettext "Creating temporary persistence image")"
+if ! run_command dd if=/dev/zero of="$persistence_image" bs=1 count=0 seek=128k; then
+    die 1 "$(gettext "Failed to create persistence image")"
+fi
+information "$(gettext "Formatting persistence image")"
+if ! run_command "$MKFS_EXT2_BIN" -b 1024 -L resizeme "$persistence_image"; then
+    die 1 "$(gettext "Failed to format persistence image")"
+fi
+
+case $BOOTLOADER_TYPE in
+grub-only)
+    BIOS_BOOT_IMG=minios/boot/grub/i386-pc/eltorito.img
+    BIOS_BOOT_CATALOG=minios/boot/grub/boot.cat
+    BIOS_MBR_IMG=$MINIOS/boot/grub/i386-pc/boot_hybrid.img
+    ;;
+syslinux-grub | syslinux-native)
+    BIOS_BOOT_IMG=minios/boot/syslinux/isolinux.bin
+    BIOS_BOOT_CATALOG=minios/boot/syslinux/isolinux.boot
+    BIOS_MBR_IMG=$MINIOS/boot/syslinux/isohdpfx.bin
+    ;;
+esac
+
+snapshot_directory=/proc/$$/fd/9/input-snapshots
+snapshot_mapping=$TEMP_DIR/input-snapshot.mapping
+if ! run_isolated_python snapshot-inputs "$input_records" "$original_input_list" \
+    "$snapshot_directory" "$snapshot_mapping"; then
+    die 2 "$(gettext "Cannot create stable private snapshots of ISO inputs")"
+fi
+mapfile -d '' -t snapshot_values <"$snapshot_mapping"
+(( ${#snapshot_values[@]} % 2 == 0 )) || die 1 "$(gettext "Invalid input snapshot mapping")"
+declare -A INPUT_SNAPSHOTS=()
+for ((index = 0; index < ${#snapshot_values[@]}; index += 2)); do
+    INPUT_SNAPSHOTS["${snapshot_values[$index]}"]=${snapshot_values[$((index + 1))]}
+done
+for destination in "${GRAFT_DESTINATIONS[@]}"; do
+    input_source=${GRAFT_SOURCES[$destination]}
+    case $input_source in
+    "$TEMP_DIR" | "$TEMP_DIR"/*) continue ;;
+    esac
+    snapshot_source=${INPUT_SNAPSHOTS[$input_source]:-}
+    [[ -n $snapshot_source ]] || die 2 "$(gettext "Final ISO input has no stable private snapshot")"
+    GRAFT_SOURCES["$destination"]=$snapshot_source
+done
+if [[ -n ${INPUT_SNAPSHOTS[$BIOS_MBR_IMG]:-} ]]; then
+    BIOS_MBR_IMG=${INPUT_SNAPSHOTS[$BIOS_MBR_IMG]}
+fi
+
+escape_graft_component() {
+    REPLY=${1//\\/\\\\}
+    REPLY=${REPLY//=/\\=}
+}
+
+for destination in "${GRAFT_DESTINATIONS[@]}"; do
+    escape_graft_component "$destination"
+    escaped_destination=$REPLY
+    escape_graft_component "${GRAFT_SOURCES[$destination]}"
+    escaped_source=$REPLY
+    GRAFT_POINTS+=("$escaped_destination=$escaped_source")
+done
+
+final_external_inputs=$original_input_list
+if ! run_isolated_python verify-inputs "$input_records" "$final_external_inputs"; then
+    die 2 "$(gettext "A source, configuration, manifest, or module input changed before ISO creation")"
+fi
+
+manifest_digest=""
+embedded_manifest_source=${GRAFT_SOURCES[minios/build-manifest.json]:-}
+if [[ -n $embedded_manifest_source ]]; then
+    manifest_hash_file=$TEMP_DIR/manifest-hash
+    run_isolated_python_to_file "$manifest_hash_file" hash-file "$embedded_manifest_source" ||
+        die 1 "$(gettext "Cannot hash the original build manifest")"
+    mapfile -t manifest_hash_values <"$manifest_hash_file"
+    (( ${#manifest_hash_values[@]} == 2 )) || die 1 "$(gettext "Invalid build manifest hash result")"
+    manifest_digest=${manifest_hash_values[1]}
+fi
+
+XORRISO_ARGS=(
+    -no_rc
+    -as mkisofs
+    -iso-level 3
+    -volid "$VOLUME_LABEL"
+    -A "$SYSTEMNAME"
+    -joliet -joliet-long -rock
+    -eltorito-boot "$BIOS_BOOT_IMG"
+    -eltorito-catalog "$BIOS_BOOT_CATALOG"
+    -no-emul-boot
+    -boot-load-size 4
+    -boot-info-table
+    -eltorito-alt-boot
+    -e minios/boot/grub/efi.img
+    -no-emul-boot
+    --isohybrid-mbr "$BIOS_MBR_IMG"
+    -append_partition 2 0x83 "$persistence_image"
+    -partition_cyl_align on
+    -partition_offset 16
+    -part_like_isohybrid
+    -graft-points
+    "${GRAFT_POINTS[@]}"
+    -output "$ISO_BUILD_PATH"
+)
+
+phase iso-write "$(gettext "Generating ISO image")"
+if ! run_command xorriso "${XORRISO_ARGS[@]}"; then
+    die 1 "$(gettext "Failed to create ISO image")"
+fi
+if [[ ! -f $ISO_BUILD_PATH || -L $ISO_BUILD_PATH || ! -s $ISO_BUILD_PATH ]]; then
+    die 1 "$(gettext "ISO writer did not create a nonempty regular private output file")"
+fi
+if ! run_isolated_python verify-inputs "$input_records" "$final_external_inputs"; then
+    die 2 "$(gettext "A source, configuration, manifest, or module input changed during ISO creation")"
+fi
+
+phase verify "$(gettext "Verifying ISO structure and boot records")"
+report_file=$TEMP_DIR/xorriso-report
+tree_file=$TEMP_DIR/xorriso-tree
+if ! run_command_to_file "$report_file" xorriso -no_rc -indev "$ISO_BUILD_PATH" \
+    -report_el_torito plain -report_system_area plain -pvd_info -end; then
+    die 1 "$(gettext "Failed to read ISO boot and volume reports")"
+fi
+if ! grep -Eq '^El Torito boot img.*BIOS[[:space:]]+y' "$report_file" ||
+   ! grep -Eq '^El Torito boot img.*UEFI[[:space:]]+y' "$report_file" ||
+   ! grep -Eq '^System area summary:' "$report_file"; then
+    die 1 "$(gettext "ISO boot reports do not describe bootable BIOS, UEFI, and system-area data")"
+fi
+if ! grep -Fqx "Volume Id    : $VOLUME_LABEL" "$report_file"; then
+    die 1 "$(gettext "ISO volume label does not match the requested label")"
+fi
+if ! run_command_to_file "$tree_file" xorriso -no_rc -indev "$ISO_BUILD_PATH" \
+    -sh_style_result on -find / -exec echo -- -end; then
+    die 1 "$(gettext "Failed to read ISO filesystem tree")"
+fi
+
+declare -A ISO_TREE_PATHS=()
+while IFS= read -r iso_path; do
+    [[ $iso_path == /* ]] || continue
+    normalized_iso_path=${iso_path#/}
+    [[ -n $normalized_iso_path ]] || continue
+    ISO_TREE_PATHS["$normalized_iso_path"]=1
+done <"$tree_file"
+for destination in "${GRAFT_DESTINATIONS[@]}"; do
+    if [[ -z ${ISO_TREE_PATHS[$destination]:-} ]]; then
+        die 1 "$(gettext "ISO verification found a missing grafted path:") $destination"
+    fi
+done
+for destination in "${REQUIRED_ISO_PATHS[@]}"; do
+    if [[ -z ${ISO_TREE_PATHS[$destination]:-} ]]; then
+        die 1 "$(gettext "ISO verification found a missing required path:") $destination"
+    fi
+done
+
+if [[ $CUSTOMIZATION_REQUESTED == true ]]; then
+    customization_verify=$TEMP_DIR/customization-verify
+    mkdir -m 0700 -- "$customization_verify" ||
+        die 4 "$(gettext "Cannot create customization verification directory")"
+    customization_report_extract=$customization_verify/image-customization.json
+    customization_extract_arguments=(
+        -no_rc -osirrox on -indev "$ISO_BUILD_PATH"
+        -extract /minios/image-customization.json "$customization_report_extract"
+    )
+    extracted_boot_mapping=$customization_verify/boot.mapping
+    : >"$extracted_boot_mapping"
+    if [[ -n $boot_output_mapping ]]; then
+        mapfile -d '' -t boot_output_values <"$boot_output_mapping"
+        boot_extract_index=0
+        for ((index = 0; index < ${#boot_output_values[@]}; index += 2)); do
+            boot_target=${boot_output_values[$index]}
+            boot_extract=$customization_verify/boot-$boot_extract_index.cfg
+            customization_extract_arguments+=( -extract "/$boot_target" "$boot_extract" )
+            printf '%s\0%s\0' "$boot_target" "$boot_extract" >>"$extracted_boot_mapping"
+            boot_extract_index=$((boot_extract_index + 1))
+        done
+    fi
+    extracted_background_mapping=$customization_verify/background.mapping
+    : >"$extracted_background_mapping"
+    if [[ -n $background_targets_file ]]; then
+        mapfile -d '' -t background_targets <"$background_targets_file"
+        for index in "${!background_targets[@]}"; do
+            background_target=${background_targets[$index]}
+            background_extract=$customization_verify/background-$index.png
+            customization_extract_arguments+=( -extract "/$background_target" "$background_extract" )
+            printf '%s\0%s\0' "$background_target" "$background_extract" \
+                >>"$extracted_background_mapping"
+        done
+    fi
+    overlay_extract=""
+    if [[ -n $overlay_target ]]; then
+        overlay_extract=$customization_verify/image-overlay.sb
+        customization_extract_arguments+=( -extract "/$overlay_target" "$overlay_extract" )
+    fi
+    customization_extract_arguments+=( -end )
+    if ! run_command xorriso "${customization_extract_arguments[@]}"; then
+        die 1 "$(gettext "Failed to extract embedded customization verification inputs")"
+    fi
+    for extracted in "$customization_report_extract" "$overlay_extract"; do
+        [[ -n $extracted ]] || continue
+        [[ -f $extracted && ! -L $extracted && -s $extracted ]] ||
+            die 1 "$(gettext "Embedded customization verification produced an unsafe or empty file")"
+    done
+    recompute_directory=$customization_verify/recomputed-boot
+    if ! run_isolated_python verify-customization "$customization_report_extract" \
+        "$boot_plan" "$extracted_boot_mapping" "$recompute_directory" \
+        "$extracted_background_mapping" "$overlay_extract" "$overlay_module" \
+        "$boot_attestation_present" "$BOOT_TIMEOUT" "$DEFAULT_BOOT" "$KERNEL_ARGS" \
+        "$boot_plan_size" "$boot_plan_digest" "$boot_target_count" \
+        "$boot_target_digest" "$background_attestation_present" "$background_width" \
+        "$background_height" "$background_size" "$background_digest" \
+        "$background_target_count" "$background_target_digest" \
+        "$overlay_attestation_present" "$overlay_target" "$overlay_order" \
+        "$overlay_module_size" "$overlay_module_digest" \
+        "$overlay_input_fingerprint" "$overlay_entry_count"; then
+        die 1 "$(gettext "Embedded customization bytes or digest report failed verification")"
+    fi
+    if [[ -n $overlay_extract ]]; then
+        if ! run_command unsquashfs -s "$overlay_extract"; then
+            die 1 "$(gettext "Embedded image overlay has an invalid SquashFS superblock")"
+        fi
+        embedded_overlay_tree=$customization_verify/image-overlay-tree
+        if ! run_command unsquashfs -d "$embedded_overlay_tree" "$overlay_extract" ||
+           ! run_isolated_python verify-overlay-tree "$overlay_metadata" "$embedded_overlay_tree"; then
+            die 1 "$(gettext "Embedded image overlay does not match the captured input manifest")"
+        fi
+    fi
+fi
+
+if [[ -n $CAPTURE_CHANGES ]]; then
+    embedded_verify=$TEMP_DIR/embedded-verify
+    mkdir -m 0700 -- "$embedded_verify" || die 4 "$(gettext "Cannot create embedded verification directory")"
+    capture_extract=$embedded_verify/capture.sb
+    report_extract=$embedded_verify/session-capture.json
+    extract_arguments=(
+        -no_rc -osirrox on -indev "$ISO_BUILD_PATH"
+        -extract "/$capture_destination" "$capture_extract"
+        -extract /minios/session-capture.json "$report_extract"
+    )
+    manifest_extract=""
+    if [[ -n $embedded_manifest_source ]]; then
+        manifest_extract=$embedded_verify/build-manifest.json
+        extract_arguments+=( -extract /minios/build-manifest.json "$manifest_extract" )
+    fi
+    extract_arguments+=( -end )
+    if ! run_command xorriso "${extract_arguments[@]}"; then
+        die 1 "$(gettext "Failed to extract embedded capture verification inputs")"
+    fi
+    for extracted in "$capture_extract" "$report_extract" "$manifest_extract"; do
+        [[ -n $extracted ]] || continue
+        [[ -f $extracted && ! -L $extracted && -s $extracted ]] ||
+            die 1 "$(gettext "Embedded capture verification produced an unsafe or empty file")"
+    done
+    if ! run_isolated_python validate-extracted "$report_extract" "$capture_extract" \
+        "$capture_destination" "$capture_selection_digest" "$capture_metadata" \
+        "$manifest_extract" "$manifest_digest" "$capture_order"; then
+        die 1 "$(gettext "Embedded capture bytes or digest report failed verification")"
+    fi
+    if ! run_command unsquashfs -s "$capture_extract"; then
+        die 1 "$(gettext "Embedded capture module has an invalid SquashFS superblock")"
+    fi
+    embedded_listing=$embedded_verify/squashfs-list
+    if ! run_command_to_file "$embedded_listing" unsquashfs -ll "$capture_extract" ||
+       [[ ! -s $embedded_listing ]]; then
+        die 1 "$(gettext "Embedded capture module failed SquashFS listing verification")"
+    fi
+fi
+
+iso_hash_file=$TEMP_DIR/iso-hash
+if ! run_isolated_python_to_file "$iso_hash_file" hash-file "$ISO_BUILD_PATH"; then
+    die 1 "$(gettext "Cannot hash verified private ISO")"
+fi
+mapfile -t iso_hash_values <"$iso_hash_file"
+(( ${#iso_hash_values[@]} == 2 )) || die 1 "$(gettext "Invalid private ISO hash result")"
+iso_hash=${iso_hash_values[1]}
+if ! run_isolated_python publish 8 9 "$target_parent_canonical" \
+    "$ISO_PARENT_DEVICE" "$ISO_PARENT_INODE" "$ISO_WORK_NAME" \
+    "$ISO_WORK_DEVICE" "$ISO_WORK_INODE" "$target_basename" \
+    "$TARGET_INITIAL_STATE" "$OVERWRITE" "$iso_hash"; then
+    die 1 "$(gettext "Atomic ISO publication failed because an output path identity changed")"
+fi
+
+phase complete "$(gettext "ISO build completed successfully")"
+information "$(gettext "ISO successfully created:") $TARGET"

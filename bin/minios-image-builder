@@ -1,0 +1,39 @@
+#!/bin/sh
+#
+# MiniOS Image Builder launcher
+# Starts the image customization workspace.
+#
+
+set -e
+
+# Prefer distribution-owned tools over arbitrary local shadows while retaining
+# the desktop session's existing PATH for unrelated helpers.
+PATH="/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/sbin:/usr/local/bin${PATH:+:$PATH}"
+TERM=xterm
+export PATH TERM
+
+case "${1:-}" in
+    -h|--help)
+        cat <<'EOF'
+Usage: minios-image-builder
+
+Launch MiniOS Image Builder. It customizes the current MiniOS session, a
+MiniOS ISO file, or an optical disc, optionally captures writable-session
+changes, structurally verifies the resulting ISO, and never source-builds
+MiniOS.
+
+For the manual page, run: man minios-image-builder
+EOF
+        exit 0
+        ;;
+esac
+
+SCRIPT_DIR=$(dirname "$(readlink -f -- "$0")")
+
+if [ -f "$(dirname "$SCRIPT_DIR")/lib/main_image_builder.py" ]; then
+    DIR="$(dirname "$SCRIPT_DIR")/lib"
+else
+    DIR="/usr/lib/minios-image-builder"
+fi
+
+exec python3 -u "$DIR/main_image_builder.py" "$@"

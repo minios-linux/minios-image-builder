@@ -1,0 +1,62 @@
+#!/bin/bash
+
+set -u
+
+original_arguments=("$@")
+
+if [[ -n ${TOOL_EUID_LOG:-} ]]; then
+    printf 'unsquashfs:%s\n' "$EUID" >>"$TOOL_EUID_LOG"
+fi
+
+module=${!#}
+if [[ ! -f $module || ! -s $module || ${module##*/} == invalid.sb ||
+      $module == *"${UNSQUASHFS_FAIL_PATTERN:-__never__}"* ]]; then
+    printf 'unsquashfs stub: invalid SquashFS image: %s\n' "$module" >&2
+    exit 1
+fi
+
+destination=""
+listing=false
+while (( $# > 0 )); do
+    case $1 in
+    -d) destination=$2; shift 2 ;;
+    -ll) listing=true; shift ;;
+    *) shift ;;
+    esac
+done
+
+if [[ -n $destination ]]; then
+    sidecar=$module.stub-tree
+    if [[ ! -d $sidecar ]]; then
+        if [[ -x /usr/bin/unsquashfs ]] && /usr/bin/unsquashfs -s "$module" >/dev/null 2>&1; then
+            exec /usr/bin/unsquashfs "${original_arguments[@]}"
+        fi
+        printf 'unsquashfs stub: module has no content manifest: %s\n' "$module" >&2
+        exit 1
+    fi
+    mkdir -p "$destination"
+    cp -a -- "$sidecar/." "$destination/"
+    case ${UNSQUASHFS_TAMPER_TREE:-} in
+    extra:*)
+        tamper_path=${UNSQUASHFS_TAMPER_TREE#extra:}
+        tamper_parent=${tamper_path%/*}
+        [[ $tamper_parent != "$tamper_path" ]] || tamper_parent=.
+        mkdir -p "$destination/$tamper_parent"
+        printf 'extra extracted content\n' >"$destination/$tamper_path"
+        ;;
+    mutate:*)
+        tamper_path=${UNSQUASHFS_TAMPER_TREE#mutate:}
+        printf 'mutated extracted content\n' >"$destination/$tamper_path"
+        ;;
+    remove:*)
+        tamper_path=${UNSQUASHFS_TAMPER_TREE#remove:}
+        [[ -n $tamper_path && $tamper_path != /* && $tamper_path != .. &&
+           $tamper_path != ../* ]] || exit 1
+        rm -rf -- "$destination/${tamper_path:?}"
+        ;;
+    esac
+elif [[ $listing == true && -d $module.stub-tree ]]; then
+    find "$module.stub-tree" -printf '%M %p\n'
+else
+    printf 'Found a valid SQUASHFS superblock\n'
+fi

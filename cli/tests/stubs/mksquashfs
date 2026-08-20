@@ -1,0 +1,62 @@
+#!/bin/bash
+
+set -u
+
+if [[ -n ${TOOL_EUID_LOG:-} ]]; then
+    printf 'mksquashfs:%s\n' "$EUID" >>"$TOOL_EUID_LOG"
+fi
+
+if [[ ${1:-} == -help-option || ${1:-} == -help || ${1:-} == -h ]]; then
+    printf '%s\n' '-quiet quiet output'
+    exit 0
+fi
+
+source_directory=${1:?missing source directory}
+module=${2:?missing module output}
+
+if [[ ${MKSQUASHFS_FAIL:-false} == true ]]; then
+    printf 'mksquashfs stub: requested failure\n' >&2
+    exit 1
+fi
+
+if [[ -n ${MKSQUASHFS_RACE_TARGET:-} ]]; then
+    printf 'racing output\n' >"$MKSQUASHFS_RACE_TARGET"
+fi
+
+if [[ ${MKSQUASHFS_SLEEP:-false} == true ]]; then
+    marker=${MKSQUASHFS_SLEEP_MARKER:?MKSQUASHFS_SLEEP_MARKER is required}
+    if [[ ${MKSQUASHFS_LEADER_EXIT:-false} == true ]]; then
+        /usr/bin/python3 -c 'import signal, time
+signal.signal(signal.SIGINT, signal.SIG_IGN)
+signal.signal(signal.SIGTERM, signal.SIG_IGN)
+while True:
+    time.sleep(1)' &
+        descendant_pid=$!
+        printf '%s\n%s\n' "$$" "$descendant_pid" >"$marker"
+        sleep 0.1
+        exit 0
+    elif [[ ${MKSQUASHFS_STUBBORN:-false} == true ]]; then
+        trap '' TERM INT
+        (
+            trap '' TERM INT
+            while :; do sleep 1; done
+        ) &
+        descendant_pid=$!
+        printf '%s\n%s\n' "$$" "$descendant_pid" >"$marker"
+        wait "$descendant_pid"
+    else
+        printf '%s\n' "$$" >"$marker"
+        trap 'exit 143' TERM
+        trap 'exit 130' INT
+        while :; do sleep 1; done
+    fi
+fi
+
+if [[ -n ${MKSQUASHFS_STATE:-} ]]; then
+    mkdir -p "$MKSQUASHFS_STATE/tree"
+    cp -a -- "$source_directory/." "$MKSQUASHFS_STATE/tree/"
+    printf '%s\0' "$@" >"$MKSQUASHFS_STATE/args"
+fi
+
+cp -a -- "$source_directory" "$module.stub-tree"
+printf 'stub SquashFS module\n' >"$module"

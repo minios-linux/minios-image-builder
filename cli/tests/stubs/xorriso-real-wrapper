@@ -1,0 +1,92 @@
+#!/bin/bash
+
+set -Eeuo pipefail
+
+real_xorriso=${REAL_XORRISO:?REAL_XORRISO is required}
+build=false
+for argument in "$@"; do
+    [[ $argument == -as ]] && build=true
+done
+
+if [[ $build == true ]]; then
+    for argument in "$@"; do
+        case $argument in
+        minios/metadata/large.bin=*)
+            snapshot=${argument#*=}
+            # Reverse minios-image-compose's graft escaping (\\ and \=) to recover the real path.
+            snapshot=$(printf '%s' "$snapshot" | sed 's/\\\(.\)/\1/g')
+            if [[ -n ${REAL_XORRISO_SOURCE_FILE:-} ]]; then
+                source_identity=$(stat -c '%d %i' -- "$REAL_XORRISO_SOURCE_FILE")
+                snapshot_identity=$(stat -c '%d %i' -- "$snapshot")
+                if [[ $source_identity == "$snapshot_identity" ]]; then
+                    # RAM-safe: the large source file is grafted in place, never
+                    # byte-copied into the tmpfs-backed private job directory.
+                    printf '%s\n' verified >"${REAL_XORRISO_STATE:?REAL_XORRISO_STATE is required}/snapshot-inplace"
+                else
+                    printf 'real xorriso wrapper: large source file was byte-copied into a private snapshot\n' >&2
+                    exit 97
+                fi
+            fi
+            ;;
+        minios/*-image-overlay.sb=*)
+            if [[ ${REAL_XORRISO_MUTATE_OVERLAY:-false} == true ||
+                  ${REAL_XORRISO_MUTATE_REPORT:-} == coordinated-overlay ]]; then
+                overlay=${argument#*=}
+                printf 'post-report real-xorriso mutation\n' >>"$overlay"
+                printf '%s\n' mutated >"${REAL_XORRISO_STATE:?REAL_XORRISO_STATE is required}/overlay-mutated"
+            fi
+            ;;
+        minios/image-customization.json=*)
+            if [[ -n ${REAL_XORRISO_MUTATE_REPORT:-} ]]; then
+                report=${argument#*=}
+                /usr/bin/python3 - "$report" "$REAL_XORRISO_MUTATE_REPORT" \
+                    "${overlay:-}" <<'PYTHON'
+import hashlib
+import json
+import sys
+
+path, mutation, overlay = sys.argv[1:]
+if mutation in ("duplicate", "nonfinite"):
+    with open(path, encoding="utf-8") as stream:
+        raw = stream.read()
+    value = "1" if mutation == "duplicate" else "NaN"
+    with open(path, "w", encoding="utf-8") as stream:
+        stream.write('{"schema_version":' + value + "," + raw[1:])
+    raise SystemExit(0)
+
+with open(path, encoding="utf-8") as stream:
+    report = json.load(stream)
+
+if mutation == "identity":
+    report["product_kind"] = "tampered-image-customization"
+elif mutation == "boot":
+    report["boot"]["timeout_seconds"] += 1
+elif mutation == "configs":
+    report["boot"]["configs"][0]["sha256"] = "0" * 64
+elif mutation == "background":
+    report["boot"]["background"]["width"] += 1
+elif mutation == "overlay":
+    report["overlay"]["module_order"] += 1
+elif mutation == "presence":
+    report["overlay"] = None
+elif mutation == "coordinated-overlay":
+    with open(overlay, "rb") as stream:
+        data = stream.read()
+    report["overlay"]["size"] = len(data)
+    report["overlay"]["sha256"] = hashlib.sha256(data).hexdigest()
+else:
+    raise SystemExit("unknown report mutation: {}".format(mutation))
+
+with open(path, "w", encoding="utf-8") as stream:
+    json.dump(report, stream, sort_keys=True, separators=(",", ":"))
+    stream.write("\n")
+PYTHON
+                printf '%s\n' "$REAL_XORRISO_MUTATE_REPORT" \
+                    >"${REAL_XORRISO_STATE:?REAL_XORRISO_STATE is required}/report-mutated"
+            fi
+            ;;
+        esac
+    done
+fi
+
+exec "$real_xorriso" "$@"

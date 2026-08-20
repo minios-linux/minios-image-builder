@@ -1,0 +1,266 @@
+#!/bin/bash
+
+set -u
+
+state=${XORRISO_STATE:?XORRISO_STATE is required}
+mkdir -p "$state"
+printf '%s\n' "$EUID" >>"$state/euids"
+if [[ -n ${TOOL_EUID_LOG:-} ]]; then
+    printf 'xorriso:%s\n' "$EUID" >>"$TOOL_EUID_LOG"
+fi
+
+contains_arg() {
+    local expected=$1
+    shift
+    local argument
+    for argument in "$@"; do
+        [[ $argument == "$expected" ]] && return 0
+    done
+    return 1
+}
+
+decode_destination() {
+    local pathspec=$1
+    local decoded=""
+    local escaped=false
+    local character
+    local index
+
+    for ((index = 0; index < ${#pathspec}; index++)); do
+        character=${pathspec:index:1}
+        if [[ $escaped == true ]]; then
+            decoded+=$character
+            escaped=false
+        elif [[ $character == \\ ]]; then
+            escaped=true
+        elif [[ $character == = ]]; then
+            break
+        else
+            decoded+=$character
+        fi
+    done
+    printf '%s' "$decoded"
+}
+
+decode_source() {
+    local pathspec=$1
+    local decoded=""
+    local escaped=false
+    local source_half=false
+    local character
+    local index
+
+    for ((index = 0; index < ${#pathspec}; index++)); do
+        character=${pathspec:index:1}
+        if [[ $escaped == true ]]; then
+            [[ $source_half == true ]] && decoded+=$character
+            escaped=false
+        elif [[ $character == \\ ]]; then
+            escaped=true
+        elif [[ $character == = && $source_half == false ]]; then
+            source_half=true
+        elif [[ $source_half == true ]]; then
+            decoded+=$character
+        fi
+    done
+    printf '%s' "$decoded"
+}
+
+if contains_arg -as "$@"; then
+    : >"$state/build.args"
+    printf '%s\0' "$@" >"$state/build.args"
+    : >"$state/graft-sources"
+    : >"$state/tree"
+    printf '/\n' >>"$state/tree"
+
+    target=""
+    label=MINIOS
+    grafts=false
+    while (( $# > 0 )); do
+        case $1 in
+        -volid)
+            label=$2
+            shift 2
+            ;;
+        -graft-points)
+            grafts=true
+            shift
+            ;;
+        -output)
+            grafts=false
+            target=$2
+            shift 2
+            ;;
+        *)
+            if [[ $grafts == true ]]; then
+                destination=$(decode_destination "$1")
+                source_path=$(decode_source "$1")
+                if [[ ! -e $source_path && ! -L $source_path ]]; then
+                    printf 'xorriso stub: graft source is not one exact path: %s\n' "$source_path" >&2
+                    exit 93
+                fi
+                printf '/%s\n' "$destination" >>"$state/tree"
+                printf '%s\0%s\0' "$destination" "$source_path" >>"$state/graft-sources"
+                if [[ ${XORRISO_MUTATE_GRAFT:-} == "$destination" ]]; then
+                    printf 'post-report graft mutation\n' >>"$source_path"
+                fi
+                case $destination in
+                minios/config.conf)
+                    cp -- "$source_path" "$state/config.conf"
+                    ;;
+                minios/session-capture.json)
+                    cp -- "$source_path" "$state/session-capture.json"
+                    ;;
+                minios/build-manifest.json)
+                    cp -- "$source_path" "$state/build-manifest.json"
+                    ;;
+                minios/*-session-changes.sb)
+                    stat -c '%s' -- "$source_path" >"$state/session-capture.size"
+                    cp -- "$source_path" "$state/session-capture.sb"
+                    printf '%s\n' "$destination" >"$state/session-capture.destination"
+                    ;;
+                minios/image-customization.json | minios/*-image-overlay.sb | \
+                minios/boot/grub/*.cfg | minios/boot/syslinux/*.cfg | \
+                minios/boot/bootlogo*.png)
+                    mkdir -p "$state/files/${destination%/*}"
+                    cp -- "$source_path" "$state/files/$destination"
+                    if [[ -d $source_path.stub-tree ]]; then
+                        cp -a -- "$source_path.stub-tree" "$state/files/$destination.stub-tree"
+                    fi
+                    if [[ $destination == minios/*-image-overlay.sb ]]; then
+                        cp -- "$source_path" "$state/image-overlay.sb"
+                        if [[ -d $source_path.stub-tree ]]; then
+                            cp -a -- "$source_path.stub-tree" "$state/image-overlay.sb.stub-tree"
+                        fi
+                        printf '%s\n' "$destination" >"$state/image-overlay.destination"
+                    elif [[ $destination == minios/image-customization.json ]]; then
+                        cp -- "$source_path" "$state/image-customization.json"
+                    fi
+                    ;;
+                esac
+            fi
+            shift
+            ;;
+        esac
+    done
+    : >"$state/sources.ok"
+
+    printf '%s\n' "$label" >"$state/label"
+    [[ -n $target ]] || exit 91
+    printf 'partial ISO\n' >"$target"
+
+    if [[ -n ${XORRISO_RACE_INPUT:-} ]]; then
+        printf 'raced input replacement\n' >"$XORRISO_RACE_INPUT"
+    fi
+    if [[ -n ${XORRISO_RACE_INPUT_PARENT:-} && -n ${XORRISO_RACE_INPUT_VICTIM:-} ]]; then
+        mv -- "$XORRISO_RACE_INPUT_PARENT" "$XORRISO_RACE_INPUT_PARENT.moved"
+        ln -s -- "$XORRISO_RACE_INPUT_VICTIM" "$XORRISO_RACE_INPUT_PARENT"
+    fi
+    if [[ -n ${XORRISO_RACE_OUTPUT_TARGET:-} ]]; then
+        printf 'attacker output\n' >"$XORRISO_RACE_OUTPUT_TARGET"
+    fi
+    if [[ -n ${XORRISO_RACE_OUTPUT_PARENT:-} && -n ${XORRISO_RACE_OUTPUT_VICTIM:-} ]]; then
+        mv -- "$XORRISO_RACE_OUTPUT_PARENT" "$XORRISO_RACE_OUTPUT_PARENT.moved"
+        ln -s -- "$XORRISO_RACE_OUTPUT_VICTIM" "$XORRISO_RACE_OUTPUT_PARENT"
+    fi
+
+    case ${XORRISO_BUILD_MODE:-success} in
+    fail)
+        printf 'xorriso stub: requested write failure\n' >&2
+        exit 12
+        ;;
+    sleep)
+        printf '%s\n' "$$" >"$state/build.started"
+        trap 'exit 143' TERM
+        trap 'exit 130' INT
+        while :; do
+            sleep 1
+        done
+        ;;
+    stubborn)
+        trap '' TERM INT
+        (
+            trap '' TERM INT
+            while :; do sleep 1; done
+        ) &
+        descendant_pid=$!
+        printf '%s\n%s\n' "$$" "$descendant_pid" >"$state/build.started"
+        wait "$descendant_pid"
+        ;;
+    leader-exit)
+        /usr/bin/python3 -c 'import signal, time
+signal.signal(signal.SIGINT, signal.SIG_IGN)
+signal.signal(signal.SIGTERM, signal.SIG_IGN)
+while True:
+    time.sleep(1)' &
+        descendant_pid=$!
+        printf '%s\n%s\n' "$$" "$descendant_pid" >"$state/build.started"
+        sleep 0.1
+        exit 0
+        ;;
+    esac
+
+    if [[ -n ${XORRISO_OMIT_DEST:-} ]]; then
+        omitted=$XORRISO_OMIT_DEST
+        temporary=$state/tree.filtered
+        : >"$temporary"
+        while IFS= read -r path; do
+            [[ $path == "/$omitted" ]] || printf '%s\n' "$path" >>"$temporary"
+        done <"$state/tree"
+        mv "$temporary" "$state/tree"
+    fi
+    exit 0
+fi
+
+if contains_arg -osirrox "$@" || contains_arg -extract "$@"; then
+    while (( $# > 0 )); do
+        case $1 in
+        -extract)
+            iso_path=$2
+            disk_path=$3
+            case $iso_path in
+            /minios/session-capture.json) source_path=$state/session-capture.json ;;
+            /minios/build-manifest.json) source_path=$state/build-manifest.json ;;
+            /minios/*-session-changes.sb) source_path=$state/session-capture.sb ;;
+            *)
+                source_path=$state/files/${iso_path#/}
+                [[ -f $source_path ]] || {
+                    printf 'xorriso stub: unknown extraction path: %s\n' "$iso_path" >&2
+                    exit 94
+                }
+                ;;
+            esac
+            cp -- "$source_path" "$disk_path"
+            if [[ -d $source_path.stub-tree ]]; then
+                cp -a -- "$source_path.stub-tree" "$disk_path.stub-tree"
+            fi
+            if [[ ${XORRISO_TAMPER_EXTRACT:-} == "$iso_path" ]]; then
+                printf 'tampered embedded bytes\n' >>"$disk_path"
+            fi
+            shift 3
+            ;;
+        *) shift ;;
+        esac
+    done
+    exit 0
+fi
+
+if contains_arg -report_el_torito "$@"; then
+    label=$(<"$state/label")
+    printf '%s\n' \
+        'El Torito boot img :   1  BIOS  y   none' \
+        'El Torito boot img :   2  UEFI  y   none' \
+        'System area summary: MBR isohybrid' \
+        "Volume Id    : $label"
+    exit 0
+fi
+
+if contains_arg -find "$@"; then
+    while IFS= read -r path; do
+        printf '%s\n' "$path"
+    done <"$state/tree"
+    exit 0
+fi
+
+printf 'xorriso stub: unexpected invocation\n' >&2
+exit 92

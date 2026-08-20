@@ -1,0 +1,54 @@
+Source: minios-image-builder
+Section: utils
+Priority: optional
+Maintainer: crims0n <crims0n@minios.dev>
+Build-Depends: debhelper (>= 11), gettext, pandoc, bats,
+ python3 (>= 3.6), python3-pytest, python3-gi, gir1.2-gtk-3.0,
+ python3-minios-gui (>= 1.1.0)
+Standards-Version: 4.1.3
+Homepage: https://minios.dev
+
+Package: minios-image-compose
+Architecture: all
+Depends: ${misc:Depends},
+         python3 (>= 3.6),
+         gettext-base,
+         mawk,
+         xorriso,
+         squashfs-tools,
+         e2fsprogs
+Recommends: minios-tools (>= 1.5.0), pkexec
+Description: MiniOS image composition backend (minios-image-compose)
+ minios-image-compose composes a bootable MiniOS ISO image from an immutable or
+ identity-bound MiniOS source reference, ordered .sb modules and a live
+ configuration. It grafts inputs in place, applies verified boot, branding and
+ overlay customization, can integrate writable-session captures produced by
+ savechanges, and structurally verifies the written image.
+ .
+ This package ships the unprivileged minios-image-compose command, used both
+ directly and as the composition backend for the MiniOS Image Builder graphical
+ workspace.
+
+Package: minios-image-builder
+Architecture: all
+Depends: ${misc:Depends},
+         minios-image-compose (= ${binary:Version}),
+         python3 (>= 3.6),
+         python3-gi,
+         gir1.2-gtk-3.0,
+         gir1.2-glib-2.0,
+         gir1.2-gio-2.0,
+         pkexec,
+         python3-minios-gui (>= 1.1.0)
+Recommends: minios-tools (>= 1.5.0), policykit-1-gnome | lxpolkit, udisks2
+Description: customize the running MiniOS as a verified bootable image
+ MiniOS Image Builder is a GTK project workspace for remastering MiniOS from
+ the running session, a mounted ISO image, or an optical disc. It composes .sb
+ modules, applies allowlisted system, security and boot defaults, can add a
+ safe project filesystem layer, and optionally captures writable-session
+ changes. A narrow privilege boundary reads a root-only live configuration and
+ optionally captures session state. Every image is reviewed,
+ structurally verified, and published atomically.
+ .
+ The graphical workspace drives the minios-image-compose command from the
+ minios-image-compose package and never source-builds MiniOS.

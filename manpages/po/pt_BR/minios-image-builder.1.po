@@ -1,0 +1,585 @@
+# Portuguese translations for PACKAGE package
+# Copyright (C) 2026 Free Software Foundation, Inc.
+# This file is distributed under the same license as the PACKAGE package.
+# Automatically generated, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: minios-image-builder 1.0.0\n"
+"POT-Creation-Date: 2026-08-20 16:52+0300\n"
+"PO-Revision-Date: 2026-08-20 13:53+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#. type: TH
+#: en/minios-image-builder.1:3
+#, no-wrap
+msgid "MINIOS-IMAGE-BUILDER"
+msgstr "MINIOS-IMAGE-BUILDER"
+
+#. type: TH
+#: en/minios-image-builder.1:3
+#, no-wrap
+msgid "2026"
+msgstr "2026"
+
+#. type: TH
+#: en/minios-image-builder.1:3
+#, no-wrap
+msgid "minios-image-builder"
+msgstr "minios-image-builder"
+
+#. type: SH
+#: en/minios-image-builder.1:4 en/minios-image-compose.1:4
+#, no-wrap
+msgid "NAME"
+msgstr "NOME"
+
+#. type: Plain text
+#: en/minios-image-builder.1:6
+msgid "minios-image-builder - customize MiniOS as a verified image"
+msgstr "minios-image-builder - personaliza o MiniOS como uma imagem verificada"
+
+#. type: SH
+#: en/minios-image-builder.1:6
+#, no-wrap
+msgid "USAGE"
+msgstr "USO"
+
+#. type: Plain text
+#: en/minios-image-builder.1:8
+msgid "\\f[B]minios-image-builder\\fR"
+msgstr "\\f[B]minios-image-builder\\fR"
+
+#. type: SH
+#: en/minios-image-builder.1:8 en/minios-image-compose.1:22
+#, no-wrap
+msgid "DESCRIPTION"
+msgstr "DESCRIÇÃO"
+
+#. type: Plain text
+#: en/minios-image-builder.1:15
+msgid ""
+"\\f[B]minios-image-builder\\f[R] launches MiniOS Image Builder, a GTK "
+"project workspace for remastering MiniOS through \\f[B]minios-image-"
+"compose\\f[R](1).  It selects and fingerprints a MiniOS source, lets the "
+"user select source and additional \\f[B].sb\\f[R] modules, creates a secure "
+"build plan, and structurally verifies the private ISO before publishing it."
+"\\fR"
+msgstr ""
+"\\f[B]minios-image-builder\\f[R] inicia o MiniOS Image Builder, um espaço de "
+"trabalho de projeto GTK para remasterizar o MiniOS por meio do \\f[B]minios-"
+"image-compose\\f[R](1). Ele seleciona e gera a impressão digital de uma "
+"fonte MiniOS, permite ao usuário escolher módulos de origem e módulos "
+"adicionais \\f[B].sb\\f[R], cria um plano de build seguro e verifica "
+"estruturalmente o ISO privado antes de publicá-lo.\\fR"
+
+#. type: Plain text
+#: en/minios-image-builder.1:26
+msgid ""
+"The application runs inside MiniOS and never source-builds MiniOS or "
+"modifies source media.  The source can be the current session, a MiniOS ISO "
+"file, or an optical disc.  ISO and optical-disc sources are mounted read-"
+"only through \\f[B]udisksctl\\f[R].  The application and composition remain "
+"unprivileged.  A fixed path-bound helper reads \\f[B]/etc/live/"
+"config.conf\\f[R] only when it is root-only; optional writable-session "
+"capture authorizes only trusted \\f[B]savechanges\\f[R](1).\\fR"
+msgstr ""
+"O aplicativo é executado dentro do MiniOS e nunca compila o MiniOS a partir "
+"do código-fonte nem modifica a mídia de origem. A fonte pode ser a sessão "
+"atual, um arquivo ISO do MiniOS ou um disco óptico. Fontes ISO e discos "
+"ópticos são montados como somente leitura via \\f[B]udisksctl\\f[R]. O "
+"aplicativo e a composição permanecem sem privilégios. Um auxiliar fixo e "
+"restrito lê \\f[B]/etc/live/config.conf\\f[R] apenas quando é exclusivo do "
+"root; a captura opcional de sessão gravável autoriza apenas "
+"\\f[B]savechanges\\f[R](1) confiável.\\fR"
+
+#. type: SH
+#: en/minios-image-builder.1:26
+#, no-wrap
+msgid "WORKFLOW"
+msgstr "FLUXO DE TRABALHO"
+
+#. type: TP
+#: en/minios-image-builder.1:27
+#, no-wrap
+msgid "\\f[B]Source\\fR"
+msgstr "\\f[B]Fonte\\fR"
+
+#. type: Plain text
+#: en/minios-image-builder.1:33
+msgid ""
+"Select the current livekit or dracut session, a MiniOS ISO file, or an "
+"optical disc asynchronously.  The page shows backend, media category, source "
+"path, release, version, architecture, bootloader, size, module counts, and "
+"diagnostics."
+msgstr ""
+"Selecione a sessão atual do livekit ou dracut, um arquivo ISO do MiniOS ou "
+"um disco óptico de forma assíncrona. A página exibe backend, categoria da "
+"mídia, caminho da fonte, release, versão, arquitetura, bootloader, tamanho, "
+"contagem de módulos e diagnósticos."
+
+#. type: TP
+#: en/minios-image-builder.1:33
+#, no-wrap
+msgid "\\f[B]Content\\fR"
+msgstr "\\f[B]Conteúdo\\fR"
+
+#. type: Plain text
+#: en/minios-image-builder.1:40
+msgid ""
+"Select source modules and add external \\f[B].sb\\f[R] files.  Required core "
+"and kernel modules remain selected and locked.  Active modules outside the "
+"source media are shown separately and are not included automatically.  "
+"Basename and target collisions block continuation.\\fR"
+msgstr ""
+"Selecione módulos de origem e adicione arquivos externos \\f[B].sb\\f[R]. Os "
+"módulos principais e de kernel obrigatórios permanecem selecionados e "
+"bloqueados. Módulos ativos fora da mídia de origem são exibidos "
+"separadamente e não são incluídos automaticamente. Colisões de nomes base e "
+"de destino impedem a continuação.\\fR"
+
+#. type: TP
+#: en/minios-image-builder.1:40
+#, no-wrap
+msgid "\\f[B]Settings\\fR"
+msgstr "\\f[B]Configurações\\fR"
+
+#. type: Plain text
+#: en/minios-image-builder.1:54
+msgid ""
+"Select output identity, allowlisted system defaults, boot behavior and PNG "
+"appearance, an optional root-relative project filesystem layer, and optional "
+"session capture.  Security, user-data, and expert kernel controls remain in "
+"compact expanders.  Empty or Keep current values preserve source behavior.  "
+"Inclusion of \\f[B]/etc/live/config.conf\\f[R] is currently required.  Its "
+"bytes are read and copied verbatim, frozen during planning, and staged mode "
+"0600 in the private build job.  Its values are not interpreted, displayed, "
+"or logged.  A loaded \\f[CR]include_current_config=false\\f[R] value is "
+"preserved but blocks Review.\\fR"
+msgstr ""
+"Selecione a identidade de saída, padrões do sistema permitidos, "
+"comportamento de boot e aparência PNG, uma camada opcional de sistema de "
+"arquivos do projeto relativa à raiz, e captura de sessão opcional. Controles "
+"de segurança, dados do usuário e kernel avançado permanecem em expansores "
+"compactos. Valores vazios ou Manter preservam o comportamento da fonte. A "
+"inclusão de \\f[B]/etc/live/config.conf\\f[R] é atualmente obrigatória. Seus "
+"bytes são lidos e copiados literalmente, congelados durante o planejamento e "
+"preparados com modo 0600 no job de build privado. Seus valores não são "
+"interpretados, exibidos ou registrados. Um valor carregado "
+"\\f[CR]include_current_config=false\\f[R] é preservado, mas bloqueia a "
+"Revisão.\\fR"
+
+#. type: TP
+#: en/minios-image-builder.1:54
+#, no-wrap
+msgid "\\f[B]Review\\fR"
+msgstr "\\f[B]Revisão\\fR"
+
+#. type: Plain text
+#: en/minios-image-builder.1:66
+msgid ""
+"Create a fresh build plan and show selected, deselected, and additional "
+"modules, output defaults, path-free customization intent, capture mode and "
+"privilege boundary, size estimates, warnings, and stable diagnostic codes.  "
+"Configuration values, raw kernel arguments, private customization paths, and "
+"selected capture paths are never shown.  An existing output is replaced only "
+"after confirmation and a new backend plan bound to the same observed file "
+"identity.  Cancellation, failure, or an identity mismatch clears approval, "
+"so every retry asks again."
+msgstr ""
+"Crie um novo plano de build e exiba módulos selecionados, desmarcados e "
+"adicionais, padrões de saída, intenção de personalização sem caminho, modo "
+"de captura e limite de privilégio, estimativas de tamanho, avisos e códigos "
+"de diagnóstico estáveis. Valores de configuração, argumentos brutos do "
+"kernel, caminhos privados de personalização e caminhos de captura "
+"selecionados nunca são exibidos. Uma saída existente só é substituída após "
+"confirmação e um novo plano de backend vinculado à mesma identidade de "
+"arquivo observada. Cancelamento, falha ou incompatibilidade de identidade "
+"removem a aprovação, então cada nova tentativa solicita novamente."
+
+#. type: TP
+#: en/minios-image-builder.1:66
+#, no-wrap
+msgid "\\f[B]Build\\fR"
+msgstr "\\f[B]Build\\fR"
+
+#. type: Plain text
+#: en/minios-image-builder.1:73
+msgid ""
+"Revalidate every effective input, execute \\f[B]minios-image-compose\\f[R] "
+"with list-based argv in the backend\\[cq]s descriptor-bound working "
+"directory, capture writable changes when requested, structurally verify "
+"customization and capture attestations, and publish atomically only after "
+"verification succeeds.\\fR"
+msgstr ""
+"Revalide cada entrada efetiva, execute \\f[B]minios-image-compose\\f[R] com "
+"argv baseado em lista no diretório de trabalho vinculado ao descritor do "
+"backend\\[cq], capture alterações graváveis quando solicitado, verifique "
+"estruturalmente personalizações e atestações de captura, e publique de forma "
+"atômica somente após a verificação ser bem-sucedida.\\fR"
+
+#. type: SH
+#: en/minios-image-builder.1:73
+#, no-wrap
+msgid "IMAGE CUSTOMIZATION"
+msgstr "PERSONALIZAÇÃO DA IMAGEM"
+
+#. type: Plain text
+#: en/minios-image-builder.1:80
+msgid ""
+"System controls cover hostname, timezone, default target, and enabled or "
+"disabled services.  Security and access controls expose only backend-"
+"allowlisted sudo, polkit, SSH, XRDP, X11, lock-screen, and issue-hint "
+"modes.  User data can link or bind user directories, but not both, and "
+"accepts a validated root-relative user-directory path."
+msgstr ""
+"Os controles do sistema abrangem hostname, fuso horário, target padrão e "
+"serviços ativados ou desativados. Controles de segurança e acesso expõem "
+"apenas modos sudo, polkit, SSH, XRDP, X11, bloqueio de tela e dica de issue "
+"permitidos pelo backend. Dados de usuário podem vincular ou associar "
+"diretórios de usuário, mas não ambos, e aceitam um caminho de diretório de "
+"usuário relativo à raiz validado."
+
+#. type: Plain text
+#: en/minios-image-builder.1:85
+msgid ""
+"Boot controls preserve or set a 0-300 second timeout and default resume/new/"
+"choose/fresh/toram session.  Expert kernel arguments are validated for "
+"bootloader-safe syntax.  Boot backgrounds must be valid PNG files."
+msgstr ""
+"Os controles de boot preservam ou definem um tempo limite de 0 a 300 "
+"segundos e a sessão padrão resume/nova/escolher/limpa/toram. Argumentos "
+"avançados do kernel são validados para sintaxe segura ao bootloader. Fundos "
+"de boot devem ser arquivos PNG válidos."
+
+#. type: Plain text
+#: en/minios-image-builder.1:93
+msgid ""
+"The project filesystem layer is an existing canonical real directory, or a "
+"mode-0700 directory created by the backend beneath the project directory.  "
+"The tree is copied relative to image root.  No scripts, raw shell, chroot, "
+"or package commands are exposed, and the source directory is never deleted.  "
+"Reusable modules belong in Module Manager."
+msgstr ""
+"A camada de sistema de arquivos do projeto é um diretório real canônico já "
+"existente, ou um diretório modo-0700 criado pelo backend abaixo do diretório "
+"do projeto. A árvore é copiada relativa à raiz da imagem. Nenhum script, "
+"shell bruto, chroot ou comandos de pacote são expostos, e o diretório de "
+"origem nunca é excluído. Módulos reutilizáveis pertencem ao Gerenciador de "
+"Módulos."
+
+#. type: Plain text
+#: en/minios-image-builder.1:101
+msgid ""
+"Review presents only override key names, boot settings, kernel byte count "
+"and SHA-256, background basename/digest, and overlay basename/fingerprint/"
+"counts.  Successful verification presents the corresponding attested summary "
+"and overlay module size/hash.  Composition is unprivileged; authorization is "
+"limited to the fixed config reader and optional session capture."
+msgstr ""
+"A revisão apresenta apenas nomes de chaves sobrescritas, configurações de "
+"boot, quantidade de bytes do kernel e SHA-256, nome base/digest do fundo e "
+"nome base/impressão digital/contagem do overlay. A verificação bem-sucedida "
+"apresenta o resumo atestado correspondente e o tamanho/hash do módulo "
+"overlay. A composição é sem privilégios; a autorização se limita ao leitor "
+"fixo de configuração e à captura de sessão opcional."
+
+#. type: SH
+#: en/minios-image-builder.1:101
+#, no-wrap
+msgid "CANCELLATION"
+msgstr "CANCELAMENTO"
+
+#. type: Plain text
+#: en/minios-image-builder.1:114
+msgid ""
+"Inventory, build, and verification subprocesses run in dedicated process "
+"groups.  Inventory cancellation requests an identity-bound private backend "
+"marker before sending \\f[B]SIGTERM\\f[R], then escalates to "
+"\\f[B]SIGKILL\\f[R] after a short grace period.  Build cancellation signals "
+"\\f[B]minios-image-compose\\f[R], whose trap owns its internal capture "
+"marker.  Pure Python hashing may finish its current pass before cancellation "
+"reaches a safe checkpoint; stale results are discarded and close waits for "
+"tracked work.  Atomic publication is not cancelled after it starts, so the "
+"destination is never intentionally left half-written.\\fR"
+msgstr ""
+"Os subprocessos de inventário, build e verificação são executados em grupos "
+"de processos dedicados. O cancelamento do inventário solicita um marcador "
+"privado de backend vinculado à identidade antes de enviar "
+"\\f[B]SIGTERM\\f[R], depois escala para \\f[B]SIGKILL\\f[R] após um curto "
+"período de carência. O cancelamento do build sinaliza o \\f[B]minios-image-"
+"compose\\f[R], cujo trap é responsável pelo seu próprio marcador de captura "
+"interna. O hash puro em Python pode finalizar sua passagem atual antes que o "
+"cancelamento atinja um ponto seguro; resultados obsoletos são descartados e "
+"o fechamento aguarda o trabalho rastreado. A publicação atômica não é "
+"cancelada após seu início, então o destino nunca é deixado intencionalmente "
+"pela metade.\\fR"
+
+#. type: SH
+#: en/minios-image-builder.1:114
+#, no-wrap
+msgid "REQUIREMENTS"
+msgstr "REQUISITOS"
+
+#. type: Plain text
+#: en/minios-image-builder.1:127
+msgid ""
+"The composition backend is provided by the matching \\f[B]minios-image-"
+"compose\\f[R] package, guaranteed by an exact package dependency.  Session "
+"capture additionally uses \\f[B]savechanges\\f[R] from \\f[B]minios-"
+"tools\\f[R] 1.5.0 or newer.  \\f[B]pkexec\\f[R] is required; a desktop "
+"polkit agent is recommended for root-only current configurations and non-"
+"root session capture.  \\f[B]udisksctl\\f[R] from \\f[B]udisks2\\f[R] is "
+"required for ISO-file and optical-disc sources.  Capture is enabled only "
+"after a successful savechanges version probe.  The launcher prefers "
+"distribution-owned \\f[B]/usr/bin\\f[R] tools over local shadows.\\fR"
+msgstr ""
+"O backend de composição é fornecido pelo pacote \\f[B]minios-image-"
+"compose\\f[R] correspondente, garantido por uma dependência exata de pacote. "
+"A captura de sessão utiliza adicionalmente o \\f[B]savechanges\\f[R] do "
+"\\f[B]minios-tools\\f[R] 1.5.0 ou superior. \\f[B]pkexec\\f[R] é "
+"obrigatório; recomenda-se um agente polkit de desktop para configurações "
+"atuais exclusivas do root e captura de sessão sem root. "
+"\\f[B]udisksctl\\f[R] do \\f[B]udisks2\\f[R] é obrigatório para fontes de "
+"arquivo ISO e disco óptico. A captura só é habilitada após uma verificação "
+"de versão bem-sucedida do savechanges. O lançador prefere ferramentas em "
+"\\f[B]/usr/bin\\f[R] pertencentes à distribuição em vez de sombras locais."
+"\\fR"
+
+#. type: SH
+#: en/minios-image-builder.1:127
+#, no-wrap
+msgid "PROJECTS"
+msgstr "PROJETOS"
+
+#. type: Plain text
+#: en/minios-image-builder.1:134
+msgid ""
+"Projects are JSON documents written through the ImageProject backend.  Use "
+"the header actions or \\f[B]Ctrl+N\\f[R], \\f[B]Ctrl+O\\f[R], "
+"\\f[B]Ctrl+S\\f[R], and \\f[B]Ctrl+Shift+S\\f[R] to create, open, save, or "
+"save as.  Unsaved changes require confirmation before closing or replacing "
+"the current project.\\fR"
+msgstr ""
+"Projetos são documentos JSON gravados pelo backend ImageProject. Use as "
+"ações do cabeçalho ou \\f[B]Ctrl+N\\f[R], \\f[B]Ctrl+O\\f[R], "
+"\\f[B]Ctrl+S\\f[R] e \\f[B]Ctrl+Shift+S\\f[R] para criar, abrir, salvar ou "
+"salvar como. Alterações não salvas exigem confirmação antes de fechar ou "
+"substituir o projeto atual.\\fR"
+
+#. type: Plain text
+#: en/minios-image-builder.1:141
+msgid ""
+"Capture mode, normalized selected paths, compression, and sensitive-capture "
+"acknowledgement are project intent.  Session inventories are runtime-only "
+"and are never written to project files.  Exact acknowledgement is stored in "
+"the project and remains in effect until revoked."
+msgstr ""
+"Modo de captura, caminhos selecionados normalizados, compressão e "
+"reconhecimento de captura sensível são intenção do projeto. Inventários de "
+"sessão são apenas em tempo de execução e nunca são gravados em arquivos de "
+"projeto. O reconhecimento exato é armazenado no projeto e permanece em vigor "
+"até ser revogado."
+
+#. type: Plain text
+#: en/minios-image-builder.1:146
+msgid ""
+"Customization fields are also project intent.  Older projects without them "
+"load Preserve source defaults.  Save As preserves absolute output, "
+"background, overlay, and module targets while invalidating plans when "
+"project base changes."
+msgstr ""
+"Campos de personalização também são intenção do projeto. Projetos antigos "
+"sem esses campos carregam Manter padrões da fonte. Salvar Como preserva "
+"saída absoluta, fundo, overlay e destinos de módulos, invalidando planos "
+"quando a base do projeto muda."
+
+#. type: SH
+#: en/minios-image-builder.1:146
+#, no-wrap
+msgid "CAPTURE MODES"
+msgstr "MODOS DE CAPTURA"
+
+#. type: TP
+#: en/minios-image-builder.1:147
+#, no-wrap
+msgid "\\f[B]Current composition\\fR"
+msgstr "\\f[B]Composição atual\\fR"
+
+#. type: Plain text
+#: en/minios-image-builder.1:153
+msgid ""
+"Use selected source modules and current configuration without writable-"
+"session capture.  Composition is unprivileged; a root-only current "
+"configuration may require authorization for the fixed packaged reader."
+msgstr ""
+"Use os módulos de origem selecionados e a configuração atual sem captura de "
+"sessão gravável. A composição é sem privilégios; uma configuração atual "
+"exclusiva do root pode exigir autorização para o leitor empacotado fixo."
+
+#. type: TP
+#: en/minios-image-builder.1:153
+#, no-wrap
+msgid "\\f[B]Exact session\\fR"
+msgstr "\\f[B]Sessão exata\\fR"
+
+#. type: Plain text
+#: en/minios-image-builder.1:159
+msgid ""
+"Preserve writable changes supported by the detected OverlayFS or AUFS "
+"provider.  This union-specific mode may preserve secrets, identities, "
+"personal files, and logs, and requires explicit acknowledgement."
+msgstr ""
+"Preserva alterações graváveis suportadas pelo provedor OverlayFS ou AUFS "
+"detectado. Este modo específico de união pode preservar segredos, "
+"identidades, arquivos pessoais e logs, e requer reconhecimento explícito."
+
+#. type: TP
+#: en/minios-image-builder.1:159
+#, no-wrap
+msgid "\\f[B]Privacy-cleaned\\fR"
+msgstr "\\f[B]Limpeza de privacidade\\fR"
+
+#. type: Plain text
+#: en/minios-image-builder.1:165
+msgid ""
+"Use the strict software and safe-default allowlist.  Broad system, identity, "
+"cache, log, and user state is intentionally omitted.  This is not a "
+"guarantee that the result is shareable."
+msgstr ""
+"Utilize a lista de permissões restrita de software e padrões seguros. "
+"Informações amplas do sistema, identidade, cache, logs e estado do usuário "
+"são intencionalmente omitidas. Isso não garante que o resultado seja "
+"compartilhável."
+
+#. type: TP
+#: en/minios-image-builder.1:165
+#, no-wrap
+msgid "\\f[B]Selected changes\\fR"
+msgstr "\\f[B]Alterações selecionadas\\fR"
+
+#. type: Plain text
+#: en/minios-image-builder.1:173
+msgid ""
+"Capture at least one normalized path selected from an analyzed inventory.  "
+"Selecting a directory represents descendants; \\f[B]savechanges\\f[R] "
+"enforces actual matching.  Advanced include/exclude editors expose all "
+"loaded rules.  Exact and ancestor exclusions override matching row selection."
+"\\fR"
+msgstr ""
+"Capture pelo menos um caminho normalizado selecionado a partir de um "
+"inventário analisado. Selecionar um diretório representa os descendentes; "
+"B<savechanges> aplica a correspondência exata. Editores avançados de "
+"inclusão/exclusão expõem todas as regras carregadas. Exclusões exatas e de "
+"ancestrais têm prioridade sobre a seleção de linha correspondente.\\fR"
+
+#. type: SH
+#: en/minios-image-builder.1:173
+#, no-wrap
+msgid "SESSION INVENTORY"
+msgstr "INVENTÁRIO DA SESSÃO"
+
+#. type: Plain text
+#: en/minios-image-builder.1:180
+msgid ""
+"Analyze session changes is an explicit action.  It creates a private "
+"mode-0700 workspace, obtains narrow savechanges \\[en]inventory-json argv "
+"from the backend, uses pkexec only when authorization is needed, validates "
+"the mode-0600 result, and removes the workspace by device and inode "
+"identity.  Command output and private paths are not logged."
+msgstr ""
+"Analisar alterações de sessão é uma ação explícita. Cria um espaço de "
+"trabalho privado com permissão modo-0700, obtém argumentos restritos de "
+"savechanges \\[en]inventory-json do backend, utiliza pkexec apenas quando é "
+"necessária autorização, valida o resultado com permissão modo-0600 e remove "
+"o espaço de trabalho com base na identidade do dispositivo e inode. A saída "
+"do comando e os caminhos privados não são registrados em log."
+
+#. type: Plain text
+#: en/minios-image-builder.1:196
+msgid ""
+"The inventory contains metadata, not file content, but filenames are "
+"sensitive.  It remains in memory only.  The interface shows aggregate union, "
+"entry, byte, category, sensitive, exact-default, and privacy-cleaned-default "
+"counts.  Selected paths appear only in the in-memory selector; Review shows "
+"count and digest.  The selector materializes 500 rows at a time with a 2,000-"
+"row hard display cap and reports displayed, matching, and total counts.  "
+"Search is debounced and filters the complete inventory.  Reanalysis, Source "
+"refresh, cancellation/failure, and new/open project transitions clear "
+"inventory, search, filters, and displayed rows while preserving loaded "
+"selection rules.  Successful Selected-changes attestation repeats the Review "
+"selection count and verified digest."
+msgstr ""
+"O inventário contém metadados, não o conteúdo dos arquivos, mas nomes de "
+"arquivos são sensíveis. Ele permanece apenas na memória. A interface exibe "
+"contagens agregadas de união, entrada, bytes, categoria, sensível, padrão "
+"exato e padrão limpo de privacidade. Os caminhos selecionados aparecem "
+"apenas no seletor em memória; Revisão mostra a contagem e o resumo. O "
+"seletor materializa 500 linhas por vez, com um limite rígido de exibição de "
+"2.000 linhas e informa as contagens exibidas, correspondentes e totais. A "
+"busca é debounced e filtra todo o inventário. Reanálise, atualização da "
+"fonte, cancelamento/falha e transições de novo/abrir projeto limpam "
+"inventário, busca, filtros e linhas exibidas, preservando as regras de "
+"seleção carregadas. A atestação bem-sucedida de alterações selecionadas "
+"repete a contagem de seleção da Revisão e o resumo verificado."
+
+#. type: SH
+#: en/minios-image-builder.1:196
+#, no-wrap
+msgid "BOOT TESTING"
+msgstr "TESTE DE BOOT"
+
+#. type: Plain text
+#: en/minios-image-builder.1:201
+msgid ""
+"After a successful build, the application can report that external boot "
+"testing is available when an installed VirtualBox or QEMU executable is "
+"detected.  It does not install, recommend, configure, or invoke a hypervisor."
+msgstr ""
+"Após uma construção bem-sucedida, o aplicativo pode informar que o teste de "
+"boot externo está disponível quando um executável VirtualBox ou QEMU "
+"instalado é detectado. Não instala, recomenda, configura ou executa um "
+"hipervisor."
+
+#. type: SH
+#: en/minios-image-builder.1:201
+#, no-wrap
+msgid "RELATED COMMANDS"
+msgstr "COMANDOS RELACIONADOS"
+
+#. type: Plain text
+#: en/minios-image-builder.1:204
+msgid ""
+"\\f[B]minios-image-compose\\f[R](1), \\f[B]sb\\f[R](1), "
+"\\f[B]savechanges\\f[R](1)\\fR"
+msgstr ""
+"\\f[B]minios-image-compose\\fR(1), \\f[B]sb\\fR(1), "
+"\\f[B]savechanges\\fR(1)\\fR"
+
+#. type: SH
+#: en/minios-image-builder.1:204
+#, no-wrap
+msgid "AUTHOR"
+msgstr "AUTOR"
+
+#. type: Plain text
+#: en/minios-image-builder.1:206
+msgid "crims0n (crims0n\\[at]minios.dev)"
+msgstr "crims0n (crims0n\\[at]minios.dev)"
+
+#. type: SH
+#: en/minios-image-builder.1:206
+#, no-wrap
+msgid "AUTHORS"
+msgstr "AUTORES"
+
+#. type: Plain text
+#: en/minios-image-builder.1:207
+msgid "MiniOS Linux."
+msgstr "MiniOS Linux."

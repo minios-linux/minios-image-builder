@@ -1,0 +1,27 @@
+# Build files
+*.mo
+build/
+dist/
+*.egg-info/
+.coverage
+htmlcov/
+
+# Debian package build files
+debian/.debhelper/
+debian/debhelper-build-stamp
+debian/files
+debian/*.substvars
+debian/minios-image-builder/
+debian/minios-image-compose/
+debian/tmp/
+*.deb
+*.buildinfo
+*.changes
+*.dsc
+*.tar.*
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/

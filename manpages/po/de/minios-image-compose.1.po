@@ -1,0 +1,1252 @@
+# German translations for PACKAGE package
+# Copyright (C) 2026 Free Software Foundation, Inc.
+# This file is distributed under the same license as the PACKAGE package.
+# Automatically generated, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: minios-image-compose 1.0.0\n"
+"POT-Creation-Date: 2026-08-20 16:52+0300\n"
+"PO-Revision-Date: 2026-08-20 13:26+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. type: SH
+#: en/minios-image-builder.1:4 en/minios-image-compose.1:4
+#, no-wrap
+msgid "NAME"
+msgstr "NAME"
+
+#. type: SH
+#: en/minios-image-builder.1:8 en/minios-image-compose.1:22
+#, no-wrap
+msgid "DESCRIPTION"
+msgstr "BESCHREIBUNG"
+
+#. type: TH
+#: en/minios-image-compose.1:3
+#, no-wrap
+msgid "MINIOS-IMAGE-COMPOSE"
+msgstr "MINIOS-IMAGE-COMPOSE"
+
+#. type: TH
+#: en/minios-image-compose.1:3
+#, no-wrap
+msgid "MiniOS Live Manual"
+msgstr "MiniOS Live-Handbuch"
+
+#. type: Plain text
+#: en/minios-image-compose.1:7
+msgid "minios-image-compose - generate MiniOS ISO image with specified modules"
+msgstr ""
+"minios-image-compose - erzeugt ein MiniOS-ISO-Abbild mit angegebenen Modulen"
+
+#. type: SH
+#: en/minios-image-compose.1:7
+#, no-wrap
+msgid "SYNOPSIS"
+msgstr "ÜBERSICHT"
+
+#. type: Plain text
+#: en/minios-image-compose.1:22
+msgid ""
+"\\f[B]minios-image-compose\\f[R] [\\f[B]-e\\f[R] \\f[I]REGEX\\f[R]] [\\f[B]-"
+"n\\f[R] \\f[I]NAME\\f[R]] [\\f[B]\\[en]source\\f[R] \\f[I]MINIOS_DIR\\f[R]] "
+"[\\f[B]\\[en]config\\f[R] \\f[I]FILE\\f[R]] [\\f[B]\\[en]volume-label\\f[R] "
+"\\f[I]LABEL\\f[R]] [\\f[B]\\[en]manifest\\f[R] \\f[I]FILE\\f[R]] [\\f[B]\\"
+"[en]capture-changes\\f[R] \\f[I]MODE\\f[R]] [\\f[B]\\[en]capture-"
+"selection\\f[R] \\f[I]FILE\\f[R]] [\\f[B]\\[en]capture-compression\\f[R] "
+"\\f[I]TYPE\\f[R]] [\\f[B]\\[en]boot-timeout\\f[R] \\f[I]SECONDS\\f[R]] "
+"[\\f[B]\\[en]default-boot\\f[R] \\f[I]MODE\\f[R]] [\\f[B]\\[en]kernel-"
+"args\\f[R] \\f[I]TEXT\\f[R]] [\\f[B]\\[en]boot-background\\f[R] "
+"\\f[I]PNG\\f[R]] [\\f[B]\\[en]overlay-directory\\f[R] \\f[I]DIR\\f[R]] "
+"[\\f[B]\\[en]menu\\f[R] \\f[I]TYPE\\f[R]] [\\f[B]\\[en]overwrite\\f[R]] "
+"[\\f[B]\\[en]no-color\\f[R]] [\\f[B]\\[en]help\\f[R]] [\\f[B]\\"
+"[en]version\\f[R]] [\\f[I]MODULE\\f[R]\\&...]\\fR"
+msgstr ""
+"\\f[B]minios-image-compose\\f[R] [\\f[B]-e\\f[R] \\f[I]REGEX\\f[R]] [\\f[B]-"
+"n\\f[R] \\f[I]NAME\\f[R]] [\\f[B]\\[en]source\\f[R] \\f[I]MINIOS_DIR\\f[R]] "
+"[\\f[B]\\[en]config\\f[R] \\f[I]FILE\\f[R]] [\\f[B]\\[en]volume-label\\f[R] "
+"\\f[I]LABEL\\f[R]] [\\f[B]\\[en]manifest\\f[R] \\f[I]FILE\\f[R]] [\\f[B]\\"
+"[en]capture-changes\\f[R] \\f[I]MODE\\f[R]] [\\f[B]\\[en]capture-"
+"selection\\f[R] \\f[I]FILE\\f[R]] [\\f[B]\\[en]capture-compression\\f[R] "
+"\\f[I]TYPE\\f[R]] [\\f[B]\\[en]boot-timeout\\f[R] \\f[I]SECONDS\\f[R]] "
+"[\\f[B]\\[en]default-boot\\f[R] \\f[I]MODE\\f[R]] [\\f[B]\\[en]kernel-"
+"args\\f[R] \\f[I]TEXT\\f[R]] [\\f[B]\\[en]boot-background\\f[R] "
+"\\f[I]PNG\\f[R]] [\\f[B]\\[en]overlay-directory\\f[R] \\f[I]DIR\\f[R]] "
+"[\\f[B]\\[en]menu\\f[R] \\f[I]TYPE\\f[R]] [\\f[B]\\[en]overwrite\\f[R]] "
+"[\\f[B]\\[en]no-color\\f[R]] [\\f[B]\\[en]help\\f[R]] [\\f[B]\\"
+"[en]version\\f[R]] [\\f[I]MODULE\\f[R]\\&...]\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:27
+msgid ""
+"\\f[B]minios-image-compose\\f[R] generates a MiniOS ISO image and optionally "
+"adds specified SquashFS modules.  The tool detects the bootloader type "
+"(SYSLINUX, GRUB, or mixed) and supports customizable menu types with "
+"localization support.\\fR"
+msgstr ""
+"\\f[B]minios-image-compose\\f[R] erzeugt ein MiniOS-ISO-Abbild und fügt "
+"optional angegebene SquashFS-Module hinzu. Das Werkzeug erkennt den "
+"Bootloader-Typ (SYSLINUX, GRUB oder gemischt) und unterstützt anpassbare "
+"Menüs mit Lokalisierungsunterstützung.\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:44
+msgid ""
+"Input identities, modes, mtimes, and SHA256 digests are recorded before the "
+"build.  Before \\f[B]xorriso\\f[R] starts, the backend attempts to bind "
+"mutable regular graft inputs to private, metadata-preserving reflinks.  When "
+"a reflink is unavailable, the original path remains the graft source and "
+"strict identity and digest checks before and after \\f[B]xorriso\\f[R] "
+"detect mutation.  Hardlinks are not used.  Read-only mounted inputs may "
+"remain directly bound.  The destination free-space preflight reserves the "
+"estimated ISO size and additional headroom.  Graft points are passed to "
+"\\f[B]xorriso\\f[R] as separate arguments, and the completed image is "
+"checked for its filesystem tree, volume label, BIOS boot record, UEFI boot "
+"record, and system area.  Rock Ridge modes and symbolic links are preserved "
+"in no-customization builds without chmod or writes against the source.\\fR"
+msgstr ""
+"Identitäten, Modi, Änderungszeiten (mtime) und SHA256-Prüfsummen der "
+"Eingabedateien werden vor dem Build erfasst. Bevor \\f[B]xorriso\\f[R] "
+"startet, versucht das Backend, veränderbare reguläre Graft-Eingaben als "
+"private, metadaten-erhaltende Reflinks einzubinden. Ist ein Reflink nicht "
+"verfügbar, bleibt der Originalpfad die Graft-Quelle und strenge Identitäts- "
+"und Prüfsummenprüfungen vor und nach \\f[B]xorriso\\f[R] erkennen "
+"Veränderungen. Hardlinks werden nicht verwendet. Read-only eingehängte "
+"Eingaben können direkt gebunden bleiben. Die Ziel-Festplattenplatzprüfung "
+"reserviert die geschätzte ISO-Größe plus zusätzlichen Puffer. Graft-Punkte "
+"werden als separate Argumente an \\f[B]xorriso\\f[R] übergeben, und das "
+"fertige Abbild wird auf seinen Dateisystembaum, das Volume-Label, BIOS-Boot-"
+"Record, UEFI-Boot-Record und Systembereich geprüft. Rock Ridge-Modi und "
+"symbolische Links bleiben bei Builds ohne Anpassung erhalten, ohne dass "
+"chmod oder Schreibzugriffe auf die Quelle erfolgen.\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:54
+msgid ""
+"Positional modules must be readable, non-symlink regular files with portable "
+"\\f[B].sb\\f[R] basenames and valid SquashFS superblocks.  Names beginning "
+"with two digits and a hyphen are placed at the MiniOS top level; other added "
+"modules are placed below \\f[B]minios/modules/\\f[R].  Destination "
+"collisions and duplicate case-folded basenames are rejected across source "
+"top-level modules, \\f[B]modules/\\f[R], positional modules, image overlays, "
+"and session captures because the runtime flattens those layers by basename."
+"\\fR"
+msgstr ""
+"Positionsmodule müssen lesbare, keine Symlinks enthaltende reguläre Dateien "
+"mit portablen \\f[B].sb\\f[R]-Basenamen und gültigen SquashFS-Superblöcken "
+"sein. Namen, die mit zwei Ziffern und einem Bindestrich beginnen, werden auf "
+"der obersten Ebene von MiniOS platziert; andere hinzugefügte Module werden "
+"unterhalb von \\f[B]minios/modules/\\f[R] abgelegt. Zielkollisionen und "
+"doppelte, beim Vergleichen der Basenamen ohne Berücksichtigung der Groß-/"
+"Kleinschreibung, werden über Quell-Top-Level-Module, \\f[B]modules/\\f[R], "
+"Positionsmodule, Image-Overlays und Sitzungsaufzeichnungen hinweg abgelehnt, "
+"da die Laufzeit diese Ebenen nach Basename zusammenführt.\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:66
+msgid ""
+"ISO preparation, writing, verification, and publication run with the caller\\"
+"[cq]s EUID.  For optional session capture, a non-root invocation runs only "
+"trusted \\f[B]/usr/bin/savechanges\\f[R] through trusted \\f[B]/usr/bin/"
+"pkexec\\f[R]; it does not elevate \\f[B]minios-image-compose\\f[R], "
+"\\f[B]xorriso\\f[R], or later phases.  A private cancellation marker in the "
+"mode 0700 build directory lets the unprivileged parent request root-side "
+"process-group cleanup even when direct signals fail with EPERM.  Callers "
+"should invoke \\f[B]minios-image-compose\\f[R] normally rather than "
+"prefixing the complete command with \\f[B]pkexec\\f[R].\\fR"
+msgstr ""
+"ISO-Vorbereitung, Schreiben, Verifikation und Veröffentlichung erfolgen mit "
+"der EUID des Aufrufers. Für die optionale Sitzungserfassung wird bei nicht-"
+"root Ausführung ausschließlich das vertrauenswürdige \\f[B]/usr/bin/"
+"savechanges\\f[R] über das vertrauenswürdige \\f[B]/usr/bin/pkexec\\f[R] "
+"ausgeführt; es erfolgt keine Privileg-Erhöhung für \\f[B]minios-image-"
+"compose\\f[R], \\f[B]xorriso\\f[R] oder spätere Phasen. Ein privater "
+"Abbruchmarker im Build-Verzeichnis mit Modus 0700 ermöglicht es dem "
+"unprivilegierten Elternprozess, eine root-seitige Prozessgruppenbereinigung "
+"anzufordern, selbst wenn direkte Signale mit EPERM fehlschlagen. Aufrufer "
+"sollten \\f[B]minios-image-compose\\f[R] regulär aufrufen und nicht den "
+"gesamten Befehl mit \\f[B]pkexec\\f[R] voranstellen.\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:75
+msgid ""
+"Image customization is limited to boot configuration, boot artwork, and one "
+"declarative filesystem overlay.  It never chroots, installs packages, "
+"executes project scripts, or modifies the source tree.  Effective boot "
+"configs and overlay files are copied into private storage through no-follow "
+"descriptors before tools consume them.  Only the optional running-session "
+"capture can cross the pkexec boundary."
+msgstr ""
+"Die Anpassung des Abbilds ist auf Boot-Konfiguration, Boot-Grafik und ein "
+"deklaratives Dateisystem-Overlay beschränkt. Es wird niemals gechrootet, "
+"Pakete installiert, Projektskripte ausgeführt oder der Quellbaum verändert. "
+"Effektive Boot-Konfigurationen und Overlay-Dateien werden über no-follow-"
+"Deskriptoren in privaten Speicher kopiert, bevor Werkzeuge sie verwenden. "
+"Nur die optionale laufende Sitzungserfassung kann die pkexec-Grenze "
+"überschreiten."
+
+#. type: SH
+#: en/minios-image-compose.1:75
+#, no-wrap
+msgid "OPTIONS"
+msgstr "OPTIONEN"
+
+#. type: TP
+#: en/minios-image-compose.1:76
+#, no-wrap
+msgid "\\f[B]-e\\f[R], \\f[B]\\[en]exclude\\f[R] \\f[I]REGEX\\fR"
+msgstr "\\f[B]-e\\f[R], \\f[B]\\[en]exclude\\f[R] \\f[I]REGEX\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:84
+msgid ""
+"Exclude source paths matching the POSIX extended regular expression "
+"\\f[I]REGEX\\f[R].  Newlines and invalid expressions are rejected.  An "
+"exclusion may not remove required boot files, kernel/initramfs files, core "
+"or kernel modules, the selected menu, the configuration, or the requested "
+"manifest.\\fR"
+msgstr ""
+"Schließt Quellpfade aus, die dem POSIX Extended Regular Expression "
+"\\f[I]REGEX\\f[R] entsprechen. Neue Zeilen und ungültige Ausdrücke werden "
+"abgelehnt. Ein Ausschluss darf keine erforderlichen Boot-Dateien, Kernel-/"
+"Initramfs-Dateien, Kern- oder Kernelmodule, das gewählte Menü, die "
+"Konfiguration oder das angeforderte Manifest entfernen.\\fR"
+
+#. type: TP
+#: en/minios-image-compose.1:84
+#, no-wrap
+msgid "\\f[B]-n\\f[R], \\f[B]\\[en]name\\f[R] \\f[I]NAME\\fR"
+msgstr "\\f[B]-n\\f[R], \\f[B]\\[en]name\\f[R] \\f[I]NAME\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:93
+msgid ""
+"Publish to this exact output pathname.  The default is minios-"
+"YYYYMMDD_HHMM.iso in the current directory.  The image is built in a private "
+"mode 0700 directory on the destination filesystem and atomically published "
+"through retained directory descriptors.  An existing pathname is refused "
+"unless \\f[B]\\[en]overwrite\\f[R] is present.\\fR"
+msgstr ""
+"Veröffentlicht unter diesem exakten Ausgabepfad. Standardmäßig wird minios-"
+"YYYYMMDD_HHMM.iso im aktuellen Verzeichnis erstellt. Das Abbild wird in "
+"einem privaten Verzeichnis mit Modus 0700 auf dem Ziel-Dateisystem gebaut "
+"und atomar über gespeicherte Verzeichnisdeskriptoren veröffentlicht. Ein "
+"vorhandener Pfad wird abgelehnt, sofern nicht \\f[B]\\[en]overwrite\\f[R] "
+"angegeben ist.\\fR"
+
+#. type: TP
+#: en/minios-image-compose.1:93
+#, no-wrap
+msgid "\\f[B]\\[en]source\\f[R] \\f[I]MINIOS_DIR\\fR"
+msgstr "\\f[B]\\[en]source\\f[R] \\f[I]MINIOS_DIR\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:106
+msgid ""
+"Use the canonical MiniOS content root containing \\f[B]boot/\\f[R] and "
+"MiniOS module files.  Modules may be top-level or below \\f[B]modules/"
+"\\f[R].  The source directory itself must not be a symbolic link and is "
+"never modified.  Without this option, the current livekit/dracut source "
+"discovery is used.  Session capture compares the effective source-module "
+"fingerprint with the running mounted base.  If reliable module binding is "
+"unavailable, an explicit source is accepted only when it is the discovered "
+"running source.\\fR"
+msgstr ""
+"Verwendet das kanonische MiniOS-Inhaltsverzeichnis mit \\f[B]boot/\\f[R] und "
+"MiniOS-Moduldateien. Module können auf Top-Level oder unterhalb von "
+"\\f[B]modules/\\f[R] liegen. Das Quellverzeichnis selbst darf kein "
+"symbolischer Link sein und wird niemals verändert. Ohne diese Option wird "
+"die aktuelle livekit/dracut-Quellenerkennung verwendet. Die "
+"Sitzungserfassung vergleicht den effektiven Fingerabdruck der Quellmodule "
+"mit der laufend eingehängten Basis. Wenn eine zuverlässige Modulbindung "
+"nicht verfügbar ist, wird eine explizite Quelle nur akzeptiert, wenn sie mit "
+"der erkannten laufenden Quelle übereinstimmt.\\fR"
+
+#. type: TP
+#: en/minios-image-compose.1:106
+#, no-wrap
+msgid "\\f[B]\\[en]config\\f[R] \\f[I]FILE\\fR"
+msgstr "\\f[B]\\[en]config\\f[R] \\f[I]FILE\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:111
+msgid ""
+"Graft the readable, non-symlink regular file as \\f[B]minios/"
+"config.conf\\f[R].  The default is \\f[B]/etc/live/config.conf\\f[R].\\fR"
+msgstr ""
+"Bindet die lesbare, nicht-symlink reguläre Datei als \\f[B]minios/"
+"config.conf\\f[R] ein. Standard ist \\f[B]/etc/live/config.conf\\f[R].\\fR"
+
+#. type: TP
+#: en/minios-image-compose.1:111
+#, no-wrap
+msgid "\\f[B]\\[en]volume-label\\f[R] \\f[I]LABEL\\fR"
+msgstr "\\f[B]\\[en]volume-label\\f[R] \\f[I]LABEL\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:117
+msgid ""
+"Set a 1 to 32 character printable ASCII ISO volume label.  The default is "
+"\\f[B]MINIOS\\f[R].  Labels outside the strict ISO 9660 uppercase, digit, "
+"and underscore set are accepted by xorriso with a warning.\\fR"
+msgstr ""
+"Setzt ein 1 bis 32 Zeichen langes druckbares ASCII-ISO-Volume-Label. "
+"Standard ist \\f[B]MINIOS\\f[R]. Labels außerhalb des strikten ISO-9660-"
+"Zeichensatzes (Großbuchstaben, Ziffern, Unterstrich) werden von xorriso mit "
+"einer Warnung akzeptiert.\\fR"
+
+#. type: TP
+#: en/minios-image-compose.1:117
+#, no-wrap
+msgid "\\f[B]\\[en]manifest\\f[R] \\f[I]FILE\\fR"
+msgstr "\\f[B]\\[en]manifest\\f[R] \\f[I]FILE\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:121
+msgid ""
+"Validate a readable, non-symlink JSON object and graft it as \\f[B]minios/"
+"build-manifest.json\\f[R].\\fR"
+msgstr ""
+"Validiert ein lesbares, nicht-symlink JSON-Objekt und bindet es als "
+"\\f[B]minios/build-manifest.json\\f[R] ein.\\fR"
+
+#. type: TP
+#: en/minios-image-compose.1:121
+#, no-wrap
+msgid "\\f[B]\\[en]capture-changes\\f[R] \\f[I]MODE\\fR"
+msgstr "\\f[B]\\[en]capture-changes\\f[R] \\f[I]MODE\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:134
+msgid ""
+"Capture the running writable session with the savechanges \\f[B]exact\\f[R], "
+"\\f[B]clean\\f[R], or \\f[B]selected\\f[R] profile.  The module is assigned "
+"the first safe numeric order after every included source and additional "
+"module, then grafted as \\f[B]minios/ORDER-session-changes.sb\\f[R].  Orders "
+"through 999998 are supported; collisions and an exhausted range are "
+"rejected.  Capture metadata binds the module to the running boot ID and "
+"mounted base-module fingerprint.  \\f[B]clean\\f[R] is a narrow path-based "
+"privacy reduction, not proof that no allowed software file contains a secret."
+"\\fR"
+msgstr ""
+"Erfasst die laufende beschreibbare Sitzung mit dem savechanges-Profil "
+"\\f[B]exact\\f[R], \\f[B]clean\\f[R] oder \\f[B]selected\\f[R]. Das Modul "
+"erhält die erste sichere numerische Reihenfolge nach allen einbezogenen "
+"Quell- und Zusatzmodulen und wird dann als \\f[B]minios/ORDER-session-"
+"changes.sb\\f[R] eingebunden. Reihenfolgen bis 999998 werden unterstützt; "
+"Kollisionen und ein erschöpfter Bereich werden abgelehnt. "
+"Erfassungsmetadaten binden das Modul an die laufende Boot-ID und den "
+"eingehängten Basis-Modul-Fingerabdruck. \\f[B]clean\\f[R] ist eine enge, "
+"pfadbasierte Datenschutz-Reduzierung, aber kein Beweis, dass keine "
+"zugelassene Softwaredatei ein Geheimnis enthält.\\fR"
+
+#. type: TP
+#: en/minios-image-compose.1:134
+#, no-wrap
+msgid "\\f[B]\\[en]capture-selection\\f[R] \\f[I]FILE\\fR"
+msgstr "\\f[B]\\[en]capture-selection\\f[R] \\f[I]FILE\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:142
+msgid ""
+"Use this readable, non-symlink strict JSON selection with \\f[B]\\"
+"[en]capture-changes selected\\f[R].  It is required for selected capture and "
+"forbidden for exact or clean capture.  The selection is copied to private "
+"build storage before it is hashed or consumed.\\fR"
+msgstr ""
+"Verwendet diese lesbare, nicht-symlink strikte JSON-Auswahl mit \\f[B]\\"
+"[en]capture-changes selected\\f[R]. Sie ist für die ausgewählte Erfassung "
+"erforderlich und für exact oder clean untersagt. Die Auswahl wird vor dem "
+"Hashen oder der Verwendung in den privaten Build-Speicher kopiert.\\fR"
+
+#. type: TP
+#: en/minios-image-compose.1:142
+#, no-wrap
+msgid "\\f[B]\\[en]capture-compression\\f[R] \\f[I]TYPE\\fR"
+msgstr "\\f[B]\\[en]capture-compression\\f[R] \\f[I]TYPE\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:148
+msgid ""
+"Compress the captured module with \\f[B]zstd\\f[R], \\f[B]gzip\\f[R], "
+"\\f[B]lzo\\f[R], or \\f[B]xz\\f[R].  The default is \\f[B]zstd\\f[R].  This "
+"option is invalid without \\f[B]\\[en]capture-changes\\f[R].\\fR"
+msgstr ""
+"Komprimiert das erfasste Modul mit \\f[B]zstd\\f[R], \\f[B]gzip\\f[R], "
+"\\f[B]lzo\\f[R] oder \\f[B]xz\\f[R]. Standard ist \\f[B]zstd\\f[R]. Diese "
+"Option ist ohne \\f[B]\\[en]capture-changes\\f[R] ungültig.\\fR"
+
+#. type: TP
+#: en/minios-image-compose.1:148
+#, no-wrap
+msgid "\\f[B]\\[en]boot-timeout\\f[R] \\f[I]SECONDS\\fR"
+msgstr "\\f[B]\\[en]boot-timeout\\f[R] \\f[I]SECONDS\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:159
+msgid ""
+"Set the timeout in every authoritative GRUB and native SYSLINUX "
+"configuration reached from the active bootloader roots.  The value is an "
+"integer from 0 through 300.  GRUB receives seconds and SYSLINUX receives "
+"deciseconds.  Without this option, source timeout directives are preserved.  "
+"In a multilingual layout, both the language menu and each reachable session "
+"menu are updated.  The minimal MiniOS SYSLINUX-to-GRUB chainloader remains "
+"unchanged because GRUB is authoritative after its fixed immediate handoff."
+msgstr ""
+"Setzt das Timeout in jeder maßgeblichen GRUB- und nativen SYSLINUX-"
+"Konfiguration, die von den aktiven Bootloader-Roots erreicht wird. Der Wert "
+"ist eine Ganzzahl von 0 bis 300. GRUB erhält Sekunden und SYSLINUX erhält "
+"Dezisekunden. Ohne diese Option bleiben Quell-Timeout-Direktiven erhalten. "
+"In einer mehrsprachigen Struktur werden sowohl das Sprachmenü als auch jedes "
+"erreichbare Sitzungsmenü aktualisiert. Der minimale MiniOS SYSLINUX-zu-GRUB-"
+"Chainloader bleibt unverändert, da GRUB nach seiner festen sofortigen "
+"Übergabe maßgeblich ist."
+
+#. type: TP
+#: en/minios-image-compose.1:159
+#, no-wrap
+msgid "\\f[B]\\[en]default-boot\\f[R] \\f[I]MODE\\fR"
+msgstr "\\f[B]\\[en]default-boot\\f[R] \\f[I]MODE\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:179
+msgid ""
+"Select \\f[B]resume\\f[R], \\f[B]new\\f[R], \\f[B]choose\\f[R], "
+"\\f[B]fresh\\f[R], or \\f[B]toram\\f[R] as the default MiniOS session.  GRUB "
+"entries are identified by the MiniOS semantic classes \\f[B]resume\\f[R], "
+"\\f[B]new\\f[R], \\f[B]switch\\f[R], \\f[B]live\\f[R], and \\f[B]ram\\f[R], "
+"with kernel session arguments used as a consistency check or fallback.  "
+"Native SYSLINUX entries are identified from \\f[B]APPEND\\f[R] session "
+"arguments and checked against known \\f[B]LABEL\\f[R] values.  Translated "
+"\\f[B]MENU LABEL\\f[R] and GRUB title text are never used.  Every "
+"authoritative reachable session menu must prove the requested mapping or the "
+"build fails.  A multilingual first-stage language menu keeps its language "
+"default; its reachable \\f[B]main.cfg\\f[R] or \\f[CR]lang/*.cfg\\f[R] "
+"session menus are changed instead.  The exact MiniOS \\f[CR]LINUX /minios/"
+"boot/grub/i386-pc/lnxboot.img\\f[R] and \\f[CR]INITRD /minios/boot/grub/i386-"
+"pc/core.img\\f[R] chain delegates session semantics to the reachable GRUB "
+"graph; malformed or mixed chainloader/native layouts are rejected.\\fR"
+msgstr ""
+"Wählt \\f[B]resume\\f[R], \\f[B]new\\f[R], \\f[B]choose\\f[R], "
+"\\f[B]fresh\\f[R] oder \\f[B]toram\\f[R] als Standard-MiniOS-Sitzung. GRUB-"
+"Einträge werden anhand der MiniOS-Semantikklassen \\f[B]resume\\f[R], "
+"\\f[B]new\\f[R], \\f[B]switch\\f[R], \\f[B]live\\f[R] und \\f[B]ram\\f[R] "
+"identifiziert, wobei Kernel-Sitzungsargumente als Konsistenzprüfung oder "
+"Fallback dienen. Native SYSLINUX-Einträge werden anhand der "
+"\\f[B]APPEND\\f[R]-Sitzungsargumente erkannt und mit bekannten "
+"\\f[B]LABEL\\f[R]-Werten abgeglichen. Übersetzte \\f[B]MENU LABEL\\f[R]- und "
+"GRUB-Titeltexte werden nie verwendet. Jedes maßgebliche erreichbare "
+"Sitzungsmenü muss die gewünschte Zuordnung nachweisen, sonst schlägt der "
+"Build fehl. Ein mehrsprachiges Sprachmenü der ersten Stufe behält seine "
+"Sprachvorgabe; die erreichbaren \\f[B]main.cfg\\f[R]- oder \\f[CR]lang/"
+"*.cfg\\f[R]-Sitzungsmenüs werden stattdessen geändert. Der exakte MiniOS "
+"\\f[CR]LINUX /minios/boot/grub/i386-pc/lnxboot.img\\f[R] und \\f[CR]INITRD /"
+"minios/boot/grub/i386-pc/core.img\\f[R]-Chain delegiert die Sitzungssemantik "
+"an den erreichbaren GRUB-Graphen; fehlerhafte oder gemischte Chainloader-/"
+"Native-Layouts werden abgelehnt.\\fR"
+
+#. type: TP
+#: en/minios-image-compose.1:179
+#, no-wrap
+msgid "\\f[B]\\[en]kernel-args\\f[R] \\f[I]TEXT\\fR"
+msgstr "\\f[B]\\[en]kernel-args\\f[R] \\f[I]TEXT\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:191
+msgid ""
+"Append \\f[I]TEXT\\f[R] unchanged to every actual GRUB \\f[B]linux\\f[R], "
+"\\f[B]linuxefi\\f[R], or \\f[B]linux16\\f[R] command and every SYSLINUX "
+"kernel stanza \\f[B]APPEND\\f[R] line in the effective config graph.  The "
+"UTF-8 encoding must be 1 to 4096 bytes, printable, use ordinary spaces only, "
+"and avoid quoting, expansion, comment, redirection, grouping, wildcard, and "
+"command-separator characters that cannot have identical GRUB and SYSLINUX "
+"meaning.  The text is never evaluated or passed through shell substitution.  "
+"Logs and \\f[B]image-customization.json\\f[R] contain only its UTF-8 byte "
+"count and SHA256.\\fR"
+msgstr ""
+"Hängt \\f[I]TEXT\\f[R] unverändert an jeden tatsächlichen GRUB-"
+"\\f[B]linux\\f[R]-, \\f[B]linuxefi\\f[R]- oder \\f[B]linux16\\f[R]-Befehl "
+"sowie an jede SYSLINUX-Kernel-\\f[B]APPEND\\f[R]-Zeile im effektiven "
+"Konfigurationsgraph an. Die UTF-8-Kodierung muss 1 bis 4096 Bytes lang, "
+"druckbar, ausschließlich gewöhnliche Leerzeichen verwenden und auf "
+"Anführungszeichen, Expansion, Kommentare, Umleitung, Gruppierung, Wildcards "
+"und Befehls-Trennzeichen verzichten, die in GRUB und SYSLINUX nicht "
+"identisch interpretiert werden können. Der Text wird niemals ausgewertet "
+"oder durch Shell-Substitution verarbeitet. Protokolle und \\f[B]image-"
+"customization.json\\f[R] enthalten nur die UTF-8-Byteanzahl und den SHA256-"
+"Hash.\\fR"
+
+#. type: TP
+#: en/minios-image-compose.1:191
+#, no-wrap
+msgid "\\f[B]\\[en]boot-background\\f[R] \\f[I]PNG\\fR"
+msgstr "\\f[B]\\[en]boot-background\\f[R] \\f[I]PNG\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:205
+msgid ""
+"Replace \\f[B]minios/boot/bootlogo791.png\\f[R] and existing source "
+"\\f[CR]bootlogo*.png\\f[R] variants with a private snapshot of "
+"\\f[I]PNG\\f[R].  The input must be a readable non-symlink regular file no "
+"larger than 16 MiB and 1 through 8192 pixels on each axis.  Validation "
+"checks bounded chunks, CRCs, one leading IHDR, a GRUB/SYSLINUX-compatible "
+"non-interlaced RGB, indexed, or RGBA format, palette ordering, consecutive "
+"IDAT chunks, the zlib stream and scanline filters, one final IEND, and "
+"absence of trailing data.  The source is not modified.  Every embedded "
+"target is extracted and compared with the recorded digest after ISO creation."
+"\\fR"
+msgstr ""
+"Ersetzt \\f[B]minios/boot/bootlogo791.png\\f[R] und vorhandene Quell-"
+"\\f[CR]bootlogo*.png\\f[R]-Varianten durch einen privaten Schnappschuss von "
+"\\f[I]PNG\\f[R]. Die Eingabe muss eine lesbare, nicht-symlink reguläre Datei "
+"mit maximal 16 MiB und 1 bis 8192 Pixeln pro Achse sein. Die Validierung "
+"prüft begrenzte Chunks, CRCs, genau einen führenden IHDR, ein GRUB/SYSLINUX-"
+"kompatibles nicht-interlaced RGB-, indiziertes oder RGBA-Format, "
+"Palettenreihenfolge, aufeinanderfolgende IDAT-Chunks, den zlib-Stream und "
+"Scanline-Filter, genau ein abschließendes IEND sowie das Fehlen von "
+"Nachlaufdaten. Die Quelle wird nicht verändert. Jede eingebettete Zieldatei "
+"wird nach der ISO-Erstellung extrahiert und mit der aufgezeichneten "
+"Prüfsumme verglichen.\\fR"
+
+#. type: TP
+#: en/minios-image-compose.1:205
+#, no-wrap
+msgid "\\f[B]\\[en]overlay-directory\\f[R] \\f[I]DIR\\fR"
+msgstr "\\f[B]Overlay-Verzeichnis\\f[R] \\f[I]DIR\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:228
+msgid ""
+"Package one real, readable directory, given as an absolute path outside the "
+"MiniOS source, the output, and the work directory, as a rootless \\f[B]ORDER-"
+"image-overlay.sb\\f[R] module.  The overlay is resolved independently of the "
+"current working directory, so the frontend may run \\f[B]minios-image-"
+"compose\\f[R] from a private job directory.  Safe directories, regular "
+"files, empty directories, executable bits, mtimes, and relative symlinks "
+"that remain inside the overlay root are supported.  Device nodes, sockets, "
+"FIFOs, filesystem crossings, control characters in names, absolute links, "
+"and escaping links are rejected.  Privilege bits are cleared and module "
+"ownership is normalized with \\f[B]mksquashfs -all-root\\f[R].  The tree is "
+"copied through retained no-follow descriptors, rescanned for mutation, and "
+"only the private copy is passed to mksquashfs.  The generated and ISO-"
+"extracted SquashFS images are each unpacked privately and compared against "
+"the captured path, type, mode, symlink-target, regular-size, and SHA256 "
+"manifest.  Missing, extra, or changed objects fail publication.  The dynamic "
+"order follows every source and additional module and precedes a session-"
+"capture module when both are requested.\\fR"
+msgstr ""
+"Packt ein reales, lesbares Verzeichnis, das als absoluter Pfad außerhalb der "
+"MiniOS-Quellen, des Ausgabeverzeichnisses und des Arbeitsverzeichnisses "
+"angegeben wird, als rootloses \\f[B]ORDER-image-overlay.sb\\f[R]-Modul. Das "
+"Overlay wird unabhängig vom aktuellen Arbeitsverzeichnis aufgelöst, sodass "
+"das Frontend \\f[B]minios-image-compose\\f[R] aus einem privaten Job-"
+"Verzeichnis heraus ausführen kann. Sichere Verzeichnisse, reguläre Dateien, "
+"leere Verzeichnisse, Ausführbarkeits-Bits, mtimes und relative Symlinks, die "
+"innerhalb des Overlay-Roots verbleiben, werden unterstützt. Gerätedateien, "
+"Sockets, FIFOs, Dateisystem-Grenzüberschreitungen, Steuerzeichen in Namen, "
+"absolute Links und ausbrechende Links werden abgelehnt. Privilegienbits "
+"werden entfernt und die Modulbesitzrechte mit \\f[B]mksquashfs -all-"
+"root\\f[R] normalisiert. Der Baum wird über beibehaltene No-Follow-"
+"Deskriptoren kopiert, auf Änderungen erneut gescannt und nur die private "
+"Kopie wird an mksquashfs übergeben. Die erzeugten und ISO-extrahierten "
+"SquashFS-Images werden jeweils privat entpackt und mit dem erfassten Pfad, "
+"Typ, Modus, Symlink-Ziel, regulärer Größe und SHA256-Manifest verglichen. "
+"Fehlende, zusätzliche oder veränderte Objekte verhindern die "
+"Veröffentlichung. Die dynamische Reihenfolge folgt jedem Quell- und "
+"Zusatzmodul und geht einem Sitzungsaufnahme-Modul voraus, wenn beides "
+"angefordert wird.\\fR"
+
+#. type: TP
+#: en/minios-image-compose.1:228
+#, no-wrap
+msgid "\\f[B]\\[en]menu\\f[R] \\f[I]TYPE\\fR"
+msgstr "\\f[B]Menü\\f[R] \\f[I]TYP\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:234
+msgid ""
+"Set menu type for both GRUB and SYSLINUX.  \\f[I]TYPE\\f[R] can be: "
+"\\f[B]multilang\\f[R] (default) - menu with language selection "
+"\\f[I]LANG\\f[R] - specific language code (en_US, ru_RU, de_DE, es_ES, "
+"it_IT, id_ID, pt_BR, pt_PT, fr_FR)\\fR"
+msgstr ""
+"Legt den Menütyp für GRUB und SYSLINUX fest. \\f[I]TYP\\f[R] kann sein: "
+"\\f[B]multilang\\f[R] (Standard) – Menü mit Sprachauswahl \\f[I]LANG\\f[R] – "
+"spezifischer Sprachcode (en_US, ru_RU, de_DE, es_ES, it_IT, id_ID, pt_BR, "
+"pt_PT, fr_FR)\\fR"
+
+#. type: TP
+#: en/minios-image-compose.1:234
+#, no-wrap
+msgid "\\f[B]\\[en]overwrite\\fR"
+msgstr "\\f[B]Überschreiben\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:239
+msgid ""
+"Explicitly allow replacement of an existing output file.  This is a safety "
+"change from older releases, which could let xorriso replace the target "
+"implicitly."
+msgstr ""
+"Erlaubt ausdrücklich das Ersetzen einer vorhandenen Ausgabedatei. Dies ist "
+"eine Sicherheitsänderung gegenüber älteren Versionen, bei denen xorriso das "
+"Ziel implizit ersetzen konnte."
+
+#. type: TP
+#: en/minios-image-compose.1:239
+#, no-wrap
+msgid "\\f[B]\\[en]no-color\\fR"
+msgstr "\\f[B]Keine Farbe\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:244
+msgid ""
+"Disable terminal colors.  Output is also color-free when stdout is not a "
+"terminal or the \\f[B]NO_COLOR\\f[R] environment variable is set.\\fR"
+msgstr ""
+"Deaktiviert Terminalfarben. Die Ausgabe ist ebenfalls farbfrei, wenn stdout "
+"kein Terminal ist oder die Umgebungsvariable \\f[B]NO_COLOR\\f[R] gesetzt "
+"ist.\\fR"
+
+#. type: TP
+#: en/minios-image-compose.1:244
+#, no-wrap
+msgid "\\f[B]\\[en]help\\fR"
+msgstr "\\f[B]Hilfe\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:247
+msgid "Display help message and exit."
+msgstr "Hilfetext anzeigen und beenden."
+
+#. type: TP
+#: en/minios-image-compose.1:247
+#, no-wrap
+msgid "\\f[B]\\[en]version\\fR"
+msgstr "\\f[B]Version\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:250
+msgid "Display version information and exit."
+msgstr "Versionsinformation anzeigen und beenden."
+
+#. type: SH
+#: en/minios-image-compose.1:250
+#, no-wrap
+msgid "BOOTLOADER SUPPORT"
+msgstr "BOOTLOADER-UNTERSTÜTZUNG"
+
+#. type: Plain text
+#: en/minios-image-compose.1:253
+msgid ""
+"The tool automatically detects and supports three bootloader configurations:"
+msgstr ""
+"Das Tool erkennt und unterstützt automatisch drei Bootloader-Konfigurationen:"
+
+#. type: TP
+#: en/minios-image-compose.1:253
+#, no-wrap
+msgid "\\f[B]syslinux-grub\\f[R] (most common)\\fR"
+msgstr "\\f[B]syslinux-grub\\f[R] (am häufigsten)\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:260
+msgid ""
+"Uses the exact minimal MiniOS SYSLINUX \\f[B]lnxboot.img/core.img\\f[R] "
+"stanza to hand legacy BIOS execution to GRUB; GRUB is also used directly for "
+"UEFI.  Detection requires both chainloader images, and customization "
+"validates the stanza before treating the reachable GRUB graph as "
+"authoritative.\\fR"
+msgstr ""
+"Verwendet die exakt minimale MiniOS-SYSLINUX-\\f[B]lnxboot.img/"
+"core.img\\f[R]-Stanza, um die Ausführung im Legacy-BIOS an GRUB zu "
+"übergeben; GRUB wird auch direkt für UEFI verwendet. Die Erkennung erfordert "
+"beide Chainloader-Images, und bei Anpassungen wird die Stanza validiert, "
+"bevor der erreichbare GRUB-Graph als maßgeblich behandelt wird.\\fR"
+
+#. type: TP
+#: en/minios-image-compose.1:260
+#, no-wrap
+msgid "\\f[B]grub-only\\fR"
+msgstr "\\f[B]grub-only\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:264
+msgid ""
+"Uses GRUB directly for all boot scenarios.  Detected when only GRUB BIOS "
+"components are present."
+msgstr ""
+"Verwendet GRUB direkt für alle Boot-Szenarien. Wird erkannt, wenn nur GRUB-"
+"BIOS-Komponenten vorhanden sind."
+
+#. type: TP
+#: en/minios-image-compose.1:264
+#, no-wrap
+msgid "\\f[B]syslinux-native\\fR"
+msgstr "\\f[B]syslinux-native\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:268
+msgid ""
+"Uses SYSLINUX natively without GRUB components.  Detected when only SYSLINUX "
+"files are present."
+msgstr ""
+"Verwendet SYSLINUX nativ ohne GRUB-Komponenten. Wird erkannt, wenn nur "
+"SYSLINUX-Dateien vorhanden sind."
+
+#. type: Plain text
+#: en/minios-image-compose.1:271
+msgid ""
+"The bootloader type is automatically detected based on the boot files "
+"present in the source MiniOS system."
+msgstr ""
+"Der Bootloader-Typ wird automatisch anhand der im Quell-MiniOS-System "
+"vorhandenen Bootdateien erkannt."
+
+#. type: SH
+#: en/minios-image-compose.1:271
+#, no-wrap
+msgid "MENU TYPES"
+msgstr "MENÜTYPEN"
+
+#. type: TP
+#: en/minios-image-compose.1:272
+#, no-wrap
+msgid "\\f[B]multilang\\f[R] (default)\\fR"
+msgstr "\\f[B]multilang\\f[R] (Standard)\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:275
+msgid "Multi-language menu with language selection screen."
+msgstr "Mehrsprachiges Menü mit Sprachauswahlbildschirm."
+
+#. type: TP
+#: en/minios-image-compose.1:275
+#, no-wrap
+msgid "\\f[I]Language codes\\fR"
+msgstr "\\f[I]Sprachcodes\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:282
+msgid ""
+"Fully localized menus with translated text and language-specific themes.  "
+"Supported languages: en_US (English), ru_RU (Russian), de_DE (German), es_ES "
+"(Spanish), it_IT (Italian), id_ID (Indonesian), pt_BR (Portuguese Brazil), "
+"pt_PT (Portuguese Portugal), fr_FR (French)."
+msgstr ""
+"Vollständig lokalisierte Menüs mit übersetztem Text und sprachspezifischen "
+"Designs. Unterstützte Sprachen: en_US (Englisch), ru_RU (Russisch), de_DE "
+"(Deutsch), es_ES (Spanisch), it_IT (Italienisch), id_ID (Indonesisch), pt_BR "
+"(Portugiesisch Brasilien), pt_PT (Portugiesisch Portugal), fr_FR "
+"(Französisch)."
+
+#. type: SH
+#: en/minios-image-compose.1:282
+#, no-wrap
+msgid "EXAMPLES"
+msgstr "BEISPIELE"
+
+#. type: Plain text
+#: en/minios-image-compose.1:284
+msgid "Create basic ISO from current live system:"
+msgstr "Erstellt ein Basis-ISO vom aktuellen Live-System:"
+
+#. type: Plain text
+#: en/minios-image-compose.1:287
+#, no-wrap
+msgid "minios-image-compose\n"
+msgstr "minios-image-compose\n"
+
+#. type: Plain text
+#: en/minios-image-compose.1:290
+msgid "Create ISO with custom name:"
+msgstr "Erstellt ein ISO mit benutzerdefiniertem Namen:"
+
+#. type: Plain text
+#: en/minios-image-compose.1:293
+#, no-wrap
+msgid "minios-image-compose --name my_custom_minios.iso\n"
+msgstr "minios-image-compose --name my_custom_minios.iso\n"
+
+#. type: Plain text
+#: en/minios-image-compose.1:296
+msgid "Create an ISO from an explicit source and configuration:"
+msgstr "Erstellt ein ISO aus einer expliziten Quelle und Konfiguration:"
+
+#. type: Plain text
+#: en/minios-image-compose.1:299
+#, no-wrap
+msgid "minios-image-compose --source /media/minios --config ./config.conf --name ./custom.iso\n"
+msgstr "minios-image-compose --source /media/minios --config ./config.conf --name ./custom.iso\n"
+
+#. type: Plain text
+#: en/minios-image-compose.1:302
+msgid "Include a GUI-generated build manifest and custom label:"
+msgstr ""
+"Fügt ein durch die GUI erzeugtes Build-Manifest und ein benutzerdefiniertes "
+"Label hinzu:"
+
+#. type: Plain text
+#: en/minios-image-compose.1:305
+#, no-wrap
+msgid "minios-image-compose --manifest ./build.json --volume-label \\[aq]MINIOS LAB\\[aq] --name ./custom.iso\n"
+msgstr "minios-image-compose --manifest ./build.json --volume-label \\[aq]MINIOS LAB\\[aq] --name ./custom.iso\n"
+
+#. type: Plain text
+#: en/minios-image-compose.1:308
+msgid "Create an ISO using the narrow software-only session policy:"
+msgstr ""
+"Erstellt ein ISO mit der eingeschränkten, softwarebasierten "
+"Sitzungsrichtlinie:"
+
+#. type: Plain text
+#: en/minios-image-compose.1:311
+#, no-wrap
+msgid "minios-image-compose --capture-changes clean --name ./software-session.iso\n"
+msgstr "minios-image-compose --capture-changes clean --name ./software-session.iso\n"
+
+#. type: Plain text
+#: en/minios-image-compose.1:315
+msgid ""
+"Create an image with a five-second session menu, a fresh-session default, "
+"and additional safe kernel arguments:"
+msgstr ""
+"Erstellt ein Abbild mit einem fünfsekündigen Sitzungsmenü, einer frischen "
+"Sitzung als Standard und zusätzlichen sicheren Kernel-Parametern:"
+
+#. type: Plain text
+#: en/minios-image-compose.1:319
+#, no-wrap
+msgid ""
+"minios-image-compose --boot-timeout 5 --default-boot fresh \\[rs]\n"
+"    --kernel-args \\[aq]audit=1 mitigations=auto\\[aq] --name ./custom-boot.iso\n"
+msgstr ""
+"minios-image-compose --boot-timeout 5 --default-boot fresh \\[rs]\n"
+"    --kernel-args \\[aq]audit=1 mitigations=auto\\[aq] --name ./custom-boot.iso\n"
+
+#. type: Plain text
+#: en/minios-image-compose.1:323
+msgid ""
+"Add a project filesystem overlay and boot artwork without changing the "
+"source tree:"
+msgstr ""
+"Fügt ein Projekt-Dateisystem-Overlay und Boot-Grafiken hinzu, ohne den "
+"Quellbaum zu verändern:"
+
+#. type: Plain text
+#: en/minios-image-compose.1:327
+#, no-wrap
+msgid ""
+"minios-image-compose --overlay-directory \\[dq]$PWD/image-overlay\\[dq] \\[rs]\n"
+"    --boot-background ./art/boot.png --name ./branded.iso\n"
+msgstr ""
+"minios-image-compose --overlay-directory \\[dq]$PWD/image-overlay\\[dq] \\[rs]\n"
+"    --boot-background ./art/boot.png --name ./branded.iso\n"
+
+#. type: Plain text
+#: en/minios-image-compose.1:330
+msgid "Capture only paths chosen by a frontend:"
+msgstr "Erfasse nur Pfade, die von einer Benutzeroberfläche ausgewählt wurden:"
+
+#. type: Plain text
+#: en/minios-image-compose.1:334
+#, no-wrap
+msgid ""
+"minios-image-compose --capture-changes selected \\[rs]\n"
+"    --capture-selection ./session-selection.json --name ./selected.iso\n"
+msgstr ""
+"minios-image-compose --capture-changes selected \\[rs]\n"
+"    --capture-selection ./session-selection.json --name ./selected.iso\n"
+
+#. type: Plain text
+#: en/minios-image-compose.1:337
+msgid "Exclude heavy applications:"
+msgstr "Schwere Anwendungen ausschließen:"
+
+#. type: Plain text
+#: en/minios-image-compose.1:340
+#, no-wrap
+msgid "minios-image-compose --exclude \\[aq]firefox|libreoffice|gimp\\[aq] --name minios_lite.iso\n"
+msgstr "minios-image-compose --exclude \\[aq]firefox|libreoffice|gimp\\[aq] --name minios_lite.iso\n"
+
+#. type: Plain text
+#: en/minios-image-compose.1:343
+msgid "Create minimal text-mode ISO:"
+msgstr "Minimales Textmodus-ISO erstellen:"
+
+#. type: Plain text
+#: en/minios-image-compose.1:346
+#, no-wrap
+msgid "minios-image-compose --exclude \\[aq]desktop|xorg|apps\\[aq] --name minios_minimal.iso\n"
+msgstr "minios-image-compose --exclude \\[aq]desktop|xorg|apps\\[aq] --name minios_minimal.iso\n"
+
+#. type: Plain text
+#: en/minios-image-compose.1:349
+msgid "Add extra modules to current system:"
+msgstr "Zusätzliche Module zum aktuellen System hinzufügen:"
+
+#. type: Plain text
+#: en/minios-image-compose.1:352
+#, no-wrap
+msgid "minios-image-compose development_tools.sb games.sb --name minios_extended.iso\n"
+msgstr "minios-image-compose development_tools.sb games.sb --name minios_extended.iso\n"
+
+#. type: Plain text
+#: en/minios-image-compose.1:355
+msgid "Create localized Russian ISO:"
+msgstr "Lokalisierte russische ISO erstellen:"
+
+#. type: Plain text
+#: en/minios-image-compose.1:358
+#, no-wrap
+msgid "minios-image-compose --menu ru_RU --name minios_ru.iso\n"
+msgstr "minios-image-compose --menu ru_RU --name minios_ru.iso\n"
+
+#. type: Plain text
+#: en/minios-image-compose.1:361
+msgid "Combine exclusions with additions:"
+msgstr "Ausschlüsse mit Ergänzungen kombinieren:"
+
+#. type: Plain text
+#: en/minios-image-compose.1:364
+#, no-wrap
+msgid "minios-image-compose --exclude \\[aq]games\\[aq] extra_productivity.sb --name minios_work.iso\n"
+msgstr "minios-image-compose --exclude \\[aq]games\\[aq] extra_productivity.sb --name minios_work.iso\n"
+
+#. type: SH
+#: en/minios-image-compose.1:365
+#, no-wrap
+msgid "FILES"
+msgstr "DATEIEN"
+
+#. type: Plain text
+#: en/minios-image-compose.1:377
+msgid ""
+"Without \\f[B]\\[en]source\\f[R], the script discovers MiniOS loaded from "
+"live media or RAM.  With explicit \\f[B]\\[en]source\\f[R] and \\f[B]\\"
+"[en]config\\f[R] paths, source discovery is not required.  Session capture "
+"still requires a running MiniOS session whose mounted base-module "
+"fingerprint matches the selected source.  Required system tools are resolved "
+"from \\f[B]/usr/sbin:/usr/bin:/sbin:/bin\\f[R], independently of the caller\\"
+"[cq]s PATH; \\f[B]mkfs.ext2\\f[R] is provided by \\f[B]e2fsprogs\\f[R].  "
+"Default boot files are located in:\\fR"
+msgstr ""
+"Ohne \\f[B]\\[en]source\\f[R] erkennt das Skript MiniOS, das von Live-Medien "
+"oder aus dem RAM geladen wurde. Bei expliziten \\f[B]\\[en]source\\f[R]- und "
+"\\f[B]\\[en]config\\f[R]-Pfaden ist keine Quellerkennung erforderlich. Die "
+"Sitzungsaufnahme erfordert weiterhin eine laufende MiniOS-Sitzung, deren "
+"gemountetes Basismodul-Fingerprint mit der gewählten Quelle übereinstimmt. "
+"Benötigte Systemwerkzeuge werden aus \\f[B]/usr/sbin:/usr/bin:/sbin:/"
+"bin\\f[R] bezogen, unabhängig vom PATH des Aufrufers; \\f[B]mkfs.ext2\\f[R] "
+"wird von \\f[B]e2fsprogs\\f[R] bereitgestellt. Standard-Bootdateien befinden "
+"sich in:\\fR"
+
+#. type: TP
+#: en/minios-image-compose.1:377
+#, no-wrap
+msgid "\\f[I]/run/initramfs/memory/data/minios/boot/\\fR"
+msgstr "\\f[I]/run/initramfs/memory/data/minios/boot/\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:380
+msgid "Boot files location when running from live system"
+msgstr "Ablageort der Bootdateien beim Betrieb aus dem Live-System"
+
+#. type: TP
+#: en/minios-image-compose.1:380
+#, no-wrap
+msgid "\\f[I]/lib/live/mount/data/minios/boot/\\fR"
+msgstr "\\f[I]/lib/live/mount/data/minios/boot/\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:383
+msgid "Boot files location with dracut-based live media"
+msgstr "Ablageort der Bootdateien bei dracut-basierten Live-Medien"
+
+#. type: TP
+#: en/minios-image-compose.1:383
+#, no-wrap
+msgid "\\f[I]/etc/live/config.conf\\fR"
+msgstr "\\f[I]/etc/live/config.conf\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:386
+msgid "Default configuration input"
+msgstr "Standard-Konfigurationseingabe"
+
+#. type: SH
+#: en/minios-image-compose.1:386
+#, no-wrap
+msgid "OUTPUT PROTOCOL"
+msgstr "AUSGABEPROTOKOLL"
+
+#. type: Plain text
+#: en/minios-image-compose.1:400
+msgid ""
+"Human-readable messages retain the stable \\f[B]I:\\f[R], \\f[B]W:\\f[R], "
+"and \\f[B]E:\\f[R] prefixes.  Major phases are additionally emitted as "
+"untranslated identifiers: \\f[B]P:prepare\\f[R], \\f[B]P:customize\\f[R] "
+"before customization work, \\f[B]P:capture\\f[R] when enabled, \\f[B]P:boot-"
+"copy\\f[R], \\f[B]P:persistence\\f[R], \\f[B]P:iso-write\\f[R], "
+"\\f[B]P:verify\\f[R], \\f[B]P:complete\\f[R], and \\f[B]P:cancelled\\f[R] "
+"during privileged cancellation.  The nested \\f[B]savechanges\\f[R] phases "
+"\\f[B]P:capture-inventory\\f[R], \\f[B]P:capture-copy\\f[R], \\f[B]P:capture-"
+"compress\\f[R], \\f[B]P:capture-complete\\f[R], and \\f[B]P:cancelled\\f[R] "
+"pass through unchanged.  Frontends should consume these identifiers rather "
+"than translated prose.\\fR"
+msgstr ""
+"Für Menschen lesbare Meldungen behalten die stabilen Präfixe \\f[B]I:\\f[R], "
+"\\f[B]W:\\f[R] und \\f[B]E:\\f[R] bei. Wichtige Phasen werden zusätzlich als "
+"nicht übersetzte Kennungen ausgegeben: \\f[B]P:prepare\\f[R], "
+"\\f[B]P:customize\\f[R] vor der Anpassung, \\f[B]P:capture\\f[R] bei "
+"Aktivierung, \\f[B]P:boot-copy\\f[R], \\f[B]P:persistence\\f[R], \\f[B]P:iso-"
+"write\\f[R], \\f[B]P:verify\\f[R], \\f[B]P:complete\\f[R] und "
+"\\f[B]P:cancelled\\f[R] bei privilegiertem Abbruch. Die verschachtelten "
+"\\f[B]savechanges\\f[R]-Phasen \\f[B]P:capture-inventory\\f[R], "
+"\\f[B]P:capture-copy\\f[R], \\f[B]P:capture-compress\\f[R], \\f[B]P:capture-"
+"complete\\f[R] und \\f[B]P:cancelled\\f[R] werden unverändert durchgereicht. "
+"Frontends sollten diese Kennungen statt übersetztem Fließtext auswerten.\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:409
+msgid ""
+"Capture logs state the profile, union backend, boot ID, source and base-"
+"module fingerprints, dynamic order and ISO target, nonzero module size, "
+"module SHA256, and selection SHA256 when applicable.  Selection include and "
+"exclude paths are never logged; invalid or unmatched selections report only "
+"generic classes or counts.  \\f[B]minios/session-capture.json\\f[R] embeds "
+"the same digest-only schema-3 report without changing the GUI-authored "
+"\\f[B]build-manifest.json\\f[R].\\fR"
+msgstr ""
+"Aufzeichnungsprotokolle geben Profil, Union-Backend, Boot-ID, Quell- und "
+"Basismodul-Fingerprints, dynamische Reihenfolge und ISO-Ziel, Modulgröße "
+"(falls ungleich null), Modul-SHA256 sowie gegebenenfalls Auswahl-SHA256 an. "
+"Auswahl-Ein- und -Ausschluss-Pfade werden niemals protokolliert; ungültige "
+"oder nicht zutreffende Auswahlen melden nur generische Klassen oder "
+"Anzahlen. \\f[B]minios/session-capture.json\\f[R] enthält denselben reinen "
+"Digest-Report nach Schema 3, ohne die von der GUI erstellte \\f[B]build-"
+"manifest.json\\f[R] zu verändern.\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:417
+msgid ""
+"After structural ISO checks, \\f[B]minios-image-compose\\f[R] extracts the "
+"embedded capture module and report, plus the build manifest when present.  "
+"It rehashes their actual bytes, validates the report against privileged "
+"capture metadata and expected order, performs full SquashFS checks on the "
+"extracted module, and rejects any mismatch before atomic publication.\\fR"
+msgstr ""
+"Nach struktureller ISO-Prüfung extrahiert \\f[B]minios-image-compose\\f[R] "
+"das eingebettete Aufzeichnungsmodul und den Bericht sowie das Build-"
+"Manifest, falls vorhanden. Es berechnet deren tatsächliche Bytes neu, "
+"validiert den Bericht anhand privilegierter Aufzeichnungsmetadaten und "
+"erwarteter Reihenfolge, führt vollständige SquashFS-Prüfungen auf dem "
+"extrahierten Modul durch und lehnt jede Abweichung vor atomarer "
+"Veröffentlichung ab.\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:438
+msgid ""
+"When image customization is enabled, \\f[B]minios/image-"
+"customization.json\\f[R] is embedded with product kind \\f[B]minios-image-"
+"customization\\f[R] and schema version 1.  It records transformed config "
+"targets and digests, timeout and semantic default values, kernel-argument "
+"byte count and SHA256, background dimensions/targets/digest, and image-"
+"overlay target, order, size, SHA256, entry count, and input-tree "
+"fingerprint.  It contains no kernel argument text or host input path.  "
+"Verification rejects duplicate fields, non-finite numbers, unknown fields, "
+"incorrect types, and incorrect optional-section presence.  The expected "
+"report is reconstructed independently from retained CLI intent, the byte-"
+"bound boot plan and its source digests, retained target-set identities, the "
+"original background and overlay identities, and bytes extracted from the "
+"ISO.  It does not trust or compare against the mutable local report.  Every "
+"customized config transformation is recomputed, every extracted background "
+"is parsed and hashed, and the generated and embedded overlay modules must "
+"match the original retained module size and SHA256.  Both overlay modules "
+"are then checked against the captured filesystem manifest.\\fR"
+msgstr ""
+"Wenn die Image-Anpassung aktiviert ist, wird \\f[B]minios/image-"
+"customization.json\\f[R] mit Produkttyp \\f[B]minios-image-"
+"customization\\f[R] und Schema-Version 1 eingebettet. Es protokolliert "
+"transformierte Konfigurationsziele und -digests, Timeout- und semantische "
+"Standardwerte, Anzahl der Kernel-Argument-Bytes und SHA256, "
+"Hintergrundabmessungen/-ziele/-digest sowie das Image-Overlay-Ziel, "
+"Reihenfolge, Größe, SHA256, Eintragsanzahl und Input-Tree-Fingerprint. Es "
+"enthält keinen Kernel-Argument-Text oder Host-Input-Pfad. Die Verifikation "
+"lehnt doppelte Felder, nicht-endliche Zahlen, unbekannte Felder, falsche "
+"Typen und falsche optionale Abschnittspräsenz ab. Der erwartete Bericht wird "
+"unabhängig aus der beibehaltenen CLI-Absicht, dem bytegebundenen Boot-Plan "
+"und dessen Quell-Digests, beibehaltenen Ziel-Set-Identitäten, dem "
+"ursprünglichen Hintergrund und Overlay-Identitäten sowie extrahierten Bytes "
+"aus dem ISO rekonstruiert. Es wird weder dem lokalen veränderlichen Bericht "
+"vertraut noch mit diesem verglichen. Jede angepasste Konfigurations-"
+"Transformation wird neu berechnet, jeder extrahierte Hintergrund wird "
+"geparst und gehasht, und die generierten sowie eingebetteten Overlay-Module "
+"müssen mit der ursprünglichen beibehaltenen Modulgröße und SHA256 "
+"übereinstimmen. Beide Overlay-Module werden anschließend mit dem erfassten "
+"Dateisystem-Manifest abgeglichen.\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:453
+msgid ""
+"Boot transformation intentionally supports direct GRUB "
+"\\f[B]configfile\\f[R] or \\f[B]source\\f[R] references and direct native "
+"SYSLINUX \\f[B]CONFIG\\f[R] or \\f[B]INCLUDE\\f[R] references whose "
+"normalized targets remain below \\f[B]minios/boot/\\f[R], plus the exact "
+"MiniOS SYSLINUX-GRUB chainloader described above.  Dynamic references, shell-"
+"generated config names, GRUB submenus, SYSLINUX nested menus, commented or "
+"multiline kernel commands, ambiguous session arguments, missing semantic "
+"entries, mixed chainloader/native layouts, and config graph cycles are "
+"rejected rather than guessed.  Existing native SYSLINUX \\f[B]MENU "
+"DEFAULT\\f[R] directives are removed and \\f[B]ONTIMEOUT\\f[R] is aligned "
+"with the requested semantic default.  Source layouts using unsupported forms "
+"require normalization before customization; builds without boot "
+"customization continue to preserve them unchanged.\\fR"
+msgstr ""
+"Die Boot-Transformation unterstützt gezielt direkte GRUB-"
+"\\f[B]configfile\\f[R]- oder \\f[B]source\\f[R]-Verweise sowie native "
+"SYSLINUX-\\f[B]CONFIG\\f[R]- oder \\f[B]INCLUDE\\f[R]-Verweise, deren "
+"normalisierte Ziele weiterhin unterhalb von \\f[B]minios/boot/\\f[R] liegen, "
+"sowie den oben beschriebenen exakten MiniOS-SYSLINUX-GRUB-Chainloader. "
+"Dynamische Verweise, Shell-generierte Konfigurationsnamen, GRUB-Untermenüs, "
+"verschachtelte SYSLINUX-Menüs, auskommentierte oder mehrzeilige Kernel-"
+"Befehle, mehrdeutige Sitzungsargumente, fehlende semantische Einträge, "
+"gemischte Chainloader-/Native-Layouts und Konfigurationsgraph-Zyklen werden "
+"abgelehnt, statt geraten. Vorhandene native SYSLINUX-\\f[B]MENU "
+"DEFAULT\\f[R]-Direktiven werden entfernt und \\f[B]ONTIMEOUT\\f[R] wird mit "
+"dem gewünschten semantischen Standard abgeglichen. Quell-Layouts mit nicht "
+"unterstützten Formen müssen vor der Anpassung normalisiert werden; Builds "
+"ohne Boot-Anpassung behalten diese weiterhin unverändert bei.\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:462
+msgid ""
+"Private reflink snapshots close pathname and ancestor replacement races for "
+"mutable xorriso inputs when the filesystem supports reflinks.  Otherwise, "
+"the original graft remains identity-bound and any metadata or content change "
+"detected around xorriso fails the build.  Read-only mounted sources are "
+"treated as immutable.  Every supervised external command must also finish "
+"its process group; a leader that exits while descendants remain causes "
+"bounded TERM/KILL cleanup and build failure."
+msgstr ""
+"Private Reflink-Snapshots schließen Pfad- und Vorfahren-Ersetzungsrennen für "
+"veränderliche xorriso-Eingaben, sofern das Dateisystem Reflinks unterstützt. "
+"Andernfalls bleibt das ursprüngliche Graft identitätsgebunden und jede "
+"während xorriso erkannte Metadaten- oder Inhaltsänderung führt zum Build-"
+"Abbruch. Schreibgeschützte gemountete Quellen werden als unveränderlich "
+"behandelt. Jeder überwachter externer Befehl muss außerdem seine "
+"Prozessgruppe beenden; ein Hauptprozess, der beendet wird, während "
+"Nachfolger noch laufen, führt zu begrenztem TERM/KILL-Cleanup und Build-"
+"Fehler."
+
+#. type: SH
+#: en/minios-image-compose.1:462
+#, no-wrap
+msgid "EXIT STATUS"
+msgstr "RÜCKGABEWERT"
+
+#. type: TP
+#: en/minios-image-compose.1:463
+#, no-wrap
+msgid "\\f[B]0\\fR"
+msgstr "\\f[B]0\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:466
+msgid "Successful completion."
+msgstr "Erfolgreich abgeschlossen."
+
+#. type: TP
+#: en/minios-image-compose.1:466
+#, no-wrap
+msgid "\\f[B]1\\fR"
+msgstr "\\f[B]1\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:469
+msgid "General, validation, tool, destination, write, or verification error."
+msgstr ""
+"Allgemeiner Fehler, Validierungs-, Werkzeug-, Ziel-, Schreib- oder "
+"Verifikationsfehler."
+
+#. type: TP
+#: en/minios-image-compose.1:469
+#, no-wrap
+msgid "\\f[B]2\\fR"
+msgstr "\\f[B]2\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:473
+msgid ""
+"Invalid source tree, required modules, menu, kernel/initramfs, or boot files."
+msgstr ""
+"Ungültiger Quellbaum, erforderliche Module, Menü, Kernel/Initramfs oder "
+"Bootdateien."
+
+#. type: TP
+#: en/minios-image-compose.1:473
+#, no-wrap
+msgid "\\f[B]3\\fR"
+msgstr "\\f[B]3\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:477
+msgid ""
+"Invalid, unsafe, colliding, unreadable, or non-SquashFS additional module."
+msgstr ""
+"Ungültiges, unsicheres, kollidierendes, nicht lesbares oder nicht-SquashFS-"
+"Zusatzmodul."
+
+#. type: TP
+#: en/minios-image-compose.1:477
+#, no-wrap
+msgid "\\f[B]4\\fR"
+msgstr "\\f[B]4\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:480
+msgid "Cannot create or prepare secure temporary build data."
+msgstr ""
+"Temporäre, sichere Build-Daten können nicht erstellt oder vorbereitet werden."
+
+#. type: TP
+#: en/minios-image-compose.1:480
+#, no-wrap
+msgid "\\f[B]130\\fR"
+msgstr "\\f[B]130\\fR"
+
+#. type: Plain text
+#: en/minios-image-compose.1:489
+msgid ""
+"Interrupted by INT or TERM.  Rootless overlay mksquashfs and its process "
+"group are terminated directly.  During privileged capture, the marker is "
+"created atomically before direct signal attempts, then the parent waits a "
+"bounded interval for savechanges to terminate, reap, and clean its root "
+"process group.  Private temporary output is removed through retained "
+"descriptors."
+msgstr ""
+"Durch INT oder TERM unterbrochen. Das Rootless-Overlay-mksquashfs und seine "
+"Prozessgruppe werden direkt beendet. Während des privilegierten Captures "
+"wird der Marker atomar erstellt, bevor ein direktes Senden von Signalen "
+"versucht wird; anschließend wartet der Elternprozess für ein begrenztes "
+"Intervall darauf, dass savechanges beendet wird, die Prozesse einsammelt und "
+"seine Root-Prozessgruppe bereinigt. Temporäre private Ausgaben werden über "
+"beibehaltene Deskriptoren entfernt."
+
+#. type: SH
+#: en/minios-image-compose.1:489
+#, no-wrap
+msgid "SEE ALSO"
+msgstr "SIEHE AUCH"
+
+#. type: Plain text
+#: en/minios-image-compose.1:490
+msgid "\\f[B]sb\\f[R](1), \\f[B]chroot2sb\\f[R](1), \\f[B]apt2sb\\f[R](1)\\fR"
+msgstr "\\f[B]sb\\f[R](1), \\f[B]chroot2sb\\f[R](1), \\f[B]apt2sb\\f[R](1)\\fR"

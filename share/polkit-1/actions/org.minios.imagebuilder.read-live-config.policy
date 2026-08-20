@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<policyconfig>
+  <vendor>MiniOS</vendor>
+  <vendor_url>https://minios.dev</vendor_url>
+  <action id="org.minios.imagebuilder.read-live-config">
+    <description>Read the current MiniOS configuration for Image Builder</description>
+    <description xml:lang="ru">Прочитать текущую конфигурацию MiniOS для Image Builder</description>
+    <description xml:lang="pt_BR">Leia a configuração atual do MiniOS para o Image Builder</description>
+    <description xml:lang="pt">Leia a configuração atual do MiniOS para o Image Builder</description>
+    <description xml:lang="it">Leggi la configurazione attuale di MiniOS per Image Builder</description>
+    <description xml:lang="id">Baca konfigurasi MiniOS saat ini untuk Image Builder</description>
+    <description xml:lang="fr">Lire la configuration actuelle de MiniOS pour Image Builder</description>
+    <description xml:lang="es">Leer la configuración actual de MiniOS para Image Builder</description>
+    <description xml:lang="de">Die aktuelle MiniOS-Konfiguration für den Image Builder lesen</description>
+    <message>Authentication is required to read the current MiniOS configuration</message>
+    <message xml:lang="ru">Для чтения текущей конфигурации MiniOS требуется аутентификация</message>
+    <message xml:lang="pt_BR">Autenticação é necessária para ler a configuração atual do MiniOS</message>
+    <message xml:lang="pt">Autenticação é necessária para ler a configuração atual do MiniOS</message>
+    <message xml:lang="it">È necessaria l&#39;autenticazione per leggere la configurazione attuale di MiniOS</message>
+    <message xml:lang="id">Autentikasi diperlukan untuk membaca konfigurasi MiniOS saat ini</message>
+    <message xml:lang="fr">Authentification requise pour lire la configuration actuelle de MiniOS</message>
+    <message xml:lang="es">Se requiere autenticación para leer la configuración actual de MiniOS</message>
+    <message xml:lang="de">Authentifizierung ist erforderlich, um die aktuelle MiniOS-Konfiguration zu lesen</message>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/lib/minios-image-builder/minios-image-builder-read-live-config</annotate>
+  </action>
+</policyconfig>

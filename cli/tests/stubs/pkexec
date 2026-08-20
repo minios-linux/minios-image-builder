@@ -1,0 +1,22 @@
+#!/bin/bash
+
+set -u
+
+state=${PKEXEC_STUB_STATE:?PKEXEC_STUB_STATE is required}
+mkdir -p "$state"
+printf '%s\0' "$@" >"$state/args"
+printf '%s\n' "$EUID" >"$state/euid"
+
+if [[ ${PKEXEC_STUB_ROOT:-false} == true ]]; then
+    caller_uid=$EUID
+    exec /usr/bin/sudo -n /usr/bin/env \
+        PKEXEC_UID="$caller_uid" \
+        SAVECHANGES_STUB_STATE="${SAVECHANGES_STUB_STATE:?}" \
+        SAVECHANGES_STUB_MODE="${SAVECHANGES_STUB_MODE:-success}" \
+        SAVECHANGES_STUB_SOURCE="${SAVECHANGES_STUB_SOURCE:-}" \
+        SAVECHANGES_STUB_BASE_FINGERPRINT="${SAVECHANGES_STUB_BASE_FINGERPRINT:-}" \
+        "$@"
+fi
+
+export PKEXEC_UID=$EUID
+exec "$@"

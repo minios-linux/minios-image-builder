@@ -1,0 +1,109 @@
+# shellcheck shell=bash disable=SC2034
+_minios_image_compose() {
+    local cur prev words cword
+    local word
+    _init_completion -n = || return
+
+    for word in "${words[@]}"; do
+        [[ $word != --help && $word != --version ]] || return
+    done
+
+    case $prev in
+    -e | --exclude)
+        # Regex pattern completion - let user type their own
+        return
+        ;;
+    -n | --name | --config | --manifest | --capture-selection | --boot-background)
+        mapfile -t COMPREPLY < <(compgen -f -- "$cur")
+        return
+        ;;
+    --source | --overlay-directory)
+        mapfile -t COMPREPLY < <(compgen -d -- "$cur")
+        return
+        ;;
+    --volume-label)
+        return
+        ;;
+    --capture-changes)
+        mapfile -t COMPREPLY < <(compgen -W 'exact clean selected' -- "$cur")
+        return
+        ;;
+    --capture-compression)
+        mapfile -t COMPREPLY < <(compgen -W 'zstd gzip lzo xz' -- "$cur")
+        return
+        ;;
+    --default-boot)
+        mapfile -t COMPREPLY < <(compgen -W 'resume new choose fresh toram' -- "$cur")
+        return
+        ;;
+    --boot-timeout | --kernel-args)
+        return
+        ;;
+    --menu)
+        # Complete menu types
+        mapfile -t COMPREPLY < <(compgen -W 'multilang en_US ru_RU de_DE es_ES it_IT id_ID pt_BR pt_PT fr_FR' -- "$cur")
+        return
+        ;;
+    esac
+
+    if [[ "$cur" == *=* ]]; then
+        local opt="${cur%%=*}"
+        cur="${cur#*=}"
+        case $opt in
+        --exclude)
+            # Regex pattern completion - let user type their own
+            return
+            ;;
+        --name | --config | --manifest | --capture-selection | --boot-background)
+            mapfile -t COMPREPLY < <(compgen -f -- "$cur")
+            return
+            ;;
+        --source | --overlay-directory)
+            mapfile -t COMPREPLY < <(compgen -d -- "$cur")
+            return
+            ;;
+        --volume-label)
+            return
+            ;;
+        --capture-changes)
+            mapfile -t COMPREPLY < <(compgen -W 'exact clean selected' -- "$cur")
+            return
+            ;;
+        --capture-compression)
+            mapfile -t COMPREPLY < <(compgen -W 'zstd gzip lzo xz' -- "$cur")
+            return
+            ;;
+        --default-boot)
+            mapfile -t COMPREPLY < <(compgen -W 'resume new choose fresh toram' -- "$cur")
+            return
+            ;;
+        --boot-timeout | --kernel-args)
+            return
+            ;;
+        --menu)
+            # Complete menu types
+            mapfile -t COMPREPLY < <(compgen -W 'multilang en_US ru_RU de_DE es_ES it_IT id_ID pt_BR pt_PT fr_FR' -- "$cur")
+            return
+            ;;
+        *) ;;
+        esac
+    fi
+
+    if [[ "$cur" == --* ]]; then
+        mapfile -t COMPREPLY < <(compgen -W '--exclude --name --source --config --volume-label --manifest --capture-changes --capture-selection --capture-compression --boot-timeout --default-boot --kernel-args --boot-background --overlay-directory --menu --overwrite --no-color --help --version' -- "$cur")
+    elif [[ "$cur" == -* ]]; then
+        mapfile -t COMPREPLY < <(compgen -W '-e -n --exclude --name --source --config --volume-label --manifest --capture-changes --capture-selection --capture-compression --boot-timeout --default-boot --kernel-args --boot-background --overlay-directory --menu --overwrite --no-color --help --version' -- "$cur")
+    else
+        # Complete module files - prioritize .sb files but allow any files
+        local -a sb_files=()
+        mapfile -t sb_files < <(compgen -f -- "$cur" | grep -Ei '\.sb$')
+        if (( ${#sb_files[@]} > 0 )); then
+            COMPREPLY=("${sb_files[@]}")
+        else
+            mapfile -t COMPREPLY < <(compgen -f -- "$cur")
+        fi
+    fi
+
+}
+
+complete -F _minios_image_compose minios-image-compose
