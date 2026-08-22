@@ -40,7 +40,8 @@ if [[ -z $cancel_file ]]; then
     exit 18
 fi
 cancel_parent=${cancel_file%/*}
-read -r cancel_owner cancel_mode < <(stat -c '%u %a' -- "$cancel_parent")
+cancel_stat=$(stat -c '%u %a' -- "$cancel_parent") || exit 18
+read -r cancel_owner cancel_mode <<<"$cancel_stat"
 expected_owner=${PKEXEC_UID:-$EUID}
 if [[ $cancel_owner != "$expected_owner" || $cancel_mode != 700 || -e $cancel_file || -L $cancel_file ]]; then
     printf 'E: invalid savechanges stub cancel marker contract\n' >&2

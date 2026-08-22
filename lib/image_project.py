@@ -440,11 +440,14 @@ def _run_command(runner, argv, input_data=None):
     if runner is None:
         if isinstance(input_data, str):
             input_data = input_data.encode('utf-8')
-        result = subprocess.run(
-            argv, input=input_data, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, stdin=(None if input_data is not None
-                                           else subprocess.DEVNULL),
-            check=False)
+        kwargs = {
+            'stdout': subprocess.PIPE,
+            'stderr': subprocess.PIPE,
+            'check': False,
+        }
+        if input_data is None:
+            kwargs['stdin'] = subprocess.DEVNULL
+        result = subprocess.run(argv, input=input_data, **kwargs)
     elif hasattr(runner, 'run'):
         if input_data is None:
             result = runner.run(argv)
@@ -512,6 +515,15 @@ def _metadata_snapshot(file_stat):
         int(getattr(file_stat, 'st_ctime_ns',
                     file_stat.st_ctime * 1000000000)),
     )
+
+
+def _matches_expected_identity(file_stat, expected_identity):
+    expected = tuple(expected_identity)
+    if len(expected) == 2:
+        return _identity(file_stat) == expected
+    if len(expected) == len(_metadata_snapshot(file_stat)):
+        return _metadata_snapshot(file_stat) == expected
+    raise ValueError('expected identity has an unsupported shape')
 
 
 def _read_stable_regular_bytes(path, maximum_bytes):
@@ -1499,8 +1511,8 @@ def cleanup_session_inventory(path, expected_identity=None):
         return False
     if stat.S_ISLNK(file_stat.st_mode) or not stat.S_ISREG(file_stat.st_mode):
         raise ImageProjectError('refusing to clean unsafe inventory output')
-    if expected_identity is not None and _identity(file_stat) != tuple(
-            expected_identity):
+    if (expected_identity is not None and
+            not _matches_expected_identity(file_stat, expected_identity)):
         raise ImageProjectError('inventory output identity changed')
     os.unlink(path)
     _fsync_directory(os.path.dirname(path) or os.curdir)
@@ -6017,15 +6029,16 @@ class VerificationResult(_Immutable):
     __slots__ = (
         'path', 'level', 'size', 'sha256', 'diagnostics', 'tree_paths',
         'boot_report', 'pvd_report', 'adapter_manifest_sha256', 'commands',
-        'plan_id', 'artifact_device', 'artifact_inode', '_plan_nonce',
-        '_attestation_token', 'capture_summary', 'customization_summary',
+        'plan_id', 'artifact_device', 'artifact_inode', '_artifact_descriptor',
+        '_plan_nonce', '_attestation_token', 'capture_summary',
+        'customization_summary',
     )
 
     def __init__(self, path, level, size=0, sha256=None, diagnostics=(),
                  tree_paths=(), boot_report='', pvd_report='',
                  adapter_manifest_sha256=None, commands=(), plan_id=None,
-                  artifact_device=None, artifact_inode=None, plan_nonce=None,
-                  capture_summary=None,
+                  artifact_device=None, artifact_inode=None,
+                  artifact_descriptor=None, plan_nonce=None, capture_summary=None,
                   customization_summary=None,
                   _token=None):
         if _token is not _VERIFICATION_TOKEN:
@@ -6043,6 +6056,7 @@ class VerificationResult(_Immutable):
         self.plan_id = plan_id
         self.artifact_device = artifact_device
         self.artifact_inode = artifact_inode
+        self._artifact_descriptor = artifact_descriptor
         self._plan_nonce = plan_nonce
         self._attestation_token = _VERIFICATION_TOKEN
         self.capture_summary = _freeze(dict(
@@ -6050,6 +6064,14 @@ class VerificationResult(_Immutable):
         self.customization_summary = _freeze(dict(
             customization_summary or {'requested': False}))
         self._lock()
+
+    def __del__(self):
+        descriptor = getattr(self, '_artifact_descriptor', None)
+        if descriptor is not None:
+            try:
+                os.close(descriptor)
+            except (AttributeError, OSError):
+                pass
 
     @property
     def errors(self):
@@ -6090,8 +6112,8 @@ class VerificationResult(_Immutable):
 def _verification_result(plan, level, size=0, sha256=None, diagnostics=(),
                          tree_paths=(), boot_report='', pvd_report='',
                           adapter_manifest_sha256=None, commands=(),
-                          artifact_stat=None, capture_summary=None,
-                          customization_summary=None):
+                          artifact_stat=None, artifact_descriptor=None,
+                          capture_summary=None, customization_summary=None):
     return VerificationResult(
         plan.partial_output_path or plan.output_path, level, size=size,
         sha256=sha256, diagnostics=diagnostics, tree_paths=tree_paths,
@@ -6100,7 +6122,8 @@ def _verification_result(plan, level, size=0, sha256=None, diagnostics=(),
         plan_id=plan.plan_id,
         artifact_device=(int(artifact_stat.st_dev) if artifact_stat else None),
         artifact_inode=(int(artifact_stat.st_ino) if artifact_stat else None),
-        plan_nonce=plan._nonce, capture_summary=capture_summary,
+        artifact_descriptor=artifact_descriptor, plan_nonce=plan._nonce,
+        capture_summary=capture_summary,
         customization_summary=customization_summary,
         _token=_VERIFICATION_TOKEN)
 
@@ -7255,25 +7278,49 @@ def verify_iso(plan, runner=None, xorriso=None, unsquashfs=None):
                     volume_id, expected_volume), path))
 
     digest = None
+    artifact_descriptor = None
+    opened_stat = file_stat
     try:
-        digest, opened_stat = _secure_hash_regular(path, file_stat)
+        flags = os.O_RDONLY
+        if hasattr(os, 'O_NOFOLLOW'):
+            flags |= os.O_NOFOLLOW
+        if hasattr(os, 'O_CLOEXEC'):
+            flags |= os.O_CLOEXEC
+        artifact_descriptor = os.open(path, flags)
+        opened_stat = os.fstat(artifact_descriptor)
+        if (not stat.S_ISREG(opened_stat.st_mode) or
+                _metadata_snapshot(opened_stat) !=
+                _metadata_snapshot(file_stat)):
+            raise ImageProjectError(
+                'artifact changed before final verification')
+        digest = _hash_descriptor(artifact_descriptor)
+        after = os.fstat(artifact_descriptor)
         final_lstat = os.lstat(path)
-        if (_identity(final_lstat) != _identity(file_stat) or
-                _identity(opened_stat) != _identity(file_stat)):
-            raise ImageProjectError('artifact inode changed during verification')
+        if (_metadata_snapshot(after) != _metadata_snapshot(opened_stat) or
+                _metadata_snapshot(final_lstat) !=
+                _metadata_snapshot(opened_stat)):
+            raise ImageProjectError(
+                'artifact changed during final verification')
     except (OSError, ImageProjectError, SourceInspectionError) as error:
+        if artifact_descriptor is not None:
+            os.close(artifact_descriptor)
+            artifact_descriptor = None
         diagnostics.append(Diagnostic(
             'error', 'output_hash_failed', str(error), path))
         opened_stat = file_stat
     level = (VERIFICATION_STRUCTURAL
              if not any(item.severity == 'error' for item in diagnostics)
              else VERIFICATION_BUILT)
+    if level != VERIFICATION_STRUCTURAL and artifact_descriptor is not None:
+        os.close(artifact_descriptor)
+        artifact_descriptor = None
     return _verification_result(
         plan, level, size=file_stat.st_size, sha256=digest,
         diagnostics=diagnostics, tree_paths=tree_paths,
         boot_report=boot_report, pvd_report=pvd_report,
         adapter_manifest_sha256=adapter_manifest_sha256,
         commands=commands, artifact_stat=opened_stat,
+        artifact_descriptor=artifact_descriptor,
         capture_summary=capture_summary,
         customization_summary=customization_summary)
 
@@ -7310,17 +7357,21 @@ def publish_verified_output(plan, verification_result, runner=None,
         raise OutputPublishError(
             'verification is not a structural attestation for this plan')
     if (verification_result.artifact_device is None or
-            verification_result.artifact_inode is None):
-        raise OutputPublishError('verification has no artifact identity')
+            verification_result.artifact_inode is None or
+            verification_result._artifact_descriptor is None):
+        raise OutputPublishError('verification has no retained artifact identity')
     try:
         _validate_job_identity(plan)
+        retained = os.fstat(verification_result._artifact_descriptor)
         before = os.lstat(plan.partial_output_path)
     except (OSError, ImageProjectError) as error:
         raise OutputPublishError(str(error))
     if (stat.S_ISLNK(before.st_mode) or not stat.S_ISREG(before.st_mode) or
-            _identity(before) != (verification_result.artifact_device,
-                                  verification_result.artifact_inode)):
-        raise OutputPublishError('partial artifact inode changed after verification')
+            _identity(retained) != (verification_result.artifact_device,
+                                    verification_result.artifact_inode) or
+            _metadata_snapshot(before) != _metadata_snapshot(retained)):
+        raise OutputPublishError(
+            'partial artifact identity changed after verification')
 
     repeated = verify_iso(
         plan, runner=runner, xorriso=xorriso, unsquashfs=unsquashfs)
@@ -7337,23 +7388,25 @@ def publish_verified_output(plan, verification_result, runner=None,
         raise OutputPublishError('repeated structural verification did not match')
     _output_matches_expectation(plan)
 
-    flags = os.O_RDONLY
-    if hasattr(os, 'O_NOFOLLOW'):
-        flags |= os.O_NOFOLLOW
+    if repeated._artifact_descriptor is None:
+        raise OutputPublishError(
+            'repeated verification has no retained artifact identity')
     try:
-        descriptor = os.open(plan.partial_output_path, flags)
+        descriptor = os.dup(repeated._artifact_descriptor)
     except OSError as error:
-        raise OutputPublishError('cannot securely open partial output: {}'.format(
-            error))
+        raise OutputPublishError(
+            'cannot retain verified partial output: {}'.format(error))
     try:
         held_stat = os.fstat(descriptor)
+        latest = os.lstat(plan.partial_output_path)
         if (_identity(held_stat) != (repeated.artifact_device,
                                      repeated.artifact_inode) or
+                _metadata_snapshot(latest) != _metadata_snapshot(held_stat) or
                 _hash_descriptor(descriptor) != repeated.sha256):
             raise OutputPublishError('partial output changed before publication')
         os.fsync(descriptor)
         latest = os.lstat(plan.partial_output_path)
-        if _identity(latest) != _identity(held_stat):
+        if _metadata_snapshot(latest) != _metadata_snapshot(held_stat):
             raise OutputPublishError('partial output path was replaced')
         expectation = _thaw(plan._output_expectation)
         if expectation['exists']:

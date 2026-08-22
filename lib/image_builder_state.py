@@ -64,9 +64,36 @@ CleanupResult = namedtuple('CleanupResult', ('cleaned', 'warning'))
 TaskOutcome = namedtuple('TaskOutcome', ('result', 'error', 'cancelled'))
 InventoryCancelResult = namedtuple(
     'InventoryCancelResult', ('marker_requested', 'runner_cancelled', 'error'))
-InventoryWorkspace = namedtuple(
-    'InventoryWorkspace',
-    ('directory', 'output_path', 'identity', 'cancel_path'))
+
+
+class InventoryWorkspace(object):
+    """Private inventory directory retained by an open descriptor."""
+
+    __slots__ = (
+        'directory', 'output_path', 'identity', 'cancel_path', '_descriptor')
+
+    def __init__(self, directory, output_path, identity, cancel_path, descriptor):
+        self.directory = directory
+        self.output_path = output_path
+        self.identity = tuple(identity)
+        self.cancel_path = cancel_path
+        self._descriptor = descriptor
+
+    def close(self):
+        descriptor = self._descriptor
+        if descriptor is None:
+            return
+        self._descriptor = None
+        try:
+            os.close(descriptor)
+        except OSError:
+            pass
+
+    def __del__(self):
+        try:
+            self.close()
+        except (AttributeError, OSError):
+            pass
 
 
 class TaskCancelled(Exception):
@@ -287,8 +314,12 @@ class CancellableCommandRunner(object):
                     _signal_process_group(process, pgid, signal.SIGKILL)
 
             thread = threading.Thread(target=escalate, daemon=True)
-            escalation_threads.append(thread)
+            # Do not expose a Thread object to the cleanup path until start()
+            # has completed.  Cancellation may race with a leader process that
+            # has already exited, and joining an unstarted thread raises on
+            # Python 3.6.
             thread.start()
+            escalation_threads.append(thread)
 
         remove_callback = self.token.add_cancel_callback(terminate)
         stdout_result = []
@@ -332,8 +363,9 @@ class CancellableCommandRunner(object):
                         break
         finally:
             remove_callback()
-            for thread in escalation_threads:
-                thread.join(0.2)
+            for thread in tuple(escalation_threads):
+                if thread.ident is not None:
+                    thread.join(0.2)
             with self._lock:
                 if self._process is process:
                     self._process = None
@@ -844,6 +876,7 @@ def create_inventory_workspace(parent_directory=None):
         raise ValueError('inventory parent must be a real directory')
     directory = tempfile.mkdtemp(
         prefix='.minios-image-builder-inventory-', dir=parent_directory)
+    descriptor = None
     try:
         os.chmod(directory, 0o700)
         directory_stat = os.lstat(directory)
@@ -853,15 +886,24 @@ def create_inventory_workspace(parent_directory=None):
                 (hasattr(os, 'geteuid') and
                  directory_stat.st_uid != os.geteuid())):
             raise ValueError('inventory workspace is not private')
+        descriptor = image_project._open_absolute_directory_nofollow(directory)
+        opened = os.fstat(descriptor)
+        if (image_project._metadata_snapshot(opened) !=
+                image_project._metadata_snapshot(directory_stat)):
+            raise ValueError('inventory workspace changed while opening')
         output_path = os.path.join(directory, 'session-inventory.json')
         cancel_path = os.path.join(directory, 'session-inventory.cancel')
         if os.path.lexists(output_path) or os.path.lexists(cancel_path):
             raise ValueError('inventory workspace is not empty')
-        return InventoryWorkspace(
+        workspace = InventoryWorkspace(
             directory, output_path,
-            (int(directory_stat.st_dev), int(directory_stat.st_ino)),
-            cancel_path)
+            (int(opened.st_dev), int(opened.st_ino)),
+            cancel_path, descriptor)
+        descriptor = None
+        return workspace
     except Exception:
+        if descriptor is not None:
+            os.close(descriptor)
         try:
             os.rmdir(directory)
         except OSError:
@@ -869,8 +911,57 @@ def create_inventory_workspace(parent_directory=None):
         raise
 
 
+def _validate_inventory_workspace(workspace):
+    if (not isinstance(workspace, InventoryWorkspace) or
+            workspace._descriptor is None):
+        raise ValueError('inventory workspace identity is invalid')
+    directory = os.path.abspath(workspace.directory)
+    retained = os.fstat(workspace._descriptor)
+    current = os.lstat(directory)
+    expected = tuple(workspace.identity)
+    if (stat.S_ISLNK(current.st_mode) or
+            not stat.S_ISDIR(current.st_mode) or
+            not stat.S_ISDIR(retained.st_mode) or
+            (int(retained.st_dev), int(retained.st_ino)) != expected or
+            (int(current.st_dev), int(current.st_ino)) != expected or
+            stat.S_IMODE(current.st_mode) != 0o700 or
+            stat.S_IMODE(retained.st_mode) != 0o700 or
+            (hasattr(os, 'geteuid') and
+             (current.st_uid != os.geteuid() or
+              retained.st_uid != os.geteuid()))):
+        raise ValueError('inventory workspace identity changed')
+    return current
+
+
+def _open_inventory_cleanup_entry(path, cancel_marker=False):
+    flags = os.O_RDONLY
+    if hasattr(os, 'O_NOFOLLOW'):
+        flags |= os.O_NOFOLLOW
+    if hasattr(os, 'O_CLOEXEC'):
+        flags |= os.O_CLOEXEC
+    descriptor = os.open(path, flags)
+    try:
+        opened = os.fstat(descriptor)
+        current = os.lstat(path)
+        if (stat.S_ISLNK(current.st_mode) or
+                not stat.S_ISREG(current.st_mode) or
+                not stat.S_ISREG(opened.st_mode) or
+                image_project._metadata_snapshot(current) !=
+                image_project._metadata_snapshot(opened)):
+            raise ValueError('inventory output is unsafe')
+        if (cancel_marker and
+                (stat.S_IMODE(opened.st_mode) != 0o600 or
+                 (hasattr(os, 'geteuid') and
+                  opened.st_uid != os.geteuid()))):
+            raise ValueError('inventory cancel marker is unsafe')
+        return descriptor, image_project._metadata_snapshot(opened)
+    except Exception:
+        os.close(descriptor)
+        raise
+
+
 def cleanup_inventory_workspace(workspace):
-    """Remove only an identity-checked inventory output and its own directory."""
+    """Remove only retained, identity-checked inventory workspace entries."""
     if workspace is None:
         return CleanupResult(True, None)
     if not isinstance(workspace, InventoryWorkspace):
@@ -884,72 +975,56 @@ def cleanup_inventory_workspace(workspace):
             os.path.basename(cancel_path) != 'session-inventory.cancel'):
         return CleanupResult(False, 'inventory paths escaped their workspace')
     try:
-        directory_stat = os.lstat(directory)
-    except OSError as error:
-        if getattr(error, 'errno', None) == 2:
+        _validate_inventory_workspace(workspace)
+    except (OSError, ValueError) as error:
+        if (isinstance(error, OSError) and
+                getattr(error, 'errno', None) == 2):
+            workspace.close()
             return CleanupResult(True, None)
-        return CleanupResult(False, 'cannot inspect inventory workspace')
-    identity = (int(directory_stat.st_dev), int(directory_stat.st_ino))
-    if (stat.S_ISLNK(directory_stat.st_mode) or
-            not stat.S_ISDIR(directory_stat.st_mode) or
-            identity != tuple(workspace.identity) or
-            stat.S_IMODE(directory_stat.st_mode) != 0o700 or
-            (hasattr(os, 'geteuid') and
-             directory_stat.st_uid != os.geteuid())):
         return CleanupResult(False, 'inventory workspace identity changed')
 
-    output_identity = None
-    if os.path.lexists(output_path):
-        try:
-            output_stat = os.lstat(output_path)
-            if (stat.S_ISLNK(output_stat.st_mode) or
-                    not stat.S_ISREG(output_stat.st_mode)):
+    entries = []
+    try:
+        if os.path.lexists(output_path):
+            try:
+                entries.append((output_path,) +
+                               _open_inventory_cleanup_entry(output_path))
+            except (OSError, ValueError):
                 return CleanupResult(False, 'inventory output is unsafe')
-            output_identity = (
-                int(output_stat.st_dev), int(output_stat.st_ino))
-        except OSError:
-            return CleanupResult(False, 'cannot inspect inventory output')
+        if os.path.lexists(cancel_path):
+            try:
+                entries.append((cancel_path,) +
+                               _open_inventory_cleanup_entry(
+                                   cancel_path, cancel_marker=True))
+            except (OSError, ValueError) as error:
+                detail = str(error)
+                if 'cancel marker' in detail:
+                    return CleanupResult(
+                        False, 'inventory cancel marker is unsafe')
+                return CleanupResult(
+                    False, 'cannot inspect inventory cancel marker')
 
-    cancel_identity = None
-    if os.path.lexists(cancel_path):
         try:
-            cancel_stat = os.lstat(cancel_path)
-            if (stat.S_ISLNK(cancel_stat.st_mode) or
-                    not stat.S_ISREG(cancel_stat.st_mode) or
-                    stat.S_IMODE(cancel_stat.st_mode) != 0o600 or
-                    (hasattr(os, 'geteuid') and
-                     cancel_stat.st_uid != os.geteuid())):
-                return CleanupResult(False, 'inventory cancel marker is unsafe')
-            cancel_identity = (
-                int(cancel_stat.st_dev), int(cancel_stat.st_ino))
-        except OSError:
+            for path, unused_descriptor, expected_identity in entries:
+                image_project.cleanup_session_inventory(
+                    path, expected_identity)
+        except Exception as error:
             return CleanupResult(
-                False, 'cannot inspect inventory cancel marker')
+                False, 'cannot clean inventory workspace entry: {}'.format(error))
+    finally:
+        for unused_path, descriptor, unused_identity in entries:
+            try:
+                os.close(descriptor)
+            except OSError:
+                pass
 
     try:
-        if output_identity is not None:
-            image_project.cleanup_session_inventory(
-                output_path, output_identity)
-        if cancel_identity is not None:
-            image_project.cleanup_session_inventory(
-                cancel_path, cancel_identity)
-    except Exception as error:
-        return CleanupResult(
-            False, 'cannot clean inventory workspace entry: {}'.format(error))
-    try:
-        final_stat = os.lstat(directory)
-        if (stat.S_ISLNK(final_stat.st_mode) or
-                not stat.S_ISDIR(final_stat.st_mode) or
-                (int(final_stat.st_dev), int(final_stat.st_ino)) !=
-                tuple(workspace.identity) or
-                stat.S_IMODE(final_stat.st_mode) != 0o700 or
-                (hasattr(os, 'geteuid') and
-                 final_stat.st_uid != os.geteuid())):
-            return CleanupResult(False, 'inventory workspace changed')
+        _validate_inventory_workspace(workspace)
         os.rmdir(directory)
-    except OSError as error:
+    except (OSError, ValueError) as error:
         return CleanupResult(
             False, 'cannot remove inventory workspace: {}'.format(error))
+    workspace.close()
     return CleanupResult(True, None)
 
 
@@ -961,6 +1036,7 @@ def request_inventory_cancel(workspace, runner):
         errors.append('inventory workspace identity is invalid')
     else:
         try:
+            _validate_inventory_workspace(workspace)
             marker_requested = bool(
                 image_project.request_session_inventory_cancel(
                     workspace.cancel_path, workspace.identity))
@@ -1243,12 +1319,25 @@ def collision_paths(collisions):
     return result
 
 
-def cleanup_plan_job(plan):
-    """Remove only an identity-checked private job directory owned by a plan.
+def _release_plan_job_descriptor(plan):
+    descriptor = getattr(plan, '_job_descriptor', None)
+    if descriptor is None:
+        return
+    try:
+        os.close(descriptor)
+    except OSError:
+        pass
+    try:
+        object.__setattr__(plan, '_job_descriptor', None)
+    except (AttributeError, TypeError):
+        pass
 
-    Refusing cleanup is preferable to recursively deleting a path whose
-    identity or relationship to the destination changed.  Callers must surface
-    the warning when ``cleaned`` is false.
+
+def cleanup_plan_job(plan):
+    """Remove only the retained private job directory owned by a plan.
+
+    The open directory descriptor keeps the original inode alive, so replacing
+    the path cannot become indistinguishable through immediate inode reuse.
     """
     if plan is None or not getattr(plan, 'job_directory', None):
         return CleanupResult(True, None)
@@ -1263,13 +1352,25 @@ def cleanup_plan_job(plan):
         return CleanupResult(
             False, 'job directory is outside the expected output directory')
     expected_identity = getattr(plan, '_job_identity', None)
+    descriptor = getattr(plan, '_job_descriptor', None)
     if (not isinstance(expected_identity, tuple) or
-            len(expected_identity) != 2):
+            len(expected_identity) != 2 or descriptor is None):
         return CleanupResult(False, 'plan job identity is unavailable')
+    try:
+        retained = os.fstat(descriptor)
+    except OSError as error:
+        return CleanupResult(False, 'cannot inspect retained job directory: {}'.format(
+            error))
+    if (not stat.S_ISDIR(retained.st_mode) or
+            (int(retained.st_dev), int(retained.st_ino)) != expected_identity or
+            stat.S_IMODE(retained.st_mode) != 0o700 or
+            (hasattr(os, 'geteuid') and retained.st_uid != os.geteuid())):
+        return CleanupResult(False, 'retained job directory identity changed')
     try:
         file_stat = os.lstat(job_directory)
     except OSError as error:
         if getattr(error, 'errno', None) == 2:
+            _release_plan_job_descriptor(plan)
             return CleanupResult(True, None)
         return CleanupResult(False, 'cannot inspect job directory: {}'.format(
             error))
@@ -1283,7 +1384,10 @@ def cleanup_plan_job(plan):
         return CleanupResult(False, 'private job directory owner changed')
     try:
         final_stat = os.lstat(job_directory)
+        retained = os.fstat(descriptor)
         if ((int(final_stat.st_dev), int(final_stat.st_ino)) !=
+                expected_identity or
+                (int(retained.st_dev), int(retained.st_ino)) !=
                 expected_identity):
             return CleanupResult(
                 False, 'private job directory changed before cleanup')
@@ -1293,6 +1397,7 @@ def cleanup_plan_job(plan):
             error))
     if os.path.lexists(job_directory):
         return CleanupResult(False, 'private job directory still exists')
+    _release_plan_job_descriptor(plan)
     return CleanupResult(True, None)
 
 

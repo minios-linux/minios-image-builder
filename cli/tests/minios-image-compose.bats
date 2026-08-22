@@ -5,7 +5,8 @@ setup() {
     COMPOSE="$BATS_TEST_DIRNAME/../bin/minios-image-compose"
     STUBS="$BATS_TEST_DIRNAME/stubs"
     SYSTEM_PATH=$PATH
-    TEST_ROOT="$BATS_TEST_TMPDIR/job $BATS_TEST_NUMBER"
+    TEST_TMP_BASE=${BATS_TEST_TMPDIR:-${BATS_TMPDIR:-${TMPDIR:-/tmp}}}
+    TEST_ROOT="$TEST_TMP_BASE/job $BATS_TEST_NUMBER"
     SOURCE="$TEST_ROOT/source tree = [x]\\root"
     CONFIG="$TEST_ROOT/config files/live config.conf"
     MANIFEST="$TEST_ROOT/manifests/build manifest.json"
@@ -463,13 +464,11 @@ assert_build_arg_pair() {
     ln -s "$CONFIG" "$config_link"
     ln -s "$SOURCE" "$source_link"
 
-    run env PATH="$STUBS:$SYSTEM_PATH" XORRISO_STATE="$STATE" TMPDIR="$TEMP_ROOT" \
-        "$COMPOSE" --source "$SOURCE" --config "$config_link" --name "$OUTPUT"
+    run_compose --config "$config_link"
     [ "$status" -ne 0 ]
     assert_output_contains 'must not be a symbolic link'
 
-    run env PATH="$STUBS:$SYSTEM_PATH" XORRISO_STATE="$STATE" TMPDIR="$TEMP_ROOT" \
-        "$COMPOSE" --source "$source_link" --config "$CONFIG" --name "$OUTPUT"
+    run_compose --source "$source_link"
     [ "$status" -eq 2 ]
     assert_output_contains 'must not be a symbolic link'
 }

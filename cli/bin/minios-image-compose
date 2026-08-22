@@ -46,6 +46,8 @@ ENV_BIN="/usr/bin/env"
 SETSID_BIN="/usr/bin/setsid"
 MKFS_EXT2_BIN=""
 MKSQUASHFS_BIN=""
+READLINK_BIN=""
+SYSTEM_TOOL_PATH=/usr/sbin:/usr/bin:/sbin:/bin
 SOURCE_TEST_MODE=false
 
 TEMP_DIR=""
@@ -379,7 +381,7 @@ trusted_executable() {
     local requested=$1
     local resolved owner mode
     [[ -e $requested ]] || return 1
-    resolved=$(/usr/bin/readlink -f -- "$requested") || return 1
+    resolved=$("$READLINK_BIN" -f -- "$requested") || return 1
     [[ -f $resolved && -x $resolved ]] || return 1
     read -r owner mode < <(/usr/bin/stat -c '%u %a' -- "$resolved") || return 1
     [[ $owner == 0 && $mode =~ ^[0-7]+$ ]] || return 1
@@ -582,7 +584,13 @@ done
 
 console_colors
 
-SCRIPT_PATH=$(/usr/bin/readlink -f -- "${BASH_SOURCE[0]}") || die 1 "$(gettext "Cannot resolve script path")"
+readlink_candidate=$(PATH=$SYSTEM_TOOL_PATH command -v readlink 2>/dev/null) ||
+    die 1 "$(gettext "Required command not found:") readlink"
+READLINK_BIN=$("$readlink_candidate" -f -- "$readlink_candidate") ||
+    die 1 "$(gettext "Cannot canonicalize readlink")"
+READLINK_BIN=$(trusted_executable "$READLINK_BIN") ||
+    die 1 "$(gettext "Trusted system readlink is unavailable")"
+SCRIPT_PATH=$("$READLINK_BIN" -f -- "${BASH_SOURCE[0]}") || die 1 "$(gettext "Cannot resolve script path")"
 SOURCE_TEST_MARKER=${SCRIPT_PATH%/*}/../tests/.source-test-context
 if (( EUID != 0 )) && [[ ${MINIOS_TOOLS_TEST_ALLOW_NON_ROOT:-0} == 1 &&
       -n ${MINIOS_TOOLS_TEST_ROOT:-} && -f $SOURCE_TEST_MARKER && ! -L $SOURCE_TEST_MARKER &&
@@ -597,7 +605,7 @@ fi
 
 # Locate the isolated Python helper engine. It lives beside the script in
 # development (cli/lib) and is installed to /usr/lib/minios-image-compose.
-compose_self=$(readlink -f -- "$0" 2>/dev/null || true)
+compose_self=$("$READLINK_BIN" -f -- "$0" 2>/dev/null || true)
 [ -n "$compose_self" ] || compose_self=$(command -v -- "$0" 2>/dev/null || printf '%s' "$0")
 compose_bin_dir=$(dirname -- "$compose_self")
 COMPOSE_ENGINE=""
@@ -605,12 +613,11 @@ for compose_engine_candidate in \
     "$compose_bin_dir/../lib/minios_image_compose_engine.py" \
     "/usr/lib/minios-image-compose/minios_image_compose_engine.py"; do
     if [ -f "$compose_engine_candidate" ]; then
-        COMPOSE_ENGINE=$(readlink -f -- "$compose_engine_candidate")
+        COMPOSE_ENGINE=$("$READLINK_BIN" -f -- "$compose_engine_candidate")
         break
     fi
 done
 [ -n "$COMPOSE_ENGINE" ] || die 1 "$(gettext "minios-image-compose helper engine not found")"
-SYSTEM_TOOL_PATH=/usr/sbin:/usr/bin:/sbin:/bin
 if [[ $SOURCE_TEST_MODE != true ]]; then
     PATH=$SYSTEM_TOOL_PATH
     export PATH
@@ -1264,7 +1271,7 @@ validate_source_symlink() {
     local resolved
     local resolved_relative
 
-    if ! readlink -z -- "$path" >"$link_file"; then
+    if ! "$READLINK_BIN" -z -- "$path" >"$link_file"; then
         die 2 "$(gettext "Cannot read source symbolic link:") $path"
     fi
     if ! IFS= read -r -d '' link_target <"$link_file"; then

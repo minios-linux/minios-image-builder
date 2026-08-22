@@ -1310,11 +1310,16 @@ def _fake_plan(tmp_path):
     (job / 'image.partial.iso').write_bytes(b'partial')
     (job / 'compose-manifest.json').write_text('{}', encoding='utf-8')
     file_stat = os.lstat(str(job))
+    flags = os.O_RDONLY
+    if hasattr(os, 'O_DIRECTORY'):
+        flags |= os.O_DIRECTORY
+    descriptor = os.open(str(job), flags)
     return SimpleNamespace(
         output_path=str(output), job_directory=str(job),
         partial_output_path=str(job / 'image.partial.iso'),
         adapter_manifest_path=str(job / 'compose-manifest.json'),
-        _job_identity=(int(file_stat.st_dev), int(file_stat.st_ino)))
+        _job_identity=(int(file_stat.st_dev), int(file_stat.st_ino)),
+        _job_descriptor=descriptor)
 
 
 def test_safe_cleanup_removes_only_identity_checked_plan_job(tmp_path):
@@ -1338,6 +1343,8 @@ def test_safe_cleanup_refuses_replaced_or_unrelated_directory(tmp_path):
     result = controller.cleanup_plan_job(replaced)
     assert not result.cleaned
     assert os.path.isdir(replaced.job_directory)
+    os.close(replaced._job_descriptor)
+    replaced._job_descriptor = None
 
     outside = tmp_path / 'ordinary-directory'
     outside.mkdir()
