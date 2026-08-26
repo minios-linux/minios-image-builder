@@ -1,0 +1,256 @@
+{
+  "headings": [
+    {
+      "anchor": "language-for-this-entry",
+      "level": 1,
+      "title": "Language for this entry"
+    },
+    {
+      "anchor": "accepted-values",
+      "level": 2,
+      "title": "Accepted values"
+    },
+    {
+      "anchor": "completion",
+      "level": 2,
+      "title": "Completion"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "language-for-this-entry",
+      [
+        [
+          "text",
+          "Language for this entry"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Override language, timezone, and keyboard settings for this startup entry only."
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "Empty fields keep the image defaults."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "accepted-values",
+      [
+        [
+          "text",
+          "Accepted values"
+        ]
+      ]
+    ],
+    [
+      "list",
+      {
+        "ordered": false,
+        "start": 1
+      },
+      [
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Locale"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " uses a locale name such as "
+                ],
+                [
+                  "span",
+                  "code",
+                  [
+                    [
+                      "text",
+                      "ru_RU.UTF-8"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  "."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Timezone"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " uses an IANA name such as "
+                ],
+                [
+                  "span",
+                  "code",
+                  [
+                    [
+                      "text",
+                      "Europe/Moscow"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  "."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Keyboard layout"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " uses an XKB layout code such as "
+                ],
+                [
+                  "span",
+                  "code",
+                  [
+                    [
+                      "text",
+                      "us"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " or "
+                ],
+                [
+                  "span",
+                  "code",
+                  [
+                    [
+                      "text",
+                      "ru"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  "."
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "completion",
+      [
+        [
+          "text",
+          "Completion"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Suggestions come from locale, timezone, and keyboard data installed in the"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "current system. A suggestion helps with spelling but does not add missing"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "locale data to the built image."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Language for this entry\nOverride language, timezone, and keyboard settings for this startup entry only.\nEmpty fields keep the image defaults.\nAccepted values\nLocale uses a locale name such as ru_RU.UTF-8.\nTimezone uses an IANA name such as Europe/Moscow.\nKeyboard layout uses an XKB layout code such as us or ru.\nCompletion\nSuggestions come from locale, timezone, and keyboard data installed in the\ncurrent system. A suggestion helps with spelling but does not add missing\nlocale data to the built image.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

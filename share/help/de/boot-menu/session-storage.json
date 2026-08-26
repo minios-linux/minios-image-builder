@@ -1,0 +1,432 @@
+{
+  "headings": [
+    {
+      "anchor": "sitzung-und-speicherung",
+      "level": 1,
+      "title": "Sitzung und Speicherung"
+    },
+    {
+      "anchor": "sitzungswahl",
+      "level": 2,
+      "title": "Sitzungswahl"
+    },
+    {
+      "anchor": "speichertyp",
+      "level": 2,
+      "title": "Speichertyp"
+    },
+    {
+      "anchor": "kapazität",
+      "level": 2,
+      "title": "Kapazität"
+    },
+    {
+      "anchor": "in-den-ram-kopieren",
+      "level": 2,
+      "title": "In den RAM kopieren"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "sitzung-und-speicherung",
+      [
+        [
+          "text",
+          "Sitzung und Speicherung"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Wählen Sie aus, wie dieser Eintrag dauerhafte Änderungen findet und speichert."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "sitzungswahl",
+      [
+        [
+          "text",
+          "Sitzungswahl"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Die Eintragsvorlage steuert, ob MiniOS die letzte Sitzung fortsetzt, eine neue erstellt oder beim Start fragt. Der Speichertyp ersetzt diese Vorlagenauswahl nicht."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "speichertyp",
+      [
+        [
+          "text",
+          "Speichertyp"
+        ]
+      ]
+    ],
+    [
+      "list",
+      {
+        "ordered": false,
+        "start": 1
+      },
+      [
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Automatisch"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " behält den Modus der Vorlage oder gespeicherten Sitzung bei."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Nativ"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " speichert Änderungen in einem Verzeichnis auf einem Linux-Dateisystem."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Dynfilefs"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " verwendet einen erweiterbaren Container."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Raw"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " nutzt ein Abbild mit fester Größe."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "LUKS"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " verwendet einen verschlüsselten Container."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "SquashFS"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " setzt eine bestehende komprimierte Sitzung fort."
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Das aktuelle initramfs kann SquashFS-Sitzungen fortsetzen, aber keine neuen erstellen."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "kapazität",
+      [
+        [
+          "text",
+          "Kapazität"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          ""
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Containergröße"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " gilt nur für containerbasierte Sitzungen und ist daher für Nativ und SquashFS deaktiviert. "
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Freier Speicher zum Behalten"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " reserviert Platz auf dem Persistenzgerät, damit gespeicherte Änderungen es nicht vollständig füllen."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Die entsprechenden Boot-Optionen sind "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "perchmode="
+            ]
+          ]
+        ],
+        [
+          "text",
+          ", "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "perchsize="
+            ]
+          ]
+        ],
+        [
+          "text",
+          " und "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "perchreserve="
+            ]
+          ]
+        ],
+        [
+          "text",
+          "."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "in-den-ram-kopieren",
+      [
+        [
+          "text",
+          "In den RAM kopieren"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "toram=full"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " kopiert das gesamte System in den Speicher. "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "toram=trim"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " kopiert nur die gefilterte Modulauswahl. Dies kann das Entfernen des Boot-Geräts ermöglichen, erfordert jedoch genügend RAM für die kopierten Daten."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Sitzung und Speicherung\nWählen Sie aus, wie dieser Eintrag dauerhafte Änderungen findet und speichert.\nSitzungswahl\nDie Eintragsvorlage steuert, ob MiniOS die letzte Sitzung fortsetzt, eine neue erstellt oder beim Start fragt. Der Speichertyp ersetzt diese Vorlagenauswahl nicht.\nSpeichertyp\nAutomatisch behält den Modus der Vorlage oder gespeicherten Sitzung bei.\nNativ speichert Änderungen in einem Verzeichnis auf einem Linux-Dateisystem.\nDynfilefs verwendet einen erweiterbaren Container.\nRaw nutzt ein Abbild mit fester Größe.\nLUKS verwendet einen verschlüsselten Container.\nSquashFS setzt eine bestehende komprimierte Sitzung fort.\nDas aktuelle initramfs kann SquashFS-Sitzungen fortsetzen, aber keine neuen erstellen.\nKapazität\nContainergröße gilt nur für containerbasierte Sitzungen und ist daher für Nativ und SquashFS deaktiviert. Freier Speicher zum Behalten reserviert Platz auf dem Persistenzgerät, damit gespeicherte Änderungen es nicht vollständig füllen.\nDie entsprechenden Boot-Optionen sind perchmode=, perchsize= und perchreserve=.\nIn den RAM kopieren\ntoram=full kopiert das gesamte System in den Speicher. toram=trim kopiert nur die gefilterte Modulauswahl. Dies kann das Entfernen des Boot-Geräts ermöglichen, erfordert jedoch genügend RAM für die kopierten Daten.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

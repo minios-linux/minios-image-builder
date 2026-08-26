@@ -60,11 +60,30 @@ headerbar.minios-headerbar {
     font-weight: 700;
 }
 
-.content-card {
-    border-radius: 6px;
-    border: 1px solid alpha(@borders, 0.65);
-    background-color: alpha(@theme_base_color, 0.35);
-    padding: 2px;
+.boot-option-heading {
+    padding: 0;
+    border: 0;
+    background: none;
+}
+
+.boot-option-heading .section-heading {
+    color: @theme_fg_color;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+popover .minios-help-title {
+    padding-bottom: 5px;
+    border-bottom: 2px solid @theme_selected_bg_color;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+popover .row-title {
+    margin-top: 8px;
+    color: @theme_selected_bg_color;
+    font-size: 14px;
+    font-weight: 700;
 }
 
 .field-label {
@@ -246,14 +265,6 @@ headerbar.minios-headerbar {
 
 .capture-mode-row {
     min-height: 58px;
-    padding: 9px 10px;
-    border: 1px solid alpha(@borders, 0.58);
-    border-left: 3px solid transparent;
-    background-color: alpha(@theme_base_color, 0.35);
-}
-
-.capture-mode-row:disabled {
-    background-color: alpha(@theme_base_color, 0.20);
 }
 
 .inventory-summary {
@@ -367,8 +378,23 @@ progressbar progress {
 
 .result-panel {
     padding: 12px 14px;
+    border-left: 4px solid alpha(@borders, 0.78);
+    background-color: alpha(@theme_fg_color, 0.04);
+}
+
+.result-panel.result-success {
     border-left: 4px solid #2d8c49;
     background-color: alpha(#2d8c49, 0.08);
+}
+
+.result-panel.result-error {
+    border-left: 4px solid #b3261e;
+    background-color: alpha(#b3261e, 0.08);
+}
+
+.result-panel.result-cancelled {
+    border-left: 4px solid #a15c00;
+    background-color: alpha(#a15c00, 0.08);
 }
 
 .result-title {
@@ -393,9 +419,9 @@ progressbar progress {
 }
 
 .action-bar {
-    min-height: 46px;
-    padding-top: 7px;
-    padding-bottom: 7px;
+    min-height: 32px;
+    padding-top: 4px;
+    padding-bottom: 4px;
     border-top: 1px solid alpha(@borders, 0.78);
     background-color: shade(@theme_bg_color, 0.97);
 }

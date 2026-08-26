@@ -1,0 +1,299 @@
+{
+  "headings": [
+    {
+      "anchor": "paramètres-de-démarrage-et-du-noyau",
+      "level": 1,
+      "title": "Paramètres de démarrage et du noyau"
+    },
+    {
+      "anchor": "session-et-persistance",
+      "level": 2,
+      "title": "Session et persistance"
+    },
+    {
+      "anchor": "copie-en-ram",
+      "level": 2,
+      "title": "Copie en RAM"
+    },
+    {
+      "anchor": "modules",
+      "level": 2,
+      "title": "Modules"
+    },
+    {
+      "anchor": "mémoire-et-graphisme",
+      "level": 2,
+      "title": "Mémoire et graphisme"
+    },
+    {
+      "anchor": "source-et-localisation",
+      "level": 2,
+      "title": "Source et localisation"
+    },
+    {
+      "anchor": "diagnostics",
+      "level": 2,
+      "title": "Diagnostics"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "paramètres-de-démarrage-et-du-noyau",
+      [
+        [
+          "text",
+          "Paramètres de démarrage et du noyau"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Saisissez les paramètres en les séparant par des espaces. La saisie semi-automatique propose des options courantes pour MiniOS et Linux. Les paramètres globaux s'appliquent à chaque entrée de session MiniOS créée ou conservée. Les paramètres spécifiques à une entrée sont ajoutés ensuite et peuvent remplacer une option clé-valeur MiniOS répétée."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "session-et-persistance",
+      [
+        [
+          "text",
+          "Session et persistance"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Ces options permettent d'activer les modifications persistantes, de reprendre la dernière session compatible,"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "de créer une nouvelle session, de demander au démarrage, ou de sélectionner directement une session numérotée :"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "perch, perchdir=resume, perchdir=new, perchdir=ask, et perchdir=NUMBER."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Les modes de stockage sont native, dynfilefs, raw, luks, et squashfs. SquashFS peut"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "reprendre une session compressée existante, mais l'initramfs actuel ne peut pas en créer une nouvelle. Les tailles de conteneur acceptent les suffixes MB, GB ou TB. L'espace libre réservé est mesuré en MiB ; sa valeur par défaut est 256 et son maximum est 4096."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Les options correspondantes sont perchmode=MODE, perchsize=SIZE, et"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "perchreserve=MIB."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "copie-en-ram",
+      [
+        [
+          "text",
+          "Copie en RAM"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Les options toram, toram=full, et toram=trim copient le système par défaut, complet ou filtré en RAM."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "modules",
+      [
+        [
+          "text",
+          "Modules"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Le filtre load charge uniquement les modules correspondants ; le filtre noload exclut"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "les modules correspondants. Les filtres peuvent contenir des noms de modules, des listes ou des plages MiniOS"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "prises en charge par l'initramfs. Les options sont load=FILTER et noload=FILTER."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "mémoire-et-graphisme",
+      [
+        [
+          "text",
+          "Mémoire et graphisme"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Les options de mémoire désactivent zRAM, choisissent la compression lzo, lzo-rle, lz4, lz4hc ou zstd,"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "et définissent la taille zRAM en MiB. Le mode texte démarre sans le bureau graphique. Nomodeset désactive le mode graphique normal du noyau et est utile pour le dépannage graphique. Les options sont nozram, zramcomp=ALGORITHM,"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "zramsize=MIB, text, et nomodeset."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "source-et-localisation",
+      [
+        [
+          "text",
+          "Source et localisation"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Ces options sélectionnent la source de données MiniOS et remplacent les paramètres de langue, de fuseau horaire"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "et de clavier pour l'entrée. Les options sont from=SOURCE, from=askdisk,"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "locales=LOCALE, timezone=ZONE, et keyboard-layouts=LAYOUT."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "diagnostics",
+      [
+        [
+          "text",
+          "Diagnostics"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Quiet réduit les messages de démarrage. Debug active des diagnostics supplémentaires. Utilisez uniquement"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "les paramètres compris par Linux, l'initramfs MiniOS ou live-config. Les options sont quiet et debug."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Paramètres de démarrage et du noyau\nSaisissez les paramètres en les séparant par des espaces. La saisie semi-automatique propose des options courantes pour MiniOS et Linux. Les paramètres globaux s'appliquent à chaque entrée de session MiniOS créée ou conservée. Les paramètres spécifiques à une entrée sont ajoutés ensuite et peuvent remplacer une option clé-valeur MiniOS répétée.\nSession et persistance\nCes options permettent d'activer les modifications persistantes, de reprendre la dernière session compatible,\nde créer une nouvelle session, de demander au démarrage, ou de sélectionner directement une session numérotée :\nperch, perchdir=resume, perchdir=new, perchdir=ask, et perchdir=NUMBER.\nLes modes de stockage sont native, dynfilefs, raw, luks, et squashfs. SquashFS peut\nreprendre une session compressée existante, mais l'initramfs actuel ne peut pas en créer une nouvelle. Les tailles de conteneur acceptent les suffixes MB, GB ou TB. L'espace libre réservé est mesuré en MiB ; sa valeur par défaut est 256 et son maximum est 4096.\nLes options correspondantes sont perchmode=MODE, perchsize=SIZE, et\nperchreserve=MIB.\nCopie en RAM\nLes options toram, toram=full, et toram=trim copient le système par défaut, complet ou filtré en RAM.\nModules\nLe filtre load charge uniquement les modules correspondants ; le filtre noload exclut\nles modules correspondants. Les filtres peuvent contenir des noms de modules, des listes ou des plages MiniOS\nprises en charge par l'initramfs. Les options sont load=FILTER et noload=FILTER.\nMémoire et graphisme\nLes options de mémoire désactivent zRAM, choisissent la compression lzo, lzo-rle, lz4, lz4hc ou zstd,\net définissent la taille zRAM en MiB. Le mode texte démarre sans le bureau graphique. Nomodeset désactive le mode graphique normal du noyau et est utile pour le dépannage graphique. Les options sont nozram, zramcomp=ALGORITHM,\nzramsize=MIB, text, et nomodeset.\nSource et localisation\nCes options sélectionnent la source de données MiniOS et remplacent les paramètres de langue, de fuseau horaire\net de clavier pour l'entrée. Les options sont from=SOURCE, from=askdisk,\nlocales=LOCALE, timezone=ZONE, et keyboard-layouts=LAYOUT.\nDiagnostics\nQuiet réduit les messages de démarrage. Debug active des diagnostics supplémentaires. Utilisez uniquement\nles paramètres compris par Linux, l'initramfs MiniOS ou live-config. Les options sont quiet et debug.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

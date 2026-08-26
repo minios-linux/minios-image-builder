@@ -1,0 +1,265 @@
+{
+  "headings": [
+    {
+      "anchor": "arbeitsspeicher",
+      "level": 1,
+      "title": "Arbeitsspeicher"
+    },
+    {
+      "anchor": "zram-status",
+      "level": 2,
+      "title": "zRAM-Status"
+    },
+    {
+      "anchor": "komprimierung",
+      "level": 2,
+      "title": "Komprimierung"
+    },
+    {
+      "anchor": "größe",
+      "level": 2,
+      "title": "Größe"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "arbeitsspeicher",
+      [
+        [
+          "text",
+          "Arbeitsspeicher"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Steuern Sie den komprimierten zRAM-Swap, der für diesen Eintrag erstellt wurde."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "zram-status",
+      [
+        [
+          "text",
+          "zRAM-Status"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          ""
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Automatisch"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " behält die MiniOS-Standardeinstellungen für den Speicher bei. "
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Deaktiviert"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " fügt "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "nozram"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " hinzu und deaktiviert die Komprimierungs- und Größenkontrollen, da sie nicht mehr anwendbar sind."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "komprimierung",
+      [
+        [
+          "text",
+          "Komprimierung"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "zramcomp="
+            ]
+          ]
+        ],
+        [
+          "text",
+          " wählt den Komprimierungsalgorithmus aus. Verfügbare Optionen sind "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "lzo"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ","
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "lzo-rle"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ", "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "lz4"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ", "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "lz4hc"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " und "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "zstd"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ". Die Verfügbarkeit des Algorithmus hängt auch vom laufenden Kernel ab."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "größe",
+      [
+        [
+          "text",
+          "Größe"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "zramsize="
+            ]
+          ]
+        ],
+        [
+          "text",
+          " legt die zRAM-Größe in MiB fest. Lassen Sie das Feld leer, damit MiniOS"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "die Größe automatisch berechnet. Ein größerer Wert bedeutet keinen freien physischen Speicher:"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "komprimierte Seiten belegen weiterhin RAM."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Arbeitsspeicher\nSteuern Sie den komprimierten zRAM-Swap, der für diesen Eintrag erstellt wurde.\nzRAM-Status\nAutomatisch behält die MiniOS-Standardeinstellungen für den Speicher bei. Deaktiviert fügt nozram hinzu und deaktiviert die Komprimierungs- und Größenkontrollen, da sie nicht mehr anwendbar sind.\nKomprimierung\nzramcomp= wählt den Komprimierungsalgorithmus aus. Verfügbare Optionen sind lzo,\nlzo-rle, lz4, lz4hc und zstd. Die Verfügbarkeit des Algorithmus hängt auch vom laufenden Kernel ab.\nGröße\nzramsize= legt die zRAM-Größe in MiB fest. Lassen Sie das Feld leer, damit MiniOS\ndie Größe automatisch berechnet. Ein größerer Wert bedeutet keinen freien physischen Speicher:\nkomprimierte Seiten belegen weiterhin RAM.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

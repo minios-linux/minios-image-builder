@@ -1,0 +1,225 @@
+{
+  "headings": [
+    {
+      "anchor": "diagnostics-and-advanced-options",
+      "level": 1,
+      "title": "Diagnostics and advanced options"
+    },
+    {
+      "anchor": "boot-messages",
+      "level": 2,
+      "title": "Boot messages"
+    },
+    {
+      "anchor": "additional-parameters",
+      "level": 2,
+      "title": "Additional parameters"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "diagnostics-and-advanced-options",
+      [
+        [
+          "text",
+          "Diagnostics and advanced options"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Adjust boot logging or add parameters not represented by the typed controls."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "boot-messages",
+      [
+        [
+          "text",
+          "Boot messages"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          ""
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Hide routine boot messages"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " adds "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "quiet"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ". "
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Enable diagnostic logging"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " adds"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "debug"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ". They can be enabled independently. Disable "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "quiet"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " when detailed boot"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "messages are more useful than a clean startup screen."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "additional-parameters",
+      [
+        [
+          "text",
+          "Additional parameters"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Enter only Linux, MiniOS initramfs, or live-config parameters that do not have a"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "typed control. Existing unknown parameters are preserved here, and completion"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "continues to suggest common options."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Entry-specific parameters are appended after the template and global kernel"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "arguments. For a repeated MiniOS "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "key=value"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " option, the last value normally"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "wins. Invalid or conflicting expert parameters can prevent startup."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Diagnostics and advanced options\nAdjust boot logging or add parameters not represented by the typed controls.\nBoot messages\nHide routine boot messages adds quiet. Enable diagnostic logging adds\ndebug. They can be enabled independently. Disable quiet when detailed boot\nmessages are more useful than a clean startup screen.\nAdditional parameters\nEnter only Linux, MiniOS initramfs, or live-config parameters that do not have a\ntyped control. Existing unknown parameters are preserved here, and completion\ncontinues to suggest common options.\nEntry-specific parameters are appended after the template and global kernel\narguments. For a repeated MiniOS key=value option, the last value normally\nwins. Invalid or conflicting expert parameters can prevent startup.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

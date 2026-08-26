@@ -1,0 +1,267 @@
+{
+  "headings": [
+    {
+      "anchor": "boot-menü-konfigurator",
+      "level": 1,
+      "title": "Boot-Menü-Konfigurator"
+    },
+    {
+      "anchor": "vorhandenes-quellmenü",
+      "level": 2,
+      "title": "Vorhandenes Quellmenü"
+    },
+    {
+      "anchor": "wie-ein-eintrag-zusammengesetzt-wird",
+      "level": 2,
+      "title": "Wie ein Eintrag zusammengesetzt wird"
+    },
+    {
+      "anchor": "sitzungsvorlagen",
+      "level": 2,
+      "title": "Sitzungsvorlagen"
+    },
+    {
+      "anchor": "persistenztypen",
+      "level": 2,
+      "title": "Persistenztypen"
+    },
+    {
+      "anchor": "abhängige-einstellungen",
+      "level": 2,
+      "title": "Abhängige Einstellungen"
+    },
+    {
+      "anchor": "vervollständigung-und-experteneingabe",
+      "level": 2,
+      "title": "Vervollständigung und Experteneingabe"
+    },
+    {
+      "anchor": "vorgaben-und-namen",
+      "level": 2,
+      "title": "Vorgaben und Namen"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "boot-menü-konfigurator",
+      [
+        [
+          "text",
+          "Boot-Menü-Konfigurator"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Erstellen Sie das sichtbare Startmenü aus unabhängigen Einträgen. Wählen Sie eine Vorlage und passen Sie den Eintrag anschließend mit den verfügbaren Steuerelementen an. Deaktivierte Einträge bleiben im Projekt erhalten, werden aber im generierten Menü ausgelassen."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "vorhandenes-quellmenü",
+      [
+        [
+          "text",
+          "Vorhandenes Quellmenü"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Vor der Anpassung liest der Konfigurator erkannte MiniOS-Einträge, deren Standard und Timeout sowie unterstützte Parameter aus dem aktiven GRUB- oder nativen SYSLINUX-Menü aus. Beim Bearbeiten eines importierten Eintrags werden nur die Parameter ersetzt, die durch typisierte Steuerelemente dargestellt werden. Andere Quellargumente bleiben in der Boot-Vorlage erhalten. In einem mehrsprachigen Menü behält jede Sprache ihre Quell-Locale, Zeitzone und Tastatur-Argumente, sofern Sie diese nicht explizit überschreiben."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "wie-ein-eintrag-zusammengesetzt-wird",
+      [
+        [
+          "text",
+          "Wie ein Eintrag zusammengesetzt wird"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Die Vorlage liefert das grundlegende MiniOS-Verhalten. Globale Experten-Kernel-Argumente werden anschließend angewendet, gefolgt von den typisierten Optionen und zusätzlichen Parametern für diesen Eintrag. Bei mehrfachen MiniOS-Schlüssel-Wert-Optionen gilt der zuletzt angegebene Wert."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "sitzungsvorlagen",
+      [
+        [
+          "text",
+          "Sitzungsvorlagen"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Resume verwendet perchdir=resume. New verwendet perchdir=new. Choose verwendet perchdir=ask."
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "Fresh hat keinen Persistenzselektor. Kopieren in den RAM verwendet toram."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Sie können mehrere Einträge aus derselben Vorlage erstellen."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "persistenztypen",
+      [
+        [
+          "text",
+          "Persistenztypen"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Native speichert Änderungen in einem Verzeichnis. Dynfilefs verwendet einen erweiterbaren Container,"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "Raw nutzt ein Abbild mit fester Größe und LUKS einen verschlüsselten Container. SquashFS"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "setzt eine bestehende komprimierte Sitzung fort. Das aktuelle"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "initramfs kann keine neue SquashFS-Sitzung erstellen."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "abhängige-einstellungen",
+      [
+        [
+          "text",
+          "Abhängige Einstellungen"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Steuerelemente werden deaktiviert, wenn sie nicht zutreffen. Das Deaktivieren von zRAM schaltet"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "auch dessen Kompression und Größensteuerung ab. Native und SquashFS-Persistenz verwenden das Feld für die Containergröße nicht."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "vervollständigung-und-experteneingabe",
+      [
+        [
+          "text",
+          "Vervollständigung und Experteneingabe"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Modulfilter vervollständigen sich aus Modulen, die in der gewählten Quelle erkannt wurden. Locale-, Zeitzonen- und Tastaturfelder werden aus den auf dem System installierten Daten vervollständigt. Verwenden Sie zusätzliche Parameter nur für Optionen ohne typisiertes Steuerelement. Unbekannte Argumente aus einem älteren Projekt bleiben dort erhalten."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "vorgaben-und-namen",
+      [
+        [
+          "text",
+          "Vorgaben und Namen"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Ein angepasstes Menü hat genau einen Standard-Eintrag. Das Deaktivieren des Standards wählt automatisch einen anderen aktivierten Eintrag aus. Ein leerer Name übernimmt den Titel der Quelle oder Vorlage. ASCII-Benutzerdefinierte Namen funktionieren in mehrsprachigen Menüs; ein einsprachiges Menü kann Zeichen verwenden, die von der Zeichencodierung des jeweiligen Bootloader-Menüs unterstützt werden."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Boot-Menü-Konfigurator\nErstellen Sie das sichtbare Startmenü aus unabhängigen Einträgen. Wählen Sie eine Vorlage und passen Sie den Eintrag anschließend mit den verfügbaren Steuerelementen an. Deaktivierte Einträge bleiben im Projekt erhalten, werden aber im generierten Menü ausgelassen.\nVorhandenes Quellmenü\nVor der Anpassung liest der Konfigurator erkannte MiniOS-Einträge, deren Standard und Timeout sowie unterstützte Parameter aus dem aktiven GRUB- oder nativen SYSLINUX-Menü aus. Beim Bearbeiten eines importierten Eintrags werden nur die Parameter ersetzt, die durch typisierte Steuerelemente dargestellt werden. Andere Quellargumente bleiben in der Boot-Vorlage erhalten. In einem mehrsprachigen Menü behält jede Sprache ihre Quell-Locale, Zeitzone und Tastatur-Argumente, sofern Sie diese nicht explizit überschreiben.\nWie ein Eintrag zusammengesetzt wird\nDie Vorlage liefert das grundlegende MiniOS-Verhalten. Globale Experten-Kernel-Argumente werden anschließend angewendet, gefolgt von den typisierten Optionen und zusätzlichen Parametern für diesen Eintrag. Bei mehrfachen MiniOS-Schlüssel-Wert-Optionen gilt der zuletzt angegebene Wert.\nSitzungsvorlagen\nResume verwendet perchdir=resume. New verwendet perchdir=new. Choose verwendet perchdir=ask.\nFresh hat keinen Persistenzselektor. Kopieren in den RAM verwendet toram.\nSie können mehrere Einträge aus derselben Vorlage erstellen.\nPersistenztypen\nNative speichert Änderungen in einem Verzeichnis. Dynfilefs verwendet einen erweiterbaren Container,\nRaw nutzt ein Abbild mit fester Größe und LUKS einen verschlüsselten Container. SquashFS\nsetzt eine bestehende komprimierte Sitzung fort. Das aktuelle\ninitramfs kann keine neue SquashFS-Sitzung erstellen.\nAbhängige Einstellungen\nSteuerelemente werden deaktiviert, wenn sie nicht zutreffen. Das Deaktivieren von zRAM schaltet\nauch dessen Kompression und Größensteuerung ab. Native und SquashFS-Persistenz verwenden das Feld für die Containergröße nicht.\nVervollständigung und Experteneingabe\nModulfilter vervollständigen sich aus Modulen, die in der gewählten Quelle erkannt wurden. Locale-, Zeitzonen- und Tastaturfelder werden aus den auf dem System installierten Daten vervollständigt. Verwenden Sie zusätzliche Parameter nur für Optionen ohne typisiertes Steuerelement. Unbekannte Argumente aus einem älteren Projekt bleiben dort erhalten.\nVorgaben und Namen\nEin angepasstes Menü hat genau einen Standard-Eintrag. Das Deaktivieren des Standards wählt automatisch einen anderen aktivierten Eintrag aus. Ein leerer Name übernimmt den Titel der Quelle oder Vorlage. ASCII-Benutzerdefinierte Namen funktionieren in mehrsprachigen Menüs; ein einsprachiges Menü kann Zeichen verwenden, die von der Zeichencodierung des jeweiligen Bootloader-Menüs unterstützt werden.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

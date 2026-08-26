@@ -1,0 +1,283 @@
+{
+  "headings": [
+    {
+      "anchor": "system-and-modules",
+      "level": 1,
+      "title": "System and modules"
+    },
+    {
+      "anchor": "module-filters",
+      "level": 2,
+      "title": "Module filters"
+    },
+    {
+      "anchor": "startup-environment",
+      "level": 2,
+      "title": "Startup environment"
+    },
+    {
+      "anchor": "graphics-compatibility",
+      "level": 2,
+      "title": "Graphics compatibility"
+    },
+    {
+      "anchor": "disk-automounting",
+      "level": 2,
+      "title": "Disk automounting"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "system-and-modules",
+      [
+        [
+          "text",
+          "System and modules"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Select the modules and startup environment for this entry."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "module-filters",
+      [
+        [
+          "text",
+          "Module filters"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          ""
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Load modules"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " restricts loading to matching module names or ranges."
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          ""
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Skip modules"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " excludes matching modules. Suggestions come from modules"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "detected in the selected MiniOS source."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "These controls generate "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "load=FILTER"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " and "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "noload=FILTER"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ". Use only filter"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "forms supported by the MiniOS initramfs."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "startup-environment",
+      [
+        [
+          "text",
+          "Startup environment"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Keep the image default, start the graphical desktop, use a text console, or"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "enter rescue mode. Text mode and rescue mode are intended for administration"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "and troubleshooting rather than normal desktop use."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "graphics-compatibility",
+      [
+        [
+          "text",
+          "Graphics compatibility"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Compatibility mode adds the Linux kernel option "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "nomodeset"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ". Use it when normal"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "kernel mode setting prevents the graphical system from starting. It can reduce"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "display resolution and acceleration."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "disk-automounting",
+      [
+        [
+          "text",
+          "Disk automounting"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Enable automatic mounting only when the session should expose other attached"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "filesystems after startup."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "System and modules\nSelect the modules and startup environment for this entry.\nModule filters\nLoad modules restricts loading to matching module names or ranges.\nSkip modules excludes matching modules. Suggestions come from modules\ndetected in the selected MiniOS source.\nThese controls generate load=FILTER and noload=FILTER. Use only filter\nforms supported by the MiniOS initramfs.\nStartup environment\nKeep the image default, start the graphical desktop, use a text console, or\nenter rescue mode. Text mode and rescue mode are intended for administration\nand troubleshooting rather than normal desktop use.\nGraphics compatibility\nCompatibility mode adds the Linux kernel option nomodeset. Use it when normal\nkernel mode setting prevents the graphical system from starting. It can reduce\ndisplay resolution and acceleration.\nDisk automounting\nEnable automatic mounting only when the session should expose other attached\nfilesystems after startup.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

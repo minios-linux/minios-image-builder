@@ -32,6 +32,8 @@ BOOT_TIMEOUT=""
 BOOT_TIMEOUT_SET=false
 DEFAULT_BOOT=""
 DEFAULT_BOOT_SET=false
+BOOT_MENU_JSON=""
+BOOT_MENU_JSON_SET=false
 KERNEL_ARGS=""
 KERNEL_ARGS_SET=false
 BOOT_BACKGROUND_INPUT=""
@@ -113,6 +115,7 @@ help() {
     printf '      --boot-timeout SECONDS\n'
     printf '                            %s\n' "$(gettext "Set effective GRUB and SYSLINUX timeout (0 to 300 seconds)")"
     printf '      --default-boot MODE   %s\n' "$(gettext "Default session: resume, new, choose, fresh, or toram")"
+    printf '      --boot-menu-json JSON %s\n' "$(gettext "Construct MiniOS boot-menu entries with per-entry parameters")"
     printf '      --kernel-args TEXT    %s\n' "$(gettext "Append safe kernel arguments to every effective kernel line")"
     printf '      --boot-background PNG %s\n' "$(gettext "Use a validated PNG for MiniOS boot backgrounds")"
     printf '      --overlay-directory DIR\n'
@@ -519,6 +522,13 @@ while (( $# > 0 )); do
         shift 2
         ;;
     --default-boot=*) DEFAULT_BOOT_SET=true; DEFAULT_BOOT=${1#*=}; shift ;;
+    --boot-menu-json)
+        require_value "$1" "$#"
+        BOOT_MENU_JSON_SET=true
+        BOOT_MENU_JSON=$2
+        shift 2
+        ;;
+    --boot-menu-json=*) BOOT_MENU_JSON_SET=true; BOOT_MENU_JSON=${1#*=}; shift ;;
     --kernel-args)
         require_value "$1" "$#"
         KERNEL_ARGS_SET=true
@@ -654,6 +664,13 @@ if [[ $DEFAULT_BOOT_SET == true ]]; then
     *) die 1 "$(gettext "Invalid default boot mode:") $DEFAULT_BOOT" ;;
     esac
 fi
+if [[ $BOOT_MENU_JSON_SET == true ]]; then
+    [[ -n $BOOT_MENU_JSON ]] || die 1 "$(gettext "Boot menu customization must not be empty")"
+    validate_no_line_break "$(gettext "Boot menu customization")" "$BOOT_MENU_JSON"
+    boot_menu_bytes=$(LC_ALL=C; printf '%s' "$BOOT_MENU_JSON" | wc -c)
+    (( boot_menu_bytes <= 65536 )) || die 1 "$(gettext "Boot menu customization exceeds 65536 UTF-8 bytes")"
+    [[ $DEFAULT_BOOT_SET != true ]] || die 1 "$(gettext "--boot-menu-json cannot be combined with --default-boot")"
+fi
 if [[ $KERNEL_ARGS_SET == true ]]; then
     [[ -n $KERNEL_ARGS ]] || die 1 "$(gettext "Kernel arguments must not be empty")"
     validate_no_line_break "$(gettext "Kernel arguments")" "$KERNEL_ARGS"
@@ -668,8 +685,8 @@ if [[ $OVERLAY_DIRECTORY_SET == true ]]; then
     [[ -n $OVERLAY_DIRECTORY_INPUT ]] || die 1 "$(gettext "Overlay directory path must not be empty")"
     validate_no_line_break "$(gettext "Overlay directory path")" "$OVERLAY_DIRECTORY_INPUT"
 fi
-if [[ $BOOT_TIMEOUT_SET == true || $DEFAULT_BOOT_SET == true || $KERNEL_ARGS_SET == true ||
-      $BOOT_BACKGROUND_SET == true || $OVERLAY_DIRECTORY_SET == true ]]; then
+if [[ $BOOT_TIMEOUT_SET == true || $DEFAULT_BOOT_SET == true || $BOOT_MENU_JSON_SET == true ||
+      $KERNEL_ARGS_SET == true || $BOOT_BACKGROUND_SET == true || $OVERLAY_DIRECTORY_SET == true ]]; then
     CUSTOMIZATION_REQUESTED=true
 fi
 case $MENU_TYPE in
@@ -678,7 +695,6 @@ multilang | en_US | ru_RU | de_DE | es_ES | it_IT | id_ID | pt_BR | pt_PT | fr_F
     die 1 "$(gettext "Invalid menu type:") $MENU_TYPE. $(gettext "Valid types: multilang, en_US, ru_RU, de_DE, es_ES, it_IT, id_ID, pt_BR, pt_PT, fr_FR")"
     ;;
 esac
-
 validate_no_line_break "$(gettext "Exclusion regex")" "$EXCLUDE_REGEX"
 
 is_printable_ascii() {
@@ -715,6 +731,11 @@ PYTHON_BIN=$(trusted_executable /usr/bin/python3) ||
     die 1 "$(gettext "Trusted /usr/bin/python3 is unavailable")"
 ENV_BIN=$(trusted_executable /usr/bin/env) || die 1 "$(gettext "Trusted /usr/bin/env is unavailable")"
 SETSID_BIN=$(trusted_executable /usr/bin/setsid) || die 1 "$(gettext "Trusted /usr/bin/setsid is unavailable")"
+if [[ $BOOT_MENU_JSON_SET == true ]]; then
+    if ! run_isolated_python validate-boot-menu-json "$BOOT_MENU_JSON" "$MENU_TYPE"; then
+        die 1 "$(gettext "Invalid boot menu customization")"
+    fi
+fi
 if [[ $OVERLAY_DIRECTORY_SET == true ]]; then
     if [[ $SOURCE_TEST_MODE == true ]]; then
         overlay_mks_candidate=${COMPOSE_TEST_MKSQUASHFS:-}
@@ -2053,7 +2074,7 @@ esac
 boot_records=""
 boot_plan=""
 boot_output_mapping=""
-if [[ $BOOT_TIMEOUT_SET == true || $DEFAULT_BOOT_SET == true || $KERNEL_ARGS_SET == true ]]; then
+if [[ $BOOT_TIMEOUT_SET == true || $DEFAULT_BOOT_SET == true || $BOOT_MENU_JSON_SET == true || $KERNEL_ARGS_SET == true ]]; then
     boot_input_mapping=$TEMP_DIR/boot-config-inputs
     boot_roots=$TEMP_DIR/boot-config-roots
     : >"$boot_input_mapping"
@@ -2087,7 +2108,7 @@ if [[ $BOOT_TIMEOUT_SET == true || $DEFAULT_BOOT_SET == true || $KERNEL_ARGS_SET
     boot_output_mapping=$TEMP_DIR/boot-customization.mapping
     if ! run_isolated_python customize-boot "$boot_input_mapping" "$boot_roots" \
         "$boot_output_directory" "$boot_plan" "$boot_records" "$boot_output_mapping" \
-        "$BOOT_TIMEOUT" "$DEFAULT_BOOT" "$KERNEL_ARGS"; then
+        "$BOOT_TIMEOUT" "$DEFAULT_BOOT" "$KERNEL_ARGS" "$MENU_TYPE" "$BOOT_MENU_JSON"; then
         die 2 "$(gettext "Effective boot configuration cannot represent the requested customization")"
     fi
     mapfile -d '' -t boot_output_values <"$boot_output_mapping"
@@ -2119,6 +2140,7 @@ if [[ $BOOT_TIMEOUT_SET == true || $DEFAULT_BOOT_SET == true || $KERNEL_ARGS_SET
     boot_attestation_present=true
     [[ $BOOT_TIMEOUT_SET != true ]] || information "$(gettext "Boot timeout seconds:") $BOOT_TIMEOUT"
     [[ $DEFAULT_BOOT_SET != true ]] || information "$(gettext "Default MiniOS session:") $DEFAULT_BOOT"
+    [[ $BOOT_MENU_JSON_SET != true ]] || information "$(gettext "Boot menu entries customized")"
 fi
 
 customization_report=""
@@ -2425,7 +2447,7 @@ if [[ $CUSTOMIZATION_REQUESTED == true ]]; then
         "$boot_plan" "$extracted_boot_mapping" "$recompute_directory" \
         "$extracted_background_mapping" "$overlay_extract" "$overlay_module" \
         "$boot_attestation_present" "$BOOT_TIMEOUT" "$DEFAULT_BOOT" "$KERNEL_ARGS" \
-        "$boot_plan_size" "$boot_plan_digest" "$boot_target_count" \
+        "$MENU_TYPE" "$BOOT_MENU_JSON" "$boot_plan_size" "$boot_plan_digest" "$boot_target_count" \
         "$boot_target_digest" "$background_attestation_present" "$background_width" \
         "$background_height" "$background_size" "$background_digest" \
         "$background_target_count" "$background_target_digest" \

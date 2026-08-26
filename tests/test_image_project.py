@@ -1520,12 +1520,25 @@ def test_build_plan_display_and_manifest_redact_private_inputs(tmp_path):
     overlay = project_dir / 'private-overlay'
     _write(overlay / 'etc' / 'value', b'value')
     kernel_args = 'audit=1 private_kernel_marker=1'
+    entry_args = 'private_entry_marker=1 nomodeset'
+    boot_menu = [
+        {
+            'id': 'normal', 'base_mode': 'fresh', 'enabled': True,
+            'default': True, 'title': None, 'kernel_args': '',
+        },
+        {
+            'id': 'safe', 'base_mode': 'fresh', 'enabled': True,
+            'default': False, 'title': None,
+            'kernel_args': entry_args,
+        },
+    ]
     override = 'private-full-name'
     project = _project(
         info, project_dir / 'out.iso', project_dir,
         additional_module_paths=(str(additional),),
         live_config_overrides={'LIVE_USER_FULLNAME': override},
-        kernel_args=kernel_args, boot_background_path=str(background),
+        kernel_args=kernel_args, boot_menu_entries=boot_menu,
+        boot_background_path=str(background),
         overlay_directory=str(overlay))
 
     plan = _plan(project, info, config)
@@ -1535,10 +1548,19 @@ def test_build_plan_display_and_manifest_redact_private_inputs(tmp_path):
     assert plan.buildable
     for private_value in (
             str(source), str(config), str(additional), str(background),
-            str(overlay), kernel_args, override):
+            str(overlay), kernel_args, entry_args, override):
         assert private_value not in public
         assert private_value not in display
     assert kernel_args in plan.argv
+    boot_menu_json = plan.argv[plan.argv.index('--boot-menu-json') + 1]
+    assert entry_args in boot_menu_json
+    assert '\n' not in boot_menu_json and '\r' not in boot_menu_json
+    assert '<redacted-boot-menu-json>' in plan.display_argv
+    menu_summary = plan.manifest['customization']['boot']['menu_entries']
+    assert menu_summary[1]['kernel_args'] == {
+        'bytes': len(entry_args.encode('utf-8')),
+        'sha256': hashlib.sha256(entry_args.encode('utf-8')).hexdigest(),
+    }
     assert str(source) in plan.argv
     assert str(additional) in plan.argv
     assert '<redacted-kernel-arguments>' in plan.display_argv
@@ -3382,3 +3404,332 @@ def test_role_order_and_sha_helpers(tmp_path):
     assert backend.describe_module_name('04-xfce-desktop.sb')['role'] == 'desktop'
     path = _write(tmp_path / 'file', b'content')
     assert backend.sha256_file(str(path)) == hashlib.sha256(b'content').hexdigest()
+
+
+def _custom_boot_menu():
+    return [
+        {
+            'id': 'ram-trim', 'base_mode': 'toram', 'enabled': True,
+            'default': True, 'title': 'Run entirely from RAM',
+            'kernel_args': 'toram=trim noload=firefox',
+        },
+        {
+            'id': 'resume', 'base_mode': 'resume', 'enabled': True,
+            'default': False, 'title': 'Continue MiniOS', 'kernel_args': '',
+        },
+        {
+            'id': 'choose', 'base_mode': 'choose', 'enabled': False,
+            'default': False, 'title': None, 'kernel_args': '',
+        },
+        {
+            'id': 'fresh', 'base_mode': 'fresh', 'enabled': True,
+            'default': False, 'title': None, 'kernel_args': '',
+        },
+        {
+            'id': 'new', 'base_mode': 'new', 'enabled': True,
+            'default': False, 'title': None, 'kernel_args': '',
+        },
+        {
+            'id': 'safe-graphics', 'base_mode': 'fresh', 'enabled': True,
+            'default': False, 'title': 'Safe graphics',
+            'kernel_args': 'nomodeset',
+        },
+    ]
+
+def _five_entry_grub_payload():
+    rows = ['set default=0\n', 'set timeout=10\n']
+    details = (
+        ('resume', 'resume', 'perchdir=resume'),
+        ('new', 'new', 'perchdir=new'),
+        ('choose', 'switch', 'perchdir=ask'),
+        ('fresh', 'live', 'boot=live'),
+        ('toram', 'ram', 'toram'),
+    )
+    for mode, class_name, arguments in details:
+        rows.extend((
+            'menuentry "{}" --class {} {{\n'.format(mode, class_name),
+            '  linux /minios/boot/vmlinuz boot=live {}\n'.format(arguments),
+            '}\n',
+            '\n',
+        ))
+    return ''.join(rows).encode('utf-8')
+
+
+def _five_entry_syslinux_payload():
+    rows = ['TIMEOUT 100\n', 'DEFAULT default\n']
+    details = (
+        ('default', 'Resume', 'perchdir=resume'),
+        ('perch', 'New', 'perchdir=new'),
+        ('asksession', 'Choose', 'perchdir=ask'),
+        ('live', 'Fresh', 'boot=live'),
+        ('toram', 'RAM', 'toram'),
+    )
+    for label, title, arguments in details:
+        rows.extend((
+            'LABEL {}\n'.format(label),
+            'MENU LABEL {}\n'.format(title),
+            'KERNEL /minios/boot/vmlinuz\n',
+            'APPEND boot=live {}\n'.format(arguments),
+            '\n',
+        ))
+    return ''.join(rows).encode('ascii')
+
+
+def test_custom_boot_menu_round_trips_and_validates_multilingual_titles(tmp_path):
+    project = backend.ImageProject(
+        project_base=str(tmp_path), source_backend='livekit',
+        source_root_path=str(tmp_path), source_path=str(tmp_path),
+        source_fingerprint='a' * 64,
+        selected_source_modules=['00-core.sb'], menu_locale='en_US',
+        boot_menu_entries=_custom_boot_menu())
+    path = tmp_path / 'project.json'
+    project.save(str(path))
+    restored = backend.ImageProject.load(str(path))
+    assert [dict(item) for item in restored.boot_menu_entries] == _custom_boot_menu()
+
+    multilingual = _custom_boot_menu()
+    multilingual[0]['title'] = 'RAM only'
+    backend.ImageProject(
+        project_base=str(tmp_path), source_backend='livekit',
+        source_root_path=str(tmp_path), source_path=str(tmp_path),
+        source_fingerprint='a' * 64,
+        selected_source_modules=['00-core.sb'], menu_locale='multilang',
+        boot_menu_entries=multilingual)
+    multilingual[0]['title'] = 'Запуск из ОЗУ'
+    with pytest.raises(ValueError, match='ASCII'):
+        backend.ImageProject(
+            project_base=str(tmp_path), source_backend='livekit',
+            source_root_path=str(tmp_path), source_path=str(tmp_path),
+            source_fingerprint='a' * 64,
+            selected_source_modules=['00-core.sb'], menu_locale='multilang',
+            boot_menu_entries=multilingual)
+
+    with pytest.raises(ValueError, match='cannot be combined'):
+        backend.ImageProject(
+            project_base=str(tmp_path), source_backend='livekit',
+            source_root_path=str(tmp_path), source_path=str(tmp_path),
+            source_fingerprint='a' * 64,
+            selected_source_modules=['00-core.sb'], menu_locale='en_US',
+            default_boot='toram', boot_menu_entries=_custom_boot_menu())
+
+
+def test_boot_menu_transform_creates_custom_entries_and_per_entry_parameters():
+    entries = _custom_boot_menu()
+    grub, _references, session = backend._transform_grub_payload(
+        _five_entry_grub_payload(), 4, None, 'audit=1',
+        boot_menu_entries=entries)
+    text = grub.decode('utf-8')
+    assert session is True
+    assert text.index('Run entirely from RAM') < text.index('Continue MiniOS')
+    assert '--class switch' not in text
+    assert text.count('Safe graphics') == 1
+    assert 'nomodeset' in text
+    assert 'toram=trim noload=firefox' in text
+    assert text.count(' audit=1') == 5
+    assert 'set default=0' in text
+    assert 'set timeout=4' in text
+
+    syslinux, _references, session = backend._transform_syslinux_payload(
+        _five_entry_syslinux_payload(), 4, None, 'audit=1',
+        boot_menu_entries=entries, menu_locale='en_US')
+    text = syslinux.decode('latin-1')
+    assert session is True
+    assert text.index('Run entirely from RAM') < text.index('Continue MiniOS')
+    assert 'LABEL asksession' not in text
+    assert 'LABEL safe-graphics' in text
+    assert 'MENU LABEL Safe graphics' in text
+    assert 'nomodeset' in text
+    assert 'toram=trim noload=firefox' in text
+    assert 'DEFAULT ram-trim' in text
+    assert 'TIMEOUT 40' in text
+
+
+def test_boot_menu_rejects_an_oversized_serialized_constructor():
+    entries = []
+    for index in range(20):
+        entries.append({
+            'id': 'entry-{}'.format(index), 'base_mode': 'fresh',
+            'enabled': True, 'default': index == 0, 'title': None,
+            'kernel_args': 'a' * 4096,
+        })
+    with pytest.raises(ValueError, match='65536 JSON bytes'):
+        backend.validate_boot_menu_entries(entries)
+
+
+def test_boot_menu_can_create_multiple_variants_from_one_template():
+    entries = [
+        {
+            'id': 'normal', 'base_mode': 'fresh', 'enabled': True,
+            'default': True, 'title': 'Normal boot', 'kernel_args': '',
+        },
+        {
+            'id': 'safe', 'base_mode': 'fresh', 'enabled': True,
+            'default': False, 'title': 'Safe graphics', 'kernel_args': 'nomodeset',
+        },
+    ]
+    grub, _references, _session = backend._transform_grub_payload(
+        _five_entry_grub_payload(), None, None, None,
+        boot_menu_entries=entries)
+    text = grub.decode('utf-8')
+    assert text.count('--class live') == 2
+    assert 'menuentry "Normal boot"' in text
+    assert 'menuentry "Safe graphics"' in text
+    assert 'nomodeset' in text
+
+    syslinux, _references, _session = backend._transform_syslinux_payload(
+        _five_entry_syslinux_payload(), None, None, None,
+        boot_menu_entries=entries, menu_locale='en_US')
+    text = syslinux.decode('latin-1')
+    assert 'LABEL normal' in text
+    assert 'LABEL safe' in text
+    assert 'DEFAULT normal' in text
+    assert 'nomodeset' in text
+
+
+def test_russian_syslinux_custom_boot_title_uses_cp866_bytes():
+    entries = _custom_boot_menu()
+    entries[0]['title'] = 'Запуск из ОЗУ'
+    syslinux, _references, _session = backend._transform_syslinux_payload(
+        _five_entry_syslinux_payload(), None, None, None,
+        boot_menu_entries=entries, menu_locale='ru_RU')
+    assert 'Запуск из ОЗУ'.encode('cp866') in syslinux
+
+
+def _source_with_bootloader(info, bootloader):
+    metadata = backend._thaw(info.metadata)
+    metadata['bootloader'] = bootloader
+    return backend.SourceInfo(
+        backend.SOURCE_SUPPORTED, backend=info.backend,
+        root_path=info.root_path, source_path=info.source_path,
+        media_category=info.media_category, fingerprint=info.fingerprint,
+        metadata=metadata, modules=info.modules,
+        active_external_modules=info.active_external_modules,
+        diagnostics=info.diagnostics, collisions=info.collisions,
+        total_bytes=info.total_bytes, non_module_bytes=info.non_module_bytes,
+        input_manifest=info.input_manifest)
+
+
+def test_source_boot_menu_imports_grub_settings_and_managed_arguments(tmp_path):
+    unused_root, source, unused_mounts, unused_sys, unused_release, info = (
+        _make_source(tmp_path))
+    _write(
+        source / 'boot' / 'grub' / 'grub.cfg',
+        b'set default=1\nset timeout=7\n'
+        b'menuentry "Resume MiniOS" --class resume {\n'
+        b' linux /minios/boot/vmlinuz boot=live quiet audit=1 perchdir=resume\n}\n'
+        b'menuentry "Safe fresh start" --class live {\n'
+        b' linux /minios/boot/vmlinuz boot=live nomodeset audit=1\n}\n')
+    refreshed = backend.discover_running_source(
+        roots=((info.backend, info.root_path),),
+        mounts_path=str(tmp_path / 'livekit-mounts'),
+        sys_block_root=str(tmp_path / 'livekit-sys'),
+        runtime_release_path=str(tmp_path / 'livekit-release'))
+    result = backend.inspect_source_boot_menu(
+        _source_with_bootloader(refreshed, 'grub-only'), 'en_US')
+
+    assert result['timeout'] == 7
+    assert result['default_known'] is True
+    assert [item['base_mode'] for item in result['entries']] == [
+        'resume', 'fresh']
+    assert [item['title'] for item in result['entries']] == [
+        'Resume MiniOS', 'Safe fresh start']
+    assert [item['kernel_args'] for item in result['entries']] == [
+        'quiet', 'nomodeset']
+    assert result['entries'][1]['default'] is True
+    assert all(item['kernel_args_schema'] == 2
+               for item in result['entries'])
+
+
+def test_source_boot_menu_imports_native_syslinux_default_and_timeout(tmp_path):
+    unused_root, source, unused_mounts, unused_sys, unused_release, unused_info = (
+        _make_source(tmp_path))
+    syslinux = (
+        b'TIMEOUT 30\nDEFAULT resume-id\nONTIMEOUT resume-id\n'
+        b'LABEL fresh-id\nMENU LABEL Fresh source\n'
+        b'KERNEL /minios/boot/vmlinuz\nAPPEND boot=live debug mystery=1\n'
+        b'LABEL resume-id\nMENU DEFAULT\nMENU LABEL Continue source\n'
+        b'KERNEL /minios/boot/vmlinuz\n'
+        b'APPEND boot=live quiet mystery=1 perchdir=resume\n')
+    _write(source / 'boot' / 'syslinux' / 'syslinux.cfg', syslinux)
+    _write(
+        source / 'boot' / 'grub' / 'grub.multilang.cfg',
+        b'set timeout=3\nset default=1\n'
+        b'menuentry "Fresh source" --class live {\n'
+        b' linux /minios/boot/vmlinuz boot=live debug mystery=1\n}\n'
+        b'menuentry "Continue source" --class resume {\n'
+        b' linux /minios/boot/vmlinuz boot=live quiet mystery=1 perchdir=resume\n}\n')
+    info = backend.discover_running_source(
+        roots=(('livekit', str(tmp_path / 'livekit-root')),),
+        mounts_path=str(tmp_path / 'livekit-mounts'),
+        sys_block_root=str(tmp_path / 'livekit-sys'),
+        runtime_release_path=str(tmp_path / 'livekit-release'))
+    result = backend.inspect_source_boot_menu(info, 'multilang')
+
+    assert result['bootloader'] == 'syslinux'
+    assert result['timeout'] == 3
+    assert [item['base_mode'] for item in result['entries']] == [
+        'fresh', 'resume']
+    assert all(item['title'] is None for item in result['entries'])
+    assert all(item['kernel_args_schema'] == 3
+               for item in result['entries'])
+    assert result['entries'][1]['default'] is True
+    assert result['entries'][0]['kernel_args'] == 'debug'
+
+
+def test_imported_menu_replaces_managed_args_and_keeps_unknown_source_args():
+    entries = [{
+        'id': 'fresh', 'base_mode': 'fresh', 'enabled': True,
+        'default': True, 'title': None, 'kernel_args': 'nomodeset',
+        'kernel_args_schema': 2,
+    }]
+    payload = (
+        b'set default=0\nmenuentry "Fresh" --class live {\n'
+        b' linux /vmlinuz boot=live quiet debug audit=1 mystery=keep\n}\n')
+    transformed, unused_references, unused_session = (
+        backend._transform_grub_payload(
+            payload, None, None, None, boot_menu_entries=entries))
+    text = transformed.decode('utf-8')
+    assert ' quiet' not in text
+    assert ' debug' not in text
+    assert text.count(' nomodeset') == 1
+    assert 'boot=live' in text
+    assert 'audit=1 mystery=keep' in text
+
+
+def test_old_boot_menu_entry_schema_keeps_append_semantics():
+    entries = [{
+        'id': 'fresh', 'base_mode': 'fresh', 'enabled': True,
+        'default': True, 'title': None, 'kernel_args': 'nomodeset',
+    }]
+    normalized = backend.validate_boot_menu_entries(entries)
+    assert 'kernel_args_schema' not in normalized[0]
+    payload = (
+        b'set default=0\nmenuentry "Fresh" --class live {\n'
+        b' linux /vmlinuz boot=live quiet audit=1\n}\n')
+    transformed, unused_references, unused_session = (
+        backend._transform_grub_payload(
+            payload, None, None, None, boot_menu_entries=entries))
+    text = transformed.decode('utf-8')
+    assert 'boot=live quiet audit=1 nomodeset' in text
+
+
+def test_multilingual_imported_menu_preserves_source_locale_arguments():
+    entries = [{
+        'id': 'fresh', 'base_mode': 'fresh', 'enabled': True,
+        'default': True, 'title': None, 'kernel_args': 'nomodeset',
+        'kernel_args_schema': 3,
+    }]
+    payload = (
+        b'set default=0\nmenuentry "Fresh" --class live {\n'
+        b' linux /vmlinuz boot=live quiet locales=ru_RU.UTF-8 '
+        b'timezone=Europe/Moscow keyboard-layouts=us,ru audit=1\n}\n')
+    transformed, unused_references, unused_session = (
+        backend._transform_grub_payload(
+            payload, None, None, None, boot_menu_entries=entries))
+    text = transformed.decode('utf-8')
+    assert ' quiet' not in text
+    assert ' nomodeset' in text
+    assert 'locales=ru_RU.UTF-8' in text
+    assert 'timezone=Europe/Moscow' in text
+    assert 'keyboard-layouts=us,ru' in text
+    assert 'audit=1' in text

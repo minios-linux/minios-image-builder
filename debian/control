@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: crims0n <crims0n@minios.dev>
 Build-Depends: debhelper (>= 11), gettext, pandoc, bats,
  python3 (>= 3.6), python3-pytest, python3-gi, gir1.2-gtk-3.0,
- python3-minios-gui (>= 1.1.0)
+ python3-minios-gui (>= 1.2.0)
 Standards-Version: 4.1.3
 Homepage: https://minios.dev
 
@@ -39,7 +39,8 @@ Depends: ${misc:Depends},
          gir1.2-glib-2.0,
          gir1.2-gio-2.0,
          pkexec,
-         python3-minios-gui (>= 1.1.0)
+         python3-minios-gui (>= 1.2.0),
+         librsvg2-common
 Recommends: minios-tools (>= 1.5.0), policykit-1-gnome | lxpolkit, udisks2
 Description: customize the running MiniOS as a verified bootable image
  MiniOS Image Builder is a GTK project workspace for remastering MiniOS from

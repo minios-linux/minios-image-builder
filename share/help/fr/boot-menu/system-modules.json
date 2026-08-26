@@ -1,0 +1,283 @@
+{
+  "headings": [
+    {
+      "anchor": "système-et-modules",
+      "level": 1,
+      "title": "Système et modules"
+    },
+    {
+      "anchor": "filtres-de-modules",
+      "level": 2,
+      "title": "Filtres de modules"
+    },
+    {
+      "anchor": "environnement-de-démarrage",
+      "level": 2,
+      "title": "Environnement de démarrage"
+    },
+    {
+      "anchor": "compatibilité-graphique",
+      "level": 2,
+      "title": "Compatibilité graphique"
+    },
+    {
+      "anchor": "montage-automatique-des-disques",
+      "level": 2,
+      "title": "Montage automatique des disques"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "système-et-modules",
+      [
+        [
+          "text",
+          "Système et modules"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Sélectionnez les modules et l’environnement de démarrage pour cette entrée."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "filtres-de-modules",
+      [
+        [
+          "text",
+          "Filtres de modules"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          ""
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Charger des modules"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " limite le chargement aux noms de modules ou plages correspondants."
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          ""
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Ignorer des modules"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " exclut les modules correspondants. Les suggestions proviennent des modules"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "détectés dans la source MiniOS sélectionnée."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Ces contrôles génèrent "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "load=FILTER"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " et "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "noload=FILTER"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ". Utilisez uniquement les formes de filtres"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "prises en charge par l'initramfs de MiniOS."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "environnement-de-démarrage",
+      [
+        [
+          "text",
+          "Environnement de démarrage"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Conservez l'image par défaut, démarrez le bureau graphique, utilisez une console texte ou"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "entrez en mode secours. Le mode texte et le mode secours sont destinés à l'administration"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "et au dépannage plutôt qu'à une utilisation normale du bureau."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "compatibilité-graphique",
+      [
+        [
+          "text",
+          "Compatibilité graphique"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Le mode de compatibilité ajoute l'option du noyau Linux "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "nomodeset"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ". Utilisez-le lorsque le mode normal"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "de gestion du noyau empêche le système graphique de démarrer. Cela peut réduire"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "la résolution d'affichage et l'accélération."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "montage-automatique-des-disques",
+      [
+        [
+          "text",
+          "Montage automatique des disques"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Activez le montage automatique uniquement lorsque la session doit exposer d'autres systèmes de fichiers"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "attachés après le démarrage."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Système et modules\nSélectionnez les modules et l’environnement de démarrage pour cette entrée.\nFiltres de modules\nCharger des modules limite le chargement aux noms de modules ou plages correspondants.\nIgnorer des modules exclut les modules correspondants. Les suggestions proviennent des modules\ndétectés dans la source MiniOS sélectionnée.\nCes contrôles génèrent load=FILTER et noload=FILTER. Utilisez uniquement les formes de filtres\nprises en charge par l'initramfs de MiniOS.\nEnvironnement de démarrage\nConservez l'image par défaut, démarrez le bureau graphique, utilisez une console texte ou\nentrez en mode secours. Le mode texte et le mode secours sont destinés à l'administration\net au dépannage plutôt qu'à une utilisation normale du bureau.\nCompatibilité graphique\nLe mode de compatibilité ajoute l'option du noyau Linux nomodeset. Utilisez-le lorsque le mode normal\nde gestion du noyau empêche le système graphique de démarrer. Cela peut réduire\nla résolution d'affichage et l'accélération.\nMontage automatique des disques\nActivez le montage automatique uniquement lorsque la session doit exposer d'autres systèmes de fichiers\nattachés après le démarrage.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

@@ -3,6 +3,9 @@ GUI_LAUNCHER = bin/minios-image-builder
 GUI_LIB = lib/*.py
 GUI_DESKTOP = share/applications/minios-image-builder.desktop
 GUI_STYLE = share/styles/style.css
+GUI_HELP = share/help
+MARKDOWN_COMPILER ?= ../minios-gui/tools/markdown-compiler.mjs
+MARKDOWN_NODE_MODULES ?= ../minios-gui/tools/node_modules
 GUI_CONFIG_READER = helper/minios-image-builder-read-live-config
 GUI_CONFIG_POLICY = share/polkit-1/actions/org.minios.imagebuilder.read-live-config.policy
 GUI_DOC = doc/minios-image-builder.md
@@ -38,6 +41,12 @@ cli-mo: $(CLI_MO_FILES)
 
 man: $(GUI_MAN) $(CLI_MAN)
 
+compile-help:
+	@test -d $(MARKDOWN_NODE_MODULES) || { \
+		echo "Node build tools are missing; run ../minios-gui/tools/npm-ci.sh" >&2; exit 1; \
+	}
+	MINIOS_MARKDOWN_COMPILER=$(MARKDOWN_COMPILER) python3 tools/compile-help.py
+
 %.mo: %.po
 	@echo "Generating mo file for $<"
 	msgfmt -o $@ $<
@@ -69,6 +78,7 @@ install: build
 	chmod +x $(DESTDIR)/$(LIBDIR)/main_image_builder.py
 	cp $(GUI_DESKTOP) $(DESTDIR)/$(APPLICATIONSDIR)/
 	cp $(GUI_STYLE) $(DESTDIR)/$(SHAREDIR)/
+	cp -a $(GUI_HELP) $(DESTDIR)/$(SHAREDIR)/
 	install -Dm755 $(GUI_CONFIG_READER) $(DESTDIR)/$(LIBDIR)/minios-image-builder-read-live-config
 	install -Dm644 $(GUI_CONFIG_POLICY) $(DESTDIR)/$(POLKITACTIONSDIR)/org.minios.imagebuilder.read-live-config.policy
 	@for MO_FILE in $(MO_FILES); do \
@@ -89,7 +99,7 @@ test:
 	bats cli/tests/minios-image-compose.bats
 
 check:
-	python3 -m py_compile lib/*.py
+	python3 -m py_compile lib/*.py tools/compile-help.py
 	python3 -m py_compile $(GUI_CONFIG_READER)
 	bash -n cli/bin/minios-image-compose
 	desktop-file-validate $(GUI_DESKTOP)
@@ -97,4 +107,4 @@ check:
 		msgfmt --check --output-file=/dev/null "$$PO_FILE" || exit 1; \
 	done
 
-.PHONY: build mo cli-mo man clean install test check
+.PHONY: build mo cli-mo man compile-help clean install test check

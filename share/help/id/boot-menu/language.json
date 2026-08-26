@@ -1,0 +1,256 @@
+{
+  "headings": [
+    {
+      "anchor": "bahasa-untuk-entri-ini",
+      "level": 1,
+      "title": "Bahasa untuk entri ini"
+    },
+    {
+      "anchor": "nilai-yang-diterima",
+      "level": 2,
+      "title": "Nilai yang diterima"
+    },
+    {
+      "anchor": "penyelesaian",
+      "level": 2,
+      "title": "Penyelesaian"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "bahasa-untuk-entri-ini",
+      [
+        [
+          "text",
+          "Bahasa untuk entri ini"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Timpa pengaturan bahasa, zona waktu, dan keyboard hanya untuk entri startup ini."
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "Kolom yang kosong akan menggunakan pengaturan default image."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "nilai-yang-diterima",
+      [
+        [
+          "text",
+          "Nilai yang diterima"
+        ]
+      ]
+    ],
+    [
+      "list",
+      {
+        "ordered": false,
+        "start": 1
+      },
+      [
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Locale"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " menggunakan nama locale seperti "
+                ],
+                [
+                  "span",
+                  "code",
+                  [
+                    [
+                      "text",
+                      "ru_RU.UTF-8"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  "."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Timezone"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " menggunakan nama IANA seperti "
+                ],
+                [
+                  "span",
+                  "code",
+                  [
+                    [
+                      "text",
+                      "Europe/Moscow"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  "."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Keyboard layout"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " menggunakan kode layout XKB seperti "
+                ],
+                [
+                  "span",
+                  "code",
+                  [
+                    [
+                      "text",
+                      "us"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " atau "
+                ],
+                [
+                  "span",
+                  "code",
+                  [
+                    [
+                      "text",
+                      "ru"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  "."
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "penyelesaian",
+      [
+        [
+          "text",
+          "Penyelesaian"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Saran berasal dari data locale, zona waktu, dan keyboard yang terpasang di"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "sistem saat ini. Saran membantu dalam pengejaan tetapi tidak menambahkan data"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "locale yang hilang ke image yang dibangun."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Bahasa untuk entri ini\nTimpa pengaturan bahasa, zona waktu, dan keyboard hanya untuk entri startup ini.\nKolom yang kosong akan menggunakan pengaturan default image.\nNilai yang diterima\nLocale menggunakan nama locale seperti ru_RU.UTF-8.\nTimezone menggunakan nama IANA seperti Europe/Moscow.\nKeyboard layout menggunakan kode layout XKB seperti us atau ru.\nPenyelesaian\nSaran berasal dari data locale, zona waktu, dan keyboard yang terpasang di\nsistem saat ini. Saran membantu dalam pengejaan tetapi tidak menambahkan data\nlocale yang hilang ke image yang dibangun.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

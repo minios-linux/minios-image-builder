@@ -1,0 +1,227 @@
+{
+  "headings": [
+    {
+      "anchor": "constructeur-du-menu-de-démarrage",
+      "level": 1,
+      "title": "Constructeur du menu de démarrage"
+    },
+    {
+      "anchor": "menu-source-existant",
+      "level": 2,
+      "title": "Menu source existant"
+    },
+    {
+      "anchor": "assemblage-dune-entrée",
+      "level": 2,
+      "title": "Assemblage d’une entrée"
+    },
+    {
+      "anchor": "modèles-de-session",
+      "level": 2,
+      "title": "Modèles de session"
+    },
+    {
+      "anchor": "types-de-persistance",
+      "level": 2,
+      "title": "Types de persistance"
+    },
+    {
+      "anchor": "paramètres-dépendants",
+      "level": 2,
+      "title": "Paramètres dépendants"
+    },
+    {
+      "anchor": "saisie-experte-et-complétion",
+      "level": 2,
+      "title": "Saisie experte et complétion"
+    },
+    {
+      "anchor": "valeurs-par-défaut-et-noms",
+      "level": 2,
+      "title": "Valeurs par défaut et noms"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "constructeur-du-menu-de-démarrage",
+      [
+        [
+          "text",
+          "Constructeur du menu de démarrage"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Créez le menu de démarrage visible à partir d’entrées indépendantes. Choisissez un modèle, puis affinez cette entrée à l’aide des contrôles typés. Les entrées désactivées restent dans le projet mais sont exclues du menu généré."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "menu-source-existant",
+      [
+        [
+          "text",
+          "Menu source existant"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Avant toute personnalisation, le constructeur lit les entrées MiniOS reconnues, leur entrée par défaut et leur délai d’expiration, ainsi que les paramètres pris en charge depuis le menu GRUB effectif ou SYSLINUX natif. L’édition d’une entrée importée ne remplace que les paramètres représentés par des contrôles typés. Les autres arguments de la source restent dans le modèle de démarrage. Dans un menu multilingue, chaque langue conserve ses arguments de locale, de fuseau horaire et de clavier, sauf si vous les remplacez explicitement."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "assemblage-dune-entrée",
+      [
+        [
+          "text",
+          "Assemblage d’une entrée"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Le modèle fournit le comportement de base de MiniOS. Les arguments noyau experts globaux sont appliqués ensuite, suivis des options typées et des paramètres supplémentaires pour cette entrée. Pour les options MiniOS répétées sous forme clé-valeur, la dernière valeur prévaut."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "modèles-de-session",
+      [
+        [
+          "text",
+          "Modèles de session"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Reprise utilise perchdir=resume. Nouveau utilise perchdir=new. Choisir utilise perchdir=ask. Neuf n’a pas de sélecteur de persistance. Copier en RAM utilise toram."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Vous pouvez créer plusieurs entrées à partir du même modèle."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "types-de-persistance",
+      [
+        [
+          "text",
+          "Types de persistance"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Native enregistre les modifications dans un dossier. Dynfilefs utilise un conteneur extensible, Raw utilise une image de taille fixe, et LUKS utilise un conteneur chiffré. SquashFS reprend une session compressée existante. L’initramfs actuel ne peut pas créer une nouvelle session SquashFS."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "paramètres-dépendants",
+      [
+        [
+          "text",
+          "Paramètres dépendants"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Les contrôles deviennent indisponibles lorsqu’ils ne sont pas applicables. Désactiver zRAM désactive ses contrôles de compression et de taille. La persistance Native et SquashFS n’utilise pas le champ taille du conteneur."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "saisie-experte-et-complétion",
+      [
+        [
+          "text",
+          "Saisie experte et complétion"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Les filtres de modules proposent automatiquement les modules détectés dans la source sélectionnée. Les champs de langue, fuseau horaire et clavier sont complétés à partir des données système installées. Utilisez les paramètres supplémentaires uniquement pour les options sans contrôle typé. Les arguments inconnus chargés depuis un ancien projet y sont conservés."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "valeurs-par-défaut-et-noms",
+      [
+        [
+          "text",
+          "Valeurs par défaut et noms"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Un menu personnalisé comporte exactement une entrée par défaut. Désactiver l’entrée par défaut en sélectionne automatiquement une autre activée. Un nom vide conserve le titre de la source ou du modèle. Les noms personnalisés en ASCII fonctionnent dans les menus multilingues ; un menu monolingue peut utiliser les caractères pris en charge par l’encodage du menu du bootloader."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Constructeur du menu de démarrage\nCréez le menu de démarrage visible à partir d’entrées indépendantes. Choisissez un modèle, puis affinez cette entrée à l’aide des contrôles typés. Les entrées désactivées restent dans le projet mais sont exclues du menu généré.\nMenu source existant\nAvant toute personnalisation, le constructeur lit les entrées MiniOS reconnues, leur entrée par défaut et leur délai d’expiration, ainsi que les paramètres pris en charge depuis le menu GRUB effectif ou SYSLINUX natif. L’édition d’une entrée importée ne remplace que les paramètres représentés par des contrôles typés. Les autres arguments de la source restent dans le modèle de démarrage. Dans un menu multilingue, chaque langue conserve ses arguments de locale, de fuseau horaire et de clavier, sauf si vous les remplacez explicitement.\nAssemblage d’une entrée\nLe modèle fournit le comportement de base de MiniOS. Les arguments noyau experts globaux sont appliqués ensuite, suivis des options typées et des paramètres supplémentaires pour cette entrée. Pour les options MiniOS répétées sous forme clé-valeur, la dernière valeur prévaut.\nModèles de session\nReprise utilise perchdir=resume. Nouveau utilise perchdir=new. Choisir utilise perchdir=ask. Neuf n’a pas de sélecteur de persistance. Copier en RAM utilise toram.\nVous pouvez créer plusieurs entrées à partir du même modèle.\nTypes de persistance\nNative enregistre les modifications dans un dossier. Dynfilefs utilise un conteneur extensible, Raw utilise une image de taille fixe, et LUKS utilise un conteneur chiffré. SquashFS reprend une session compressée existante. L’initramfs actuel ne peut pas créer une nouvelle session SquashFS.\nParamètres dépendants\nLes contrôles deviennent indisponibles lorsqu’ils ne sont pas applicables. Désactiver zRAM désactive ses contrôles de compression et de taille. La persistance Native et SquashFS n’utilise pas le champ taille du conteneur.\nSaisie experte et complétion\nLes filtres de modules proposent automatiquement les modules détectés dans la source sélectionnée. Les champs de langue, fuseau horaire et clavier sont complétés à partir des données système installées. Utilisez les paramètres supplémentaires uniquement pour les options sans contrôle typé. Les arguments inconnus chargés depuis un ancien projet y sont conservés.\nValeurs par défaut et noms\nUn menu personnalisé comporte exactement une entrée par défaut. Désactiver l’entrée par défaut en sélectionne automatiquement une autre activée. Un nom vide conserve le titre de la source ou du modèle. Les noms personnalisés en ASCII fonctionnent dans les menus multilingues ; un menu monolingue peut utiliser les caractères pris en charge par l’encodage du menu du bootloader.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

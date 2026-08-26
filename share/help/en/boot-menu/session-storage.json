@@ -1,0 +1,484 @@
+{
+  "headings": [
+    {
+      "anchor": "session-and-storage",
+      "level": 1,
+      "title": "Session and storage"
+    },
+    {
+      "anchor": "session-selection",
+      "level": 2,
+      "title": "Session selection"
+    },
+    {
+      "anchor": "storage-type",
+      "level": 2,
+      "title": "Storage type"
+    },
+    {
+      "anchor": "capacity",
+      "level": 2,
+      "title": "Capacity"
+    },
+    {
+      "anchor": "copy-to-ram",
+      "level": 2,
+      "title": "Copy to RAM"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "session-and-storage",
+      [
+        [
+          "text",
+          "Session and storage"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Choose how this entry finds and stores persistent changes."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "session-selection",
+      [
+        [
+          "text",
+          "Session selection"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "The entry template controls whether MiniOS resumes the latest session, creates"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "a new one, or asks at startup. The storage type does not replace that template"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "choice."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "storage-type",
+      [
+        [
+          "text",
+          "Storage type"
+        ]
+      ]
+    ],
+    [
+      "list",
+      {
+        "ordered": false,
+        "start": 1
+      },
+      [
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Automatic"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " keeps the template or saved-session mode."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Native"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " stores changes in a directory on a Linux filesystem."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Dynfilefs"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " uses an expandable container."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Raw"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " uses a fixed-size image."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "LUKS"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " uses an encrypted container."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "SquashFS"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " resumes an existing compressed session."
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "The current initramfs can resume but cannot create SquashFS sessions."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "capacity",
+      [
+        [
+          "text",
+          "Capacity"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          ""
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Container size"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " applies only to container-backed sessions, so it is disabled"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "for Native and SquashFS. "
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Free space to keep"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " reserves room on the persistence"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "device so that saved changes do not fill it completely."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "The corresponding boot options are "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "perchmode="
+            ]
+          ]
+        ],
+        [
+          "text",
+          ", "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "perchsize="
+            ]
+          ]
+        ],
+        [
+          "text",
+          ", and"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "perchreserve="
+            ]
+          ]
+        ],
+        [
+          "text",
+          "."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "copy-to-ram",
+      [
+        [
+          "text",
+          "Copy to RAM"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "toram=full"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " copies the entire system to memory. "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "toram=trim"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " copies only the"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "filtered module set. This may allow removal of the boot device, but requires"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "enough RAM for the copied data."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Session and storage\nChoose how this entry finds and stores persistent changes.\nSession selection\nThe entry template controls whether MiniOS resumes the latest session, creates\na new one, or asks at startup. The storage type does not replace that template\nchoice.\nStorage type\nAutomatic keeps the template or saved-session mode.\nNative stores changes in a directory on a Linux filesystem.\nDynfilefs uses an expandable container.\nRaw uses a fixed-size image.\nLUKS uses an encrypted container.\nSquashFS resumes an existing compressed session.\nThe current initramfs can resume but cannot create SquashFS sessions.\nCapacity\nContainer size applies only to container-backed sessions, so it is disabled\nfor Native and SquashFS. Free space to keep reserves room on the persistence\ndevice so that saved changes do not fill it completely.\nThe corresponding boot options are perchmode=, perchsize=, and\nperchreserve=.\nCopy to RAM\ntoram=full copies the entire system to memory. toram=trim copies only the\nfiltered module set. This may allow removal of the boot device, but requires\nenough RAM for the copied data.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

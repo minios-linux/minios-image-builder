@@ -1,0 +1,432 @@
+{
+  "headings": [
+    {
+      "anchor": "sessione-e-archiviazione",
+      "level": 1,
+      "title": "Sessione e archiviazione"
+    },
+    {
+      "anchor": "selezione-della-sessione",
+      "level": 2,
+      "title": "Selezione della sessione"
+    },
+    {
+      "anchor": "tipo-di-archiviazione",
+      "level": 2,
+      "title": "Tipo di archiviazione"
+    },
+    {
+      "anchor": "capacità",
+      "level": 2,
+      "title": "Capacità"
+    },
+    {
+      "anchor": "copia-in-ram",
+      "level": 2,
+      "title": "Copia in RAM"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "sessione-e-archiviazione",
+      [
+        [
+          "text",
+          "Sessione e archiviazione"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Scegli come questa voce individua e memorizza le modifiche persistenti."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "selezione-della-sessione",
+      [
+        [
+          "text",
+          "Selezione della sessione"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Il modello della voce controlla se MiniOS riprende l'ultima sessione, ne crea una nuova o chiede all'avvio. Il tipo di archiviazione non sostituisce questa scelta del modello."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "tipo-di-archiviazione",
+      [
+        [
+          "text",
+          "Tipo di archiviazione"
+        ]
+      ]
+    ],
+    [
+      "list",
+      {
+        "ordered": false,
+        "start": 1
+      },
+      [
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Automatico"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " mantiene la modalità del modello o della sessione salvata."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Nativo"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " salva le modifiche in una directory su un filesystem Linux."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Dynfilefs"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " utilizza un contenitore espandibile."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Raw"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " utilizza un'immagine a dimensione fissa."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "LUKS"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " utilizza un contenitore cifrato."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "SquashFS"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " riprende una sessione compressa esistente."
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "L'attuale initramfs può riprendere ma non creare sessioni SquashFS."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "capacità",
+      [
+        [
+          "text",
+          "Capacità"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          ""
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Dimensione del contenitore"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " si applica solo alle sessioni basate su contenitore, quindi è disabilitata per Nativo e SquashFS. "
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Spazio libero da mantenere"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " riserva spazio sul dispositivo di persistenza in modo che le modifiche salvate non lo riempiano completamente."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Le opzioni di avvio corrispondenti sono "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "perchmode="
+            ]
+          ]
+        ],
+        [
+          "text",
+          ", "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "perchsize="
+            ]
+          ]
+        ],
+        [
+          "text",
+          " e "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "perchreserve="
+            ]
+          ]
+        ],
+        [
+          "text",
+          "."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "copia-in-ram",
+      [
+        [
+          "text",
+          "Copia in RAM"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "toram=full"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " copia l'intero sistema in memoria. "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "toram=trim"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " copia solo il set di moduli filtrato. Questo può consentire la rimozione del dispositivo di avvio, ma richiede abbastanza RAM per i dati copiati."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Sessione e archiviazione\nScegli come questa voce individua e memorizza le modifiche persistenti.\nSelezione della sessione\nIl modello della voce controlla se MiniOS riprende l'ultima sessione, ne crea una nuova o chiede all'avvio. Il tipo di archiviazione non sostituisce questa scelta del modello.\nTipo di archiviazione\nAutomatico mantiene la modalità del modello o della sessione salvata.\nNativo salva le modifiche in una directory su un filesystem Linux.\nDynfilefs utilizza un contenitore espandibile.\nRaw utilizza un'immagine a dimensione fissa.\nLUKS utilizza un contenitore cifrato.\nSquashFS riprende una sessione compressa esistente.\nL'attuale initramfs può riprendere ma non creare sessioni SquashFS.\nCapacità\nDimensione del contenitore si applica solo alle sessioni basate su contenitore, quindi è disabilitata per Nativo e SquashFS. Spazio libero da mantenere riserva spazio sul dispositivo di persistenza in modo che le modifiche salvate non lo riempiano completamente.\nLe opzioni di avvio corrispondenti sono perchmode=, perchsize= e perchreserve=.\nCopia in RAM\ntoram=full copia l'intero sistema in memoria. toram=trim copia solo il set di moduli filtrato. Questo può consentire la rimozione del dispositivo di avvio, ma richiede abbastanza RAM per i dati copiati.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

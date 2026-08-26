@@ -1,0 +1,333 @@
+{
+  "assets": {},
+  "documents": [
+    {
+      "compiled": "de/boot-menu/diagnostics.json",
+      "sha256": "8d41939380337dea35b10cd5e951f4f859a2344c0b16bf83c8f789a0fecb94bf",
+      "source": "de/boot-menu/diagnostics.md"
+    },
+    {
+      "compiled": "de/boot-menu/language.json",
+      "sha256": "f5ecbfd32d4ba1f0da60520fa43a94593498232babb2de028d9fcaba711f5609",
+      "source": "de/boot-menu/language.md"
+    },
+    {
+      "compiled": "de/boot-menu/memory.json",
+      "sha256": "3596acab5ee08db029045ae114c126c013c70b830f90136636e2ca9ff0781b9d",
+      "source": "de/boot-menu/memory.md"
+    },
+    {
+      "compiled": "de/boot-menu/overview.json",
+      "sha256": "912019ed5e82bf53f0fc161fc43df64d3383e20b93189e92b31f680b536aaa2d",
+      "source": "de/boot-menu/overview.md"
+    },
+    {
+      "compiled": "de/boot-menu/parameters.json",
+      "sha256": "4ab66ef283e90a48d2cae5200463248c9ee749618c27316e46a807def6babf4d",
+      "source": "de/boot-menu/parameters.md"
+    },
+    {
+      "compiled": "de/boot-menu/session-storage.json",
+      "sha256": "6f6977cc27c4ba5427d5af0f8107058e172eabd0e4fbfea9d4dde48e33dd5ef7",
+      "source": "de/boot-menu/session-storage.md"
+    },
+    {
+      "compiled": "de/boot-menu/system-modules.json",
+      "sha256": "aad276e92cbf4a715a63df2eed5f986f61812e91bcc4d0f72837c11abe4b88f1",
+      "source": "de/boot-menu/system-modules.md"
+    },
+    {
+      "compiled": "en/boot-menu/diagnostics.json",
+      "sha256": "b4f23123e8407b30ff2fafb076230f0360f1a2cbbb838f6064888d5d320c9f58",
+      "source": "en/boot-menu/diagnostics.md"
+    },
+    {
+      "compiled": "en/boot-menu/language.json",
+      "sha256": "84673e2ac909d81fdcb4f5ef5385835f890199f8532c8db3d64e19b8331dc901",
+      "source": "en/boot-menu/language.md"
+    },
+    {
+      "compiled": "en/boot-menu/memory.json",
+      "sha256": "4126bab7037494c6c370103cb3a5b9d3e11e7940b56912dc99c78ebd60605f24",
+      "source": "en/boot-menu/memory.md"
+    },
+    {
+      "compiled": "en/boot-menu/overview.json",
+      "sha256": "e6e221044ae306fab4dc24f60091db35d52656d78e12c8669be69e5f08999b1a",
+      "source": "en/boot-menu/overview.md"
+    },
+    {
+      "compiled": "en/boot-menu/parameters.json",
+      "sha256": "ace7eed6eb6c8d936d7f6ff22409952d2c4d84a34c0753b0ed2949b6225ff62f",
+      "source": "en/boot-menu/parameters.md"
+    },
+    {
+      "compiled": "en/boot-menu/session-storage.json",
+      "sha256": "1eb65c1f30bb98b27535ccbe7ca7f13d876bd106754eb6fea97aac69cdc48558",
+      "source": "en/boot-menu/session-storage.md"
+    },
+    {
+      "compiled": "en/boot-menu/system-modules.json",
+      "sha256": "39af8deb59b03ce940714defdcc7e99b21f2996182036c823060f801e4786890",
+      "source": "en/boot-menu/system-modules.md"
+    },
+    {
+      "compiled": "es/boot-menu/diagnostics.json",
+      "sha256": "01fbebfad547688244a4718bfcf8c536eb4bbf93b075a7660e96dc4de91fdfd7",
+      "source": "es/boot-menu/diagnostics.md"
+    },
+    {
+      "compiled": "es/boot-menu/language.json",
+      "sha256": "98cfed4bf609eed29659df64f58497d30efff88b8cb066dec9ad25f5f7c01d0a",
+      "source": "es/boot-menu/language.md"
+    },
+    {
+      "compiled": "es/boot-menu/memory.json",
+      "sha256": "95c10813ab216ca502757e64c88ecf8082ec70220f95b41e151c54d3968c5a45",
+      "source": "es/boot-menu/memory.md"
+    },
+    {
+      "compiled": "es/boot-menu/overview.json",
+      "sha256": "fffda886050fa8dc89c131f03ba68d48a194f9bdf5271bd9b5e0e54c4cbe323a",
+      "source": "es/boot-menu/overview.md"
+    },
+    {
+      "compiled": "es/boot-menu/parameters.json",
+      "sha256": "e80095b2f9650d90711d34e9dd589a564956ef9ee6dc5c0d7337efc00443756c",
+      "source": "es/boot-menu/parameters.md"
+    },
+    {
+      "compiled": "es/boot-menu/session-storage.json",
+      "sha256": "d6f25427159b58def7e2aa9a2cb3e9f6af213be3d99a2e5d0664284ec66fca39",
+      "source": "es/boot-menu/session-storage.md"
+    },
+    {
+      "compiled": "es/boot-menu/system-modules.json",
+      "sha256": "e4d42e6a04be99cfe26a653c6b96a0a2f40fe7fc86b4c87d1935f0353a1b5ebc",
+      "source": "es/boot-menu/system-modules.md"
+    },
+    {
+      "compiled": "fr/boot-menu/diagnostics.json",
+      "sha256": "721b5e25b1e10821b11ec7019b7bbdb919a26a8efba95bb3ea81a05a139c116a",
+      "source": "fr/boot-menu/diagnostics.md"
+    },
+    {
+      "compiled": "fr/boot-menu/language.json",
+      "sha256": "9edf656998fdd69a500bdc1fc36fcf97aacd77650676d3e70ca0f2e1f192e264",
+      "source": "fr/boot-menu/language.md"
+    },
+    {
+      "compiled": "fr/boot-menu/memory.json",
+      "sha256": "004d6ed5ace105d01136ba88262736151adbcac28351e068a32d4789c01dd27c",
+      "source": "fr/boot-menu/memory.md"
+    },
+    {
+      "compiled": "fr/boot-menu/overview.json",
+      "sha256": "78c5042dcde22755fd243a05190356fcb93cf93b9b7d47cc0578deb16475e48a",
+      "source": "fr/boot-menu/overview.md"
+    },
+    {
+      "compiled": "fr/boot-menu/parameters.json",
+      "sha256": "9ead7550d42ef02cc5e2be37787738216d37a72f1c2a8dd358d4e302cb38a1f8",
+      "source": "fr/boot-menu/parameters.md"
+    },
+    {
+      "compiled": "fr/boot-menu/session-storage.json",
+      "sha256": "eb8d50f43dcfd81ad1eb75f7ec7cc3b980d5ee096deb008d8308082d85ba8771",
+      "source": "fr/boot-menu/session-storage.md"
+    },
+    {
+      "compiled": "fr/boot-menu/system-modules.json",
+      "sha256": "0078a9657b85a762d240cdcb69e641889463ab868fcc9d71bc13cb73a1a28821",
+      "source": "fr/boot-menu/system-modules.md"
+    },
+    {
+      "compiled": "id/boot-menu/diagnostics.json",
+      "sha256": "2cee8742e07d22fd300dcacf6e7a81653c13236904f0b74529f60c0408495a27",
+      "source": "id/boot-menu/diagnostics.md"
+    },
+    {
+      "compiled": "id/boot-menu/language.json",
+      "sha256": "501d6e259390a1a5c04c4ed8b09374a40ec9224775d4291b4f447c6c96ddb569",
+      "source": "id/boot-menu/language.md"
+    },
+    {
+      "compiled": "id/boot-menu/memory.json",
+      "sha256": "e6ebf6b80321b62af1182479faa6930dc5ba083a32b27e350f03147ccfceb553",
+      "source": "id/boot-menu/memory.md"
+    },
+    {
+      "compiled": "id/boot-menu/overview.json",
+      "sha256": "10fcace50d948f984677e130aee94f87bf9469d51402417936d8ef719dc36c01",
+      "source": "id/boot-menu/overview.md"
+    },
+    {
+      "compiled": "id/boot-menu/parameters.json",
+      "sha256": "40f4419b4134b62b5bbdaa6d4ed679d7c81024e63cde86fb56f0154b5bea121d",
+      "source": "id/boot-menu/parameters.md"
+    },
+    {
+      "compiled": "id/boot-menu/session-storage.json",
+      "sha256": "b171690c9ecec2e14efe07c1e32a3ed35aaf40e3447c56ed2b7cdd0af88a0ed6",
+      "source": "id/boot-menu/session-storage.md"
+    },
+    {
+      "compiled": "id/boot-menu/system-modules.json",
+      "sha256": "3fe94cbf05b6d74aae3feb9c593f7810dab8fc91959e67122fe60ce67521df5a",
+      "source": "id/boot-menu/system-modules.md"
+    },
+    {
+      "compiled": "it/boot-menu/diagnostics.json",
+      "sha256": "383757abf3ce33d2cf7848743c35c66938bb794c5cd2169f7727ab348835ad27",
+      "source": "it/boot-menu/diagnostics.md"
+    },
+    {
+      "compiled": "it/boot-menu/language.json",
+      "sha256": "e3b4bbf34678e5f1f2db05b7c914e0c03795a2769df4a9dc2d3b20e12f4166a7",
+      "source": "it/boot-menu/language.md"
+    },
+    {
+      "compiled": "it/boot-menu/memory.json",
+      "sha256": "1878cc25bbcf72aec62c80a18e2efca47e0f68149896ec944319020ecc5376bf",
+      "source": "it/boot-menu/memory.md"
+    },
+    {
+      "compiled": "it/boot-menu/overview.json",
+      "sha256": "40960726ef82411a3b2944788f9e311e2ded0c83207a4564073b1fdaa1c9d6e3",
+      "source": "it/boot-menu/overview.md"
+    },
+    {
+      "compiled": "it/boot-menu/parameters.json",
+      "sha256": "27e49d7189c7b74a54d11dc9c78cf451cb8d217de4d4939df82b4f41569255f6",
+      "source": "it/boot-menu/parameters.md"
+    },
+    {
+      "compiled": "it/boot-menu/session-storage.json",
+      "sha256": "c5c2548f2abe87dd5728f163a35bd73df5d0a8aac5ada1a2b64914edf80e78eb",
+      "source": "it/boot-menu/session-storage.md"
+    },
+    {
+      "compiled": "it/boot-menu/system-modules.json",
+      "sha256": "a5845d7ad5a8b0a225cd1a08153b2fac609d4100f4e40a71988211d937224579",
+      "source": "it/boot-menu/system-modules.md"
+    },
+    {
+      "compiled": "pt/boot-menu/diagnostics.json",
+      "sha256": "a122852ef7330263c931688ff386a3995fc91ecb82768da004817d4b6f19172b",
+      "source": "pt/boot-menu/diagnostics.md"
+    },
+    {
+      "compiled": "pt/boot-menu/language.json",
+      "sha256": "65565ba0e332ff28cd6ec08c77d609b2bae270b639853b6e34ff101020cdc59f",
+      "source": "pt/boot-menu/language.md"
+    },
+    {
+      "compiled": "pt/boot-menu/memory.json",
+      "sha256": "93ccecfc47699e594829b142b40132b22e7c3c869b29206674da0511aa4d628e",
+      "source": "pt/boot-menu/memory.md"
+    },
+    {
+      "compiled": "pt/boot-menu/overview.json",
+      "sha256": "da5f179839d938fd3e1a1ba3ab3d36980e4bffb24dd404c731678ef0b06813a0",
+      "source": "pt/boot-menu/overview.md"
+    },
+    {
+      "compiled": "pt/boot-menu/parameters.json",
+      "sha256": "f40f088a4cc754aa3a12e17c439cfc299e33bb7e63863b9f73327c826bc1c2e7",
+      "source": "pt/boot-menu/parameters.md"
+    },
+    {
+      "compiled": "pt/boot-menu/session-storage.json",
+      "sha256": "64fa1d3a96e7ac4f856dd576c476239a189ebbbc05dc1c7067d6d10959c6ea52",
+      "source": "pt/boot-menu/session-storage.md"
+    },
+    {
+      "compiled": "pt/boot-menu/system-modules.json",
+      "sha256": "d4429e77a6d7ab27ceabfc73837fc16fffcc6d539384cc2d077102d12651d4a6",
+      "source": "pt/boot-menu/system-modules.md"
+    },
+    {
+      "compiled": "pt-BR/boot-menu/diagnostics.json",
+      "sha256": "0d6aea6034cc08c8d1d8aadc10b1cd45cb59c00e5211cb76dc5192b797f5065b",
+      "source": "pt-BR/boot-menu/diagnostics.md"
+    },
+    {
+      "compiled": "pt-BR/boot-menu/language.json",
+      "sha256": "c07a1da99695ba3a09a8d229b0b51aa2664415444cd6bbc30b1c10573eecec60",
+      "source": "pt-BR/boot-menu/language.md"
+    },
+    {
+      "compiled": "pt-BR/boot-menu/memory.json",
+      "sha256": "5ef46ac9a43f8e5ce7044942d3c7320898fb9b263604b040e6f82d187a9126e6",
+      "source": "pt-BR/boot-menu/memory.md"
+    },
+    {
+      "compiled": "pt-BR/boot-menu/overview.json",
+      "sha256": "c36245138186043d90f9331117322cc94d960f25d41232572f71d51bc4d57e35",
+      "source": "pt-BR/boot-menu/overview.md"
+    },
+    {
+      "compiled": "pt-BR/boot-menu/parameters.json",
+      "sha256": "5ca740388f0cbed3658d9a5d6d6782ce55cf7f498c6aa34c51a44a3c1bcc2ef9",
+      "source": "pt-BR/boot-menu/parameters.md"
+    },
+    {
+      "compiled": "pt-BR/boot-menu/session-storage.json",
+      "sha256": "b20b49b66be3369768e0f2d0aad807487fde9e607ffa1758796861cbe764f82e",
+      "source": "pt-BR/boot-menu/session-storage.md"
+    },
+    {
+      "compiled": "pt-BR/boot-menu/system-modules.json",
+      "sha256": "89d26113f2cf3ce5629e1bea67e08bcf58e0ebc0d56c1f696e27d42cdd8f2f65",
+      "source": "pt-BR/boot-menu/system-modules.md"
+    },
+    {
+      "compiled": "ru/boot-menu/diagnostics.json",
+      "sha256": "59acd3561079fe1b1e7b2b10fb17af43ad564e52678894ee9321ed1020971475",
+      "source": "ru/boot-menu/diagnostics.md"
+    },
+    {
+      "compiled": "ru/boot-menu/language.json",
+      "sha256": "ef904fd775589cb64dd514b64d7811c432a89bb0c98465aca8f20d94b3e13a0e",
+      "source": "ru/boot-menu/language.md"
+    },
+    {
+      "compiled": "ru/boot-menu/memory.json",
+      "sha256": "d4f289108e0ec53b5f75766d4c8a61bf019ff24da66f993bcb25eca3ab987fd3",
+      "source": "ru/boot-menu/memory.md"
+    },
+    {
+      "compiled": "ru/boot-menu/overview.json",
+      "sha256": "7e853f5e07010d3b7a8e99820d1a65349f51d14cac7db54f8ac6c7ffd2d1c54a",
+      "source": "ru/boot-menu/overview.md"
+    },
+    {
+      "compiled": "ru/boot-menu/parameters.json",
+      "sha256": "0d669530cb65326cb6fef621600e5353e8de0e65dbf6ce75cfd5dbb1db716641",
+      "source": "ru/boot-menu/parameters.md"
+    },
+    {
+      "compiled": "ru/boot-menu/session-storage.json",
+      "sha256": "2e6ea45bc286ef5aecca042fe5cf0a78eccba4618bcfdc54ba1c53460817e4bb",
+      "source": "ru/boot-menu/session-storage.md"
+    },
+    {
+      "compiled": "ru/boot-menu/system-modules.json",
+      "sha256": "a94dd0afe4df5c4b742d774274c1323ae120e1beccf98460e222cecaa4390ce6",
+      "source": "ru/boot-menu/system-modules.md"
+    }
+  ],
+  "locales": [
+    "de",
+    "en",
+    "es",
+    "fr",
+    "id",
+    "it",
+    "pt",
+    "pt-BR",
+    "ru"
+  ],
+  "product_kind": "minios-image-builder-help",
+  "schema_version": 1
+}

@@ -1,0 +1,283 @@
+{
+  "headings": [
+    {
+      "anchor": "sistema-e-moduli",
+      "level": 1,
+      "title": "Sistema e moduli"
+    },
+    {
+      "anchor": "filtri-dei-moduli",
+      "level": 2,
+      "title": "Filtri dei moduli"
+    },
+    {
+      "anchor": "ambiente-di-avvio",
+      "level": 2,
+      "title": "Ambiente di avvio"
+    },
+    {
+      "anchor": "compatibilità-grafica",
+      "level": 2,
+      "title": "Compatibilità grafica"
+    },
+    {
+      "anchor": "montaggio-automatico-dei-dischi",
+      "level": 2,
+      "title": "Montaggio automatico dei dischi"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "sistema-e-moduli",
+      [
+        [
+          "text",
+          "Sistema e moduli"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Seleziona i moduli e l'ambiente di avvio per questa voce."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "filtri-dei-moduli",
+      [
+        [
+          "text",
+          "Filtri dei moduli"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          ""
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Carica moduli"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " limita il caricamento ai nomi o intervalli di moduli corrispondenti."
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          ""
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Salta moduli"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " esclude i moduli corrispondenti. I suggerimenti provengono dai moduli"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "detectati nella sorgente MiniOS selezionata."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Questi controlli generano "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "load=FILTER"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " e "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "noload=FILTER"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ". Usa solo le forme di filtro"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "supportate dall'initramfs di MiniOS."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "ambiente-di-avvio",
+      [
+        [
+          "text",
+          "Ambiente di avvio"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Mantieni l'immagine predefinita, avvia il desktop grafico, usa una console testuale o"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "entra in modalità di recupero. La modalità testo e la modalità di recupero sono pensate per"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "amministrazione e risoluzione dei problemi piuttosto che per l'uso normale del desktop."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "compatibilità-grafica",
+      [
+        [
+          "text",
+          "Compatibilità grafica"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "La modalità compatibilità aggiunge l'opzione del kernel Linux "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "nomodeset"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ". Usala quando la normale"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "impostazione della modalità kernel impedisce l'avvio del sistema grafico. Può ridurre"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "la risoluzione e l'accelerazione dello schermo."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "montaggio-automatico-dei-dischi",
+      [
+        [
+          "text",
+          "Montaggio automatico dei dischi"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Abilita il montaggio automatico solo quando la sessione deve esporre altri filesystem collegati"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "dopo l'avvio."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Sistema e moduli\nSeleziona i moduli e l'ambiente di avvio per questa voce.\nFiltri dei moduli\nCarica moduli limita il caricamento ai nomi o intervalli di moduli corrispondenti.\nSalta moduli esclude i moduli corrispondenti. I suggerimenti provengono dai moduli\ndetectati nella sorgente MiniOS selezionata.\nQuesti controlli generano load=FILTER e noload=FILTER. Usa solo le forme di filtro\nsupportate dall'initramfs di MiniOS.\nAmbiente di avvio\nMantieni l'immagine predefinita, avvia il desktop grafico, usa una console testuale o\nentra in modalità di recupero. La modalità testo e la modalità di recupero sono pensate per\namministrazione e risoluzione dei problemi piuttosto che per l'uso normale del desktop.\nCompatibilità grafica\nLa modalità compatibilità aggiunge l'opzione del kernel Linux nomodeset. Usala quando la normale\nimpostazione della modalità kernel impedisce l'avvio del sistema grafico. Può ridurre\nla risoluzione e l'accelerazione dello schermo.\nMontaggio automatico dei dischi\nAbilita il montaggio automatico solo quando la sessione deve esporre altri filesystem collegati\ndopo l'avvio.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

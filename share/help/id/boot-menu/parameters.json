@@ -1,0 +1,339 @@
+{
+  "headings": [
+    {
+      "anchor": "parameter-boot-dan-kernel",
+      "level": 1,
+      "title": "Parameter boot dan kernel"
+    },
+    {
+      "anchor": "sesi-dan-persistensi",
+      "level": 2,
+      "title": "Sesi dan persistensi"
+    },
+    {
+      "anchor": "salin-ke-ram",
+      "level": 2,
+      "title": "Salin ke RAM"
+    },
+    {
+      "anchor": "modul",
+      "level": 2,
+      "title": "Modul"
+    },
+    {
+      "anchor": "memori-dan-grafis",
+      "level": 2,
+      "title": "Memori dan grafis"
+    },
+    {
+      "anchor": "sumber-dan-lokalisasi",
+      "level": 2,
+      "title": "Sumber dan lokalisasi"
+    },
+    {
+      "anchor": "diagnostik",
+      "level": 2,
+      "title": "Diagnostik"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "parameter-boot-dan-kernel",
+      [
+        [
+          "text",
+          "Parameter boot dan kernel"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Ketik parameter yang dipisahkan dengan spasi. Fitur pelengkapan akan menyarankan opsi MiniOS dan Linux yang umum. Parameter global berlaku untuk setiap entri sesi MiniOS yang dibuat atau disimpan. Parameter khusus entri akan ditambahkan kemudian dan dapat menimpa opsi key-value MiniOS yang sama jika diulang."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "sesi-dan-persistensi",
+      [
+        [
+          "text",
+          "Sesi dan persistensi"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Opsi-opsi ini memungkinkan perubahan yang persisten, melanjutkan sesi kompatibel terbaru,"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "membuat sesi baru, menanyakan saat startup, atau memilih sesi bernomor secara langsung:"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "perch, perchdir=resume, perchdir=new, perchdir=ask, dan perchdir=NUMBER."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Mode penyimpanan adalah native, dynfilefs, raw, luks, dan squashfs. SquashFS dapat"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "melanjutkan sesi terkompresi yang sudah ada, tetapi initramfs saat ini tidak dapat membuat"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "sesi baru. Ukuran kontainer menerima akhiran MB, GB, atau TB. Ruang kosong yang dicadangkan"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "diukur dalam MiB; nilai default-nya adalah 256 dan maksimum adalah 4096."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Opsi yang sesuai adalah perchmode=MODE, perchsize=SIZE, dan"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "perchreserve=MIB."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "salin-ke-ram",
+      [
+        [
+          "text",
+          "Salin ke RAM"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Opsi toram, toram=full, dan toram=trim menyalin sistem default, lengkap, atau"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "terfilter ke RAM."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "modul",
+      [
+        [
+          "text",
+          "Modul"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Filter load hanya memuat modul yang cocok; filter noload mengecualikan"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "modul yang cocok. Filter dapat berisi nama modul, daftar, atau rentang MiniOS"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "yang didukung oleh initramfs. Opsi-opsinya adalah load=FILTER dan noload=FILTER."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "memori-dan-grafis",
+      [
+        [
+          "text",
+          "Memori dan grafis"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Opsi memori menonaktifkan zRAM, memilih kompresi lzo, lzo-rle, lz4, lz4hc, atau zstd,"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "dan mengatur ukuran zRAM dalam MiB. Mode teks memulai tanpa desktop grafis."
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "Nomodeset menonaktifkan pengaturan mode kernel normal dan berguna"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "untuk pemecahan masalah grafis. Opsi-opsinya adalah nozram, zramcomp=ALGORITHM,"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "zramsize=MIB, text, dan nomodeset."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "sumber-dan-lokalisasi",
+      [
+        [
+          "text",
+          "Sumber dan lokalisasi"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Opsi-opsi ini memilih sumber data MiniOS dan menimpa pengaturan bahasa, zona waktu,"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "dan keyboard untuk entri. Opsi-opsinya adalah from=SOURCE, from=askdisk,"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "locales=LOCALE, timezone=ZONE, dan keyboard-layouts=LAYOUT."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "diagnostik",
+      [
+        [
+          "text",
+          "Diagnostik"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Quiet mengurangi pesan boot. Debug mengaktifkan diagnostik tambahan. Gunakan hanya"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "parameter yang dipahami oleh Linux, initramfs MiniOS, atau live-config. Opsi-opsinya adalah quiet dan debug."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Parameter boot dan kernel\nKetik parameter yang dipisahkan dengan spasi. Fitur pelengkapan akan menyarankan opsi MiniOS dan Linux yang umum. Parameter global berlaku untuk setiap entri sesi MiniOS yang dibuat atau disimpan. Parameter khusus entri akan ditambahkan kemudian dan dapat menimpa opsi key-value MiniOS yang sama jika diulang.\nSesi dan persistensi\nOpsi-opsi ini memungkinkan perubahan yang persisten, melanjutkan sesi kompatibel terbaru,\nmembuat sesi baru, menanyakan saat startup, atau memilih sesi bernomor secara langsung:\nperch, perchdir=resume, perchdir=new, perchdir=ask, dan perchdir=NUMBER.\nMode penyimpanan adalah native, dynfilefs, raw, luks, dan squashfs. SquashFS dapat\nmelanjutkan sesi terkompresi yang sudah ada, tetapi initramfs saat ini tidak dapat membuat\nsesi baru. Ukuran kontainer menerima akhiran MB, GB, atau TB. Ruang kosong yang dicadangkan\ndiukur dalam MiB; nilai default-nya adalah 256 dan maksimum adalah 4096.\nOpsi yang sesuai adalah perchmode=MODE, perchsize=SIZE, dan\nperchreserve=MIB.\nSalin ke RAM\nOpsi toram, toram=full, dan toram=trim menyalin sistem default, lengkap, atau\nterfilter ke RAM.\nModul\nFilter load hanya memuat modul yang cocok; filter noload mengecualikan\nmodul yang cocok. Filter dapat berisi nama modul, daftar, atau rentang MiniOS\nyang didukung oleh initramfs. Opsi-opsinya adalah load=FILTER dan noload=FILTER.\nMemori dan grafis\nOpsi memori menonaktifkan zRAM, memilih kompresi lzo, lzo-rle, lz4, lz4hc, atau zstd,\ndan mengatur ukuran zRAM dalam MiB. Mode teks memulai tanpa desktop grafis.\nNomodeset menonaktifkan pengaturan mode kernel normal dan berguna\nuntuk pemecahan masalah grafis. Opsi-opsinya adalah nozram, zramcomp=ALGORITHM,\nzramsize=MIB, text, dan nomodeset.\nSumber dan lokalisasi\nOpsi-opsi ini memilih sumber data MiniOS dan menimpa pengaturan bahasa, zona waktu,\ndan keyboard untuk entri. Opsi-opsinya adalah from=SOURCE, from=askdisk,\nlocales=LOCALE, timezone=ZONE, dan keyboard-layouts=LAYOUT.\nDiagnostik\nQuiet mengurangi pesan boot. Debug mengaktifkan diagnostik tambahan. Gunakan hanya\nparameter yang dipahami oleh Linux, initramfs MiniOS, atau live-config. Opsi-opsinya adalah quiet dan debug.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

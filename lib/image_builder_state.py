@@ -804,6 +804,9 @@ def review_customization_summary(manifest, background_path=None,
             if isinstance(key, str))),
         'boot_timeout': boot.get('timeout_seconds'),
         'default_boot': boot.get('default_boot'),
+        'boot_menu_entries': (
+            tuple(dict(item) for item in boot.get('menu_entries', ()))
+            if isinstance(boot.get('menu_entries'), list) else ()),
         'kernel_args': (dict(boot.get('kernel_args'))
                         if isinstance(boot.get('kernel_args'), dict) else None),
         'background': (dict(
@@ -838,6 +841,7 @@ def verification_customization_summary(customization_summary, plan_manifest,
     if live_config.get('override_count') != len(keys):
         keys = ()
     boot = verified.get('boot', {})
+    plan_boot = manifest.get('customization', {}).get('boot', {})
     background = boot.get('background')
     overlay = verified.get('overlay')
     return {
@@ -847,6 +851,9 @@ def verification_customization_summary(customization_summary, plan_manifest,
         'override_keys': keys,
         'boot_timeout': boot.get('timeout_seconds'),
         'default_boot': boot.get('default_boot'),
+        'boot_menu_entries': (
+            tuple(dict(item) for item in plan_boot.get('menu_entries', ()))
+            if isinstance(plan_boot.get('menu_entries'), list) else ()),
         'kernel_args': (dict(boot.get('kernel_args'))
                         if isinstance(boot.get('kernel_args'), Mapping)
                         else None),
@@ -1435,6 +1442,7 @@ class ProjectState(object):
         self.live_config_overrides = {}
         self.boot_timeout = None
         self.default_boot = None
+        self.boot_menu_entries = None
         self.kernel_args = None
         self.boot_background_path = None
         self.boot_background_metadata = None
@@ -1539,6 +1547,9 @@ class ProjectState(object):
         self.live_config_overrides = dict(project.live_config_overrides)
         self.boot_timeout = project.boot_timeout
         self.default_boot = project.default_boot
+        self.boot_menu_entries = (
+            [dict(item) for item in project.boot_menu_entries]
+            if project.boot_menu_entries is not None else None)
         self.kernel_args = project.kernel_args
         self.boot_background_path = project.boot_background_path
         self.boot_background_metadata = None
@@ -1776,6 +1787,22 @@ class ProjectState(object):
         if (self.default_boot is not None and
                 self.default_boot not in image_project.DEFAULT_BOOT_MODES):
             errors.append('default boot mode is unsupported')
+        try:
+            self.boot_menu_entries = image_project.validate_boot_menu_entries(
+                self.boot_menu_entries)
+            if self.boot_menu_entries is not None:
+                self.boot_menu_entries = [dict(item)
+                                          for item in self.boot_menu_entries]
+                if self.default_boot is not None:
+                    errors.append(
+                        'default boot mode conflicts with the custom boot menu')
+                if (self.menu_locale == 'multilang' and
+                        any(item['title'] and any(ord(character) >= 128 for character in item['title'])
+                            for item in self.boot_menu_entries)):
+                    errors.append(
+                        'multilingual custom boot-menu titles must be ASCII')
+        except (TypeError, ValueError) as error:
+            errors.append(str(error))
         if self.kernel_args is not None:
             try:
                 image_project.validate_kernel_arguments(self.kernel_args)
@@ -1812,7 +1839,8 @@ class ProjectState(object):
     def customization_requested(self):
         return bool(
             self.live_config_overrides or self.boot_timeout is not None or
-            self.default_boot is not None or self.kernel_args is not None or
+            self.default_boot is not None or self.boot_menu_entries is not None or
+            self.kernel_args is not None or
             self.boot_background_path is not None or
             self.overlay_directory is not None)
 
@@ -1834,6 +1862,17 @@ class ProjectState(object):
             if (self.default_boot is not None and
                     self.default_boot not in image_project.DEFAULT_BOOT_MODES):
                 raise ValueError('default boot mode is unsupported')
+            boot_menu = image_project.validate_boot_menu_entries(
+                self.boot_menu_entries)
+            if boot_menu is not None:
+                if self.default_boot is not None:
+                    raise ValueError(
+                        'default boot mode conflicts with the custom boot menu')
+                if (self.menu_locale == 'multilang' and
+                        any(item['title'] and any(ord(character) >= 128 for character in item['title'])
+                            for item in boot_menu)):
+                    raise ValueError(
+                        'multilingual custom boot-menu titles must be ASCII')
             if self.kernel_args is not None:
                 image_project.validate_kernel_arguments(self.kernel_args)
             if self.boot_background_path is not None:
@@ -1891,7 +1930,24 @@ class ProjectState(object):
     def set_default_boot(self, value):
         if value is not None and value not in image_project.DEFAULT_BOOT_MODES:
             raise ValueError('unsupported default boot mode')
+        if self.boot_menu_entries is not None and value is not None:
+            raise ValueError('custom boot menu has its own default entry')
         return self._set_value('default_boot', value)
+
+    def set_boot_menu_entries(self, entries):
+        normalized = image_project.validate_boot_menu_entries(entries)
+        value = ([dict(item) for item in normalized]
+                 if normalized is not None else None)
+        before = (self.boot_menu_entries, self.default_boot)
+        self.boot_menu_entries = value
+        if value is not None:
+            self.default_boot = None
+        after = (self.boot_menu_entries, self.default_boot)
+        if after == before:
+            return False
+        self.customization_error = None
+        self._mark_changed()
+        return True
 
     def set_kernel_args(self, value):
         if value is not None:
@@ -2136,6 +2192,7 @@ class ProjectState(object):
             live_config_overrides=dict(self.live_config_overrides),
             boot_timeout=self.boot_timeout,
             default_boot=self.default_boot,
+            boot_menu_entries=self.boot_menu_entries,
             kernel_args=self.kernel_args,
             boot_background_path=self.boot_background_path,
             overlay_directory=self.overlay_directory,

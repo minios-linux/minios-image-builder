@@ -1,0 +1,240 @@
+{
+  "headings": [
+    {
+      "anchor": "sprache-für-diesen-eintrag",
+      "level": 1,
+      "title": "Sprache für diesen Eintrag"
+    },
+    {
+      "anchor": "zulässige-werte",
+      "level": 2,
+      "title": "Zulässige Werte"
+    },
+    {
+      "anchor": "vervollständigung",
+      "level": 2,
+      "title": "Vervollständigung"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "sprache-für-diesen-eintrag",
+      [
+        [
+          "text",
+          "Sprache für diesen Eintrag"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Überschreibt Sprache, Zeitzone und Tastatureinstellungen nur für diesen Starteintrag."
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "Leere Felder übernehmen die Standardwerte des Abbilds."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "zulässige-werte",
+      [
+        [
+          "text",
+          "Zulässige Werte"
+        ]
+      ]
+    ],
+    [
+      "list",
+      {
+        "ordered": false,
+        "start": 1
+      },
+      [
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Locale"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " verwendet einen Locale-Namen wie "
+                ],
+                [
+                  "span",
+                  "code",
+                  [
+                    [
+                      "text",
+                      "ru_RU.UTF-8"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  "."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Zeitzone"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " verwendet einen IANA-Namen wie "
+                ],
+                [
+                  "span",
+                  "code",
+                  [
+                    [
+                      "text",
+                      "Europe/Moscow"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  "."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Tastaturlayout"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " verwendet einen XKB-Layout-Code wie "
+                ],
+                [
+                  "span",
+                  "code",
+                  [
+                    [
+                      "text",
+                      "us"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " oder "
+                ],
+                [
+                  "span",
+                  "code",
+                  [
+                    [
+                      "text",
+                      "ru"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  "."
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "vervollständigung",
+      [
+        [
+          "text",
+          "Vervollständigung"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Vorschläge stammen aus den auf dem aktuellen System installierten Locale-, Zeitzonen- und Tastaturdaten. Ein Vorschlag hilft bei der Rechtschreibung, fügt aber keine fehlenden Locale-Daten zum erstellten Abbild hinzu."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Sprache für diesen Eintrag\nÜberschreibt Sprache, Zeitzone und Tastatureinstellungen nur für diesen Starteintrag.\nLeere Felder übernehmen die Standardwerte des Abbilds.\nZulässige Werte\nLocale verwendet einen Locale-Namen wie ru_RU.UTF-8.\nZeitzone verwendet einen IANA-Namen wie Europe/Moscow.\nTastaturlayout verwendet einen XKB-Layout-Code wie us oder ru.\nVervollständigung\nVorschläge stammen aus den auf dem aktuellen System installierten Locale-, Zeitzonen- und Tastaturdaten. Ein Vorschlag hilft bei der Rechtschreibung, fügt aber keine fehlenden Locale-Daten zum erstellten Abbild hinzu.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

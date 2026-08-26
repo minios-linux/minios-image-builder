@@ -246,7 +246,11 @@ assert_capture_arg_pair() {
 }
 
 assert_output_contains() {
-    [[ $output == *"$1"* ]]
+    if [[ $output != *"$1"* ]]; then
+        printf '# Expected output to contain: %s\n' "$1" >&2
+        printf '# Actual output:\n%s\n' "$output" >&2
+        return 1
+    fi
 }
 
 assert_build_arg_pair() {
@@ -422,6 +426,9 @@ assert_build_arg_pair() {
 @test "required boot module config and manifest exclusions fail preflight" {
     local pattern
     local expected
+    # Keep this test independent of filesystem-specific find ordering: the
+    # symlink exclusion behavior has its own test below.
+    rm -f "$SOURCE/boot/kernel-link"
     local -a patterns=(
         '^boot/vmlinuz'
         '^00-core'
@@ -429,7 +436,7 @@ assert_build_arg_pair() {
         'build-manifest[.]json$'
     )
     local -a messages=(
-        'excluded path'
+        'required kernel or initramfs file'
         'required source module'
         'minios/config.conf'
         'minios/build-manifest.json'
@@ -531,6 +538,8 @@ assert_build_arg_pair() {
     XORRISO_RACE_INPUT_PARENT="$config_parent" \
         XORRISO_RACE_INPUT_VICTIM="$input_victim" run_compose
     [ "$status" -ne 0 ]
+    assert_output_contains 'build input'
+    assert_output_contains "$CONFIG"
     assert_output_contains 'changed during ISO creation'
     [ ! -e "$OUTPUT" ]
     [ "$(<"$STATE/config.conf")" = configuration ]
@@ -539,6 +548,8 @@ assert_build_arg_pair() {
 
     XORRISO_RACE_INPUT="$CONFIG" run_compose
     [ "$status" -ne 0 ]
+    assert_output_contains 'build input identity or digest changed'
+    assert_output_contains "$CONFIG"
     assert_output_contains 'changed during ISO creation'
     [ ! -e "$OUTPUT" ]
     [ "$(<"$STATE/config.conf")" = configuration ]
@@ -1705,4 +1716,87 @@ assert report["module"]["target"] == "minios/101-session-changes.sb"
         --config "$COMPOSE_REAL_CONFIG" --name "$real_output"
     [ "$status" -eq 0 ]
     [ -s "$real_output" ]
+}
+
+@test "boot menu constructor creates custom variants with per-entry kernel parameters" {
+    prepare_custom_boot_fixture
+    local boot_menu
+    boot_menu='[{"id":"ram-trim","base_mode":"toram","enabled":true,"default":true,"title":"Run from memory","kernel_args":"toram=trim noload=firefox"},{"id":"resume","base_mode":"resume","enabled":true,"default":false,"title":"Continue MiniOS","kernel_args":""},{"id":"fresh","base_mode":"fresh","enabled":true,"default":false,"title":null,"kernel_args":""},{"id":"safe-graphics","base_mode":"fresh","enabled":true,"default":false,"title":"Safe graphics","kernel_args":"nomodeset"}]'
+
+    run_compose --menu en_US --kernel-args audit=1 --boot-menu-json "$boot_menu"
+
+    [ "$status" -eq 0 ]
+    grub="$STATE/files/minios/boot/grub/main.cfg"
+    syslinux="$STATE/files/minios/boot/syslinux/syslinux.cfg"
+    grep -Fqx 'set default=0' "$grub"
+    [ "$(grep -n 'Run from memory' "$grub" | cut -d: -f1)" -lt \
+      "$(grep -n 'Continue MiniOS' "$grub" | cut -d: -f1)" ]
+    grep -Fq 'toram=trim noload=firefox' "$grub"
+    grep -Fq 'menuentry "Safe graphics" --class live' "$grub"
+    grep -Fq 'nomodeset' "$grub"
+    grep -Fqx 'DEFAULT ram-trim' "$syslinux"
+    grep -Fq 'MENU LABEL Run from memory' "$syslinux"
+    grep -Fq 'LABEL safe-graphics' "$syslinux"
+    grep -Fq 'MENU LABEL Safe graphics' "$syslinux"
+    grep -Fq 'nomodeset' "$syslinux"
+}
+
+@test "boot menu constructor validates default ids and multilingual names" {
+    prepare_custom_boot_fixture
+    local boot_menu
+    boot_menu='[{"id":"normal","base_mode":"fresh","enabled":true,"default":true,"title":"Normal boot","kernel_args":""},{"id":"safe","base_mode":"fresh","enabled":true,"default":false,"title":"Safe graphics","kernel_args":"nomodeset"}]'
+
+    run_compose --menu en_US --default-boot fresh --boot-menu-json "$boot_menu"
+    [ "$status" -ne 0 ]
+    assert_output_contains 'cannot be combined'
+
+    run_compose --menu en_US --boot-menu-json '[{"id":"same","base_mode":"fresh","enabled":true,"default":true,"title":null,"kernel_args":""},{"id":"same","base_mode":"fresh","enabled":true,"default":false,"title":null,"kernel_args":""}]'
+    [ "$status" -ne 0 ]
+    assert_output_contains 'Invalid boot menu customization'
+
+    run_compose --menu multilang --boot-menu-json '[{"id":"normal","base_mode":"fresh","enabled":true,"default":true,"title":"Безопасный режим","kernel_args":""}]'
+    [ "$status" -ne 0 ]
+    assert_output_contains 'Invalid boot menu customization'
+
+    run_compose --menu multilang --boot-menu-json "$boot_menu"
+    [ "$status" -eq 0 ]
+    grep -Fq 'menuentry "Safe graphics" --class live' \
+        "$STATE/files/minios/boot/grub/main.cfg"
+}
+
+@test "imported boot menu entries replace managed arguments and preserve source arguments" {
+    prepare_custom_boot_fixture
+    local boot_menu
+    boot_menu='[{"id":"fresh","base_mode":"fresh","enabled":true,"default":true,"title":null,"kernel_args":"nomodeset","kernel_args_schema":2}]'
+
+    run_compose --menu en_US --boot-menu-json "$boot_menu"
+
+    [ "$status" -eq 0 ]
+    grub="$STATE/files/minios/boot/grub/main.cfg"
+    syslinux="$STATE/files/minios/boot/syslinux/syslinux.cfg"
+    grep -Fq 'boot=live nomodeset' "$grub"
+    grep -Fq 'boot=live nomodeset' "$syslinux"
+    ! grep -Fq ' quiet' "$grub"
+    ! grep -Fq ' quiet' "$syslinux"
+}
+
+@test "multilingual imported entries preserve source locale arguments" {
+    prepare_custom_boot_fixture
+    sed -i 's/ quiet/ quiet locales=en_US.UTF-8 timezone=Europe\/London/g' \
+        "$SOURCE/boot/grub/main.cfg" \
+        "$SOURCE/boot/syslinux/lang/en_US.cfg"
+    local boot_menu
+    boot_menu='[{"id":"fresh","base_mode":"fresh","enabled":true,"default":true,"title":null,"kernel_args":"nomodeset","kernel_args_schema":3}]'
+
+    run_compose --menu en_US --boot-menu-json "$boot_menu"
+
+    [ "$status" -eq 0 ]
+    grub="$STATE/files/minios/boot/grub/main.cfg"
+    syslinux="$STATE/files/minios/boot/syslinux/syslinux.cfg"
+    ! grep -Fq ' quiet' "$grub"
+    ! grep -Fq ' quiet' "$syslinux"
+    grep -Fq 'locales=en_US.UTF-8' "$grub"
+    grep -Fq 'locales=en_US.UTF-8' "$syslinux"
+    grep -Fq 'timezone=Europe/London' "$grub"
+    grep -Fq 'timezone=Europe/London' "$syslinux"
 }

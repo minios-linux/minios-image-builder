@@ -1,0 +1,283 @@
+{
+  "headings": [
+    {
+      "anchor": "system-und-module",
+      "level": 1,
+      "title": "System und Module"
+    },
+    {
+      "anchor": "modulfiter",
+      "level": 2,
+      "title": "Modulfiter"
+    },
+    {
+      "anchor": "startumgebung",
+      "level": 2,
+      "title": "Startumgebung"
+    },
+    {
+      "anchor": "grafikkompatibilität",
+      "level": 2,
+      "title": "Grafikkompatibilität"
+    },
+    {
+      "anchor": "automatisches-einbinden-von-datenträgern",
+      "level": 2,
+      "title": "Automatisches Einbinden von Datenträgern"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "system-und-module",
+      [
+        [
+          "text",
+          "System und Module"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Wählen Sie die Module und die Startumgebung für diesen Eintrag aus."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "modulfiter",
+      [
+        [
+          "text",
+          "Modulfiter"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          ""
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Module laden"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " beschränkt das Laden auf passende Modulnamen oder Bereiche."
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          ""
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Module überspringen"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " schließt passende Module aus. Vorschläge stammen von Modulen,"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "die in der gewählten MiniOS-Quelle erkannt wurden."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Diese Einstellungen erzeugen "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "load=FILTER"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " und "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "noload=FILTER"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ". Verwenden Sie nur Filterformen,"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "die vom MiniOS-initramfs unterstützt werden."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "startumgebung",
+      [
+        [
+          "text",
+          "Startumgebung"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Behalten Sie das Standard-Image bei, starten Sie die grafische Desktopumgebung, verwenden Sie eine Textkonsole oder"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "wechseln Sie in den Rettungsmodus. Textmodus und Rettungsmodus sind für Administration"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "und Fehlerbehebung gedacht und nicht für den normalen Desktopbetrieb."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "grafikkompatibilität",
+      [
+        [
+          "text",
+          "Grafikkompatibilität"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Der Kompatibilitätsmodus fügt die Linux-Kernel-Option "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "nomodeset"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " hinzu. Verwenden Sie ihn, wenn der normale"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "Kernel-Modus das Starten des grafischen Systems verhindert. Dies kann die"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "Bildschirmauflösung und die Beschleunigung reduzieren."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "automatisches-einbinden-von-datenträgern",
+      [
+        [
+          "text",
+          "Automatisches Einbinden von Datenträgern"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Aktivieren Sie das automatische Einbinden nur, wenn die Sitzung nach dem Start andere angeschlossene"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "Dateisysteme bereitstellen soll."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "System und Module\nWählen Sie die Module und die Startumgebung für diesen Eintrag aus.\nModulfiter\nModule laden beschränkt das Laden auf passende Modulnamen oder Bereiche.\nModule überspringen schließt passende Module aus. Vorschläge stammen von Modulen,\ndie in der gewählten MiniOS-Quelle erkannt wurden.\nDiese Einstellungen erzeugen load=FILTER und noload=FILTER. Verwenden Sie nur Filterformen,\ndie vom MiniOS-initramfs unterstützt werden.\nStartumgebung\nBehalten Sie das Standard-Image bei, starten Sie die grafische Desktopumgebung, verwenden Sie eine Textkonsole oder\nwechseln Sie in den Rettungsmodus. Textmodus und Rettungsmodus sind für Administration\nund Fehlerbehebung gedacht und nicht für den normalen Desktopbetrieb.\nGrafikkompatibilität\nDer Kompatibilitätsmodus fügt die Linux-Kernel-Option nomodeset hinzu. Verwenden Sie ihn, wenn der normale\nKernel-Modus das Starten des grafischen Systems verhindert. Dies kann die\nBildschirmauflösung und die Beschleunigung reduzieren.\nAutomatisches Einbinden von Datenträgern\nAktivieren Sie das automatische Einbinden nur, wenn die Sitzung nach dem Start andere angeschlossene\nDateisysteme bereitstellen soll.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

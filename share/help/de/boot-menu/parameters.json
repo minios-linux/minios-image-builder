@@ -1,0 +1,211 @@
+{
+  "headings": [
+    {
+      "anchor": "boot-und-kernel-parameter",
+      "level": 1,
+      "title": "Boot- und Kernel-Parameter"
+    },
+    {
+      "anchor": "sitzung-und-persistenz",
+      "level": 2,
+      "title": "Sitzung und Persistenz"
+    },
+    {
+      "anchor": "in-den-ram-kopieren",
+      "level": 2,
+      "title": "In den RAM kopieren"
+    },
+    {
+      "anchor": "module",
+      "level": 2,
+      "title": "Module"
+    },
+    {
+      "anchor": "speicher-und-grafik",
+      "level": 2,
+      "title": "Speicher und Grafik"
+    },
+    {
+      "anchor": "quelle-und-lokalisierung",
+      "level": 2,
+      "title": "Quelle und Lokalisierung"
+    },
+    {
+      "anchor": "diagnose",
+      "level": 2,
+      "title": "Diagnose"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "boot-und-kernel-parameter",
+      [
+        [
+          "text",
+          "Boot- und Kernel-Parameter"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Geben Sie die Parameter durch Leerzeichen getrennt ein. Die Autovervollständigung schlägt gängige Optionen für MiniOS und Linux vor. Globale Parameter gelten für jeden erstellten oder beibehaltenen MiniOS-Sitzungseintrag. Eintragsspezifische Parameter werden später angehängt und können eine wiederholte MiniOS-Schlüssel-Wert-Option überschreiben."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "sitzung-und-persistenz",
+      [
+        [
+          "text",
+          "Sitzung und Persistenz"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Diese Optionen ermöglichen dauerhafte Änderungen, das Fortsetzen der letzten kompatiblen Sitzung, das Erstellen einer neuen Sitzung, eine Abfrage beim Start oder die direkte Auswahl einer nummerierten Sitzung: perch, perchdir=resume, perchdir=new, perchdir=ask und perchdir=NUMBER."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Speichermodi sind native, dynfilefs, raw, luks und squashfs. SquashFS kann eine vorhandene komprimierte Sitzung fortsetzen, aber das aktuelle initramfs kann keine neue erstellen. Containergrößen akzeptieren die Suffixe MB, GB oder TB. Der reservierte freie Speicherplatz wird in MiB gemessen; der Standardwert ist 256 und das Maximum beträgt 4096."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Die entsprechenden Optionen sind perchmode=MODE, perchsize=SIZE und perchreserve=MIB."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "in-den-ram-kopieren",
+      [
+        [
+          "text",
+          "In den RAM kopieren"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Die Optionen toram, toram=full und toram=trim kopieren das Standard-, vollständige oder gefilterte System in den RAM."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "module",
+      [
+        [
+          "text",
+          "Module"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Der load-Filter lädt nur passende Module; der noload-Filter schließt passende Module aus. Filter können Modulnamen, Listen oder von initramfs unterstützte MiniOS-Bereiche enthalten. Die Optionen sind load=FILTER und noload=FILTER."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "speicher-und-grafik",
+      [
+        [
+          "text",
+          "Speicher und Grafik"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Die Speicheroptionen deaktivieren zRAM, wählen lzo, lzo-rle, lz4, lz4hc oder zstd-Komprimierung und setzen die zRAM-Größe in MiB. Textmodus startet ohne grafische Desktop-Umgebung. Nomodeset deaktiviert das normale Kernel-Mode-Setting und ist nützlich zur Fehlerbehebung bei Grafikproblemen. Die Optionen sind nozram, zramcomp=ALGORITHM, zramsize=MIB, text und nomodeset."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "quelle-und-lokalisierung",
+      [
+        [
+          "text",
+          "Quelle und Lokalisierung"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Diese Optionen wählen die MiniOS-Datenquelle und überschreiben Sprach-, Zeitzonen- und Tastatureinstellungen für den Eintrag. Die Optionen sind from=SOURCE, from=askdisk, locales=LOCALE, timezone=ZONE und keyboard-layouts=LAYOUT."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "diagnose",
+      [
+        [
+          "text",
+          "Diagnose"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Quiet reduziert Bootmeldungen. Debug aktiviert zusätzliche Diagnosen. Verwenden Sie nur Parameter, die von Linux, dem MiniOS-initramfs oder live-config verstanden werden. Die Optionen sind quiet und debug."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Boot- und Kernel-Parameter\nGeben Sie die Parameter durch Leerzeichen getrennt ein. Die Autovervollständigung schlägt gängige Optionen für MiniOS und Linux vor. Globale Parameter gelten für jeden erstellten oder beibehaltenen MiniOS-Sitzungseintrag. Eintragsspezifische Parameter werden später angehängt und können eine wiederholte MiniOS-Schlüssel-Wert-Option überschreiben.\nSitzung und Persistenz\nDiese Optionen ermöglichen dauerhafte Änderungen, das Fortsetzen der letzten kompatiblen Sitzung, das Erstellen einer neuen Sitzung, eine Abfrage beim Start oder die direkte Auswahl einer nummerierten Sitzung: perch, perchdir=resume, perchdir=new, perchdir=ask und perchdir=NUMBER.\nSpeichermodi sind native, dynfilefs, raw, luks und squashfs. SquashFS kann eine vorhandene komprimierte Sitzung fortsetzen, aber das aktuelle initramfs kann keine neue erstellen. Containergrößen akzeptieren die Suffixe MB, GB oder TB. Der reservierte freie Speicherplatz wird in MiB gemessen; der Standardwert ist 256 und das Maximum beträgt 4096.\nDie entsprechenden Optionen sind perchmode=MODE, perchsize=SIZE und perchreserve=MIB.\nIn den RAM kopieren\nDie Optionen toram, toram=full und toram=trim kopieren das Standard-, vollständige oder gefilterte System in den RAM.\nModule\nDer load-Filter lädt nur passende Module; der noload-Filter schließt passende Module aus. Filter können Modulnamen, Listen oder von initramfs unterstützte MiniOS-Bereiche enthalten. Die Optionen sind load=FILTER und noload=FILTER.\nSpeicher und Grafik\nDie Speicheroptionen deaktivieren zRAM, wählen lzo, lzo-rle, lz4, lz4hc oder zstd-Komprimierung und setzen die zRAM-Größe in MiB. Textmodus startet ohne grafische Desktop-Umgebung. Nomodeset deaktiviert das normale Kernel-Mode-Setting und ist nützlich zur Fehlerbehebung bei Grafikproblemen. Die Optionen sind nozram, zramcomp=ALGORITHM, zramsize=MIB, text und nomodeset.\nQuelle und Lokalisierung\nDiese Optionen wählen die MiniOS-Datenquelle und überschreiben Sprach-, Zeitzonen- und Tastatureinstellungen für den Eintrag. Die Optionen sind from=SOURCE, from=askdisk, locales=LOCALE, timezone=ZONE und keyboard-layouts=LAYOUT.\nDiagnose\nQuiet reduziert Bootmeldungen. Debug aktiviert zusätzliche Diagnosen. Verwenden Sie nur Parameter, die von Linux, dem MiniOS-initramfs oder live-config verstanden werden. Die Optionen sind quiet und debug.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

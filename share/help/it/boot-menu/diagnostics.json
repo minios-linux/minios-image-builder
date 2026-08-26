@@ -1,0 +1,225 @@
+{
+  "headings": [
+    {
+      "anchor": "diagnostica-e-opzioni-avanzate",
+      "level": 1,
+      "title": "Diagnostica e opzioni avanzate"
+    },
+    {
+      "anchor": "messaggi-di-avvio",
+      "level": 2,
+      "title": "Messaggi di avvio"
+    },
+    {
+      "anchor": "parametri-aggiuntivi",
+      "level": 2,
+      "title": "Parametri aggiuntivi"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "diagnostica-e-opzioni-avanzate",
+      [
+        [
+          "text",
+          "Diagnostica e opzioni avanzate"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Regola il logging di avvio o aggiungi parametri non disponibili nei controlli digitati."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "messaggi-di-avvio",
+      [
+        [
+          "text",
+          "Messaggi di avvio"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          ""
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Nascondi i messaggi di avvio di routine"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " aggiunge "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "quiet"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ". "
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Abilita la registrazione diagnostica"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " aggiunge"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "debug"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ". Possono essere abilitati indipendentemente. Disabilita "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "quiet"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " quando i messaggi di avvio dettagliati"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "sono più utili di una schermata di avvio pulita."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "parametri-aggiuntivi",
+      [
+        [
+          "text",
+          "Parametri aggiuntivi"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Inserisci solo parametri Linux, MiniOS initramfs o live-config che non hanno un"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "controllo tipizzato. Gli eventuali parametri sconosciuti esistenti vengono mantenuti qui e il completamento"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "continua a suggerire opzioni comuni."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "I parametri specifici della voce vengono aggiunti dopo gli argomenti del kernel del modello e globali."
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "Per un'opzione MiniOS "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "key=value"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " ripetuta, normalmente prevale l'ultimo valore."
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "Parametri esperti non validi o in conflitto possono impedire l'avvio."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Diagnostica e opzioni avanzate\nRegola il logging di avvio o aggiungi parametri non disponibili nei controlli digitati.\nMessaggi di avvio\nNascondi i messaggi di avvio di routine aggiunge quiet. Abilita la registrazione diagnostica aggiunge\ndebug. Possono essere abilitati indipendentemente. Disabilita quiet quando i messaggi di avvio dettagliati\nsono più utili di una schermata di avvio pulita.\nParametri aggiuntivi\nInserisci solo parametri Linux, MiniOS initramfs o live-config che non hanno un\ncontrollo tipizzato. Gli eventuali parametri sconosciuti esistenti vengono mantenuti qui e il completamento\ncontinua a suggerire opzioni comuni.\nI parametri specifici della voce vengono aggiunti dopo gli argomenti del kernel del modello e globali.\nPer un'opzione MiniOS key=value ripetuta, normalmente prevale l'ultimo valore.\nParametri esperti non validi o in conflitto possono impedire l'avvio.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

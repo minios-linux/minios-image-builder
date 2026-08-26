@@ -5,12 +5,15 @@ import sys
 import time
 from types import SimpleNamespace
 
+import gi
 import pytest
-from gi.repository import GLib
+gi.require_version('Gdk', '3.0')
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gdk, GLib, Gtk, Pango
 
 import image_builder_state as controller
 import main_image_builder as ui
-from ui_utils import CommandRunner
+from ui_utils import CommandRunner, apply_css_if_exists
 
 
 def test_command_runner_streams_carriage_return_frames():
@@ -52,6 +55,81 @@ def test_command_runner_streams_carriage_return_frames():
     assert result == [(0, False)]
     assert frames == ['I: first\r', 'I: second\r', 'P:complete\n']
     assert live_frames[0] is True
+
+
+def test_application_css_loads_after_shared_css(tmp_path):
+    shared = tmp_path / 'shared.css'
+    application = tmp_path / 'application.css'
+    shared.write_text('.section-heading { font-weight: 400; }')
+    application.write_text('.section-heading { font-weight: 700; }')
+
+    loaded = apply_css_if_exists((
+        str(shared), str(tmp_path / 'missing.css'), str(application)))
+
+    assert loaded == (str(shared), str(application))
+
+
+def test_boot_option_heading_has_typographic_application_style():
+    if Gdk.Screen.get_default() is None:
+        pytest.skip('GTK screen is unavailable')
+    assert apply_css_if_exists((ui.CSS_PATHS[2],)) == (ui.CSS_PATHS[2],)
+    surface = Gtk.Box()
+    surface.get_style_context().add_class('boot-option-heading')
+    label = Gtk.Label(label='Session and storage')
+    label.get_style_context().add_class('section-heading')
+    surface.add(label)
+    window = Gtk.Window()
+    window.add(surface)
+    window.show_all()
+    while Gtk.events_pending():
+        Gtk.main_iteration_do(False)
+
+    state = Gtk.StateFlags.NORMAL
+    font = label.get_style_context().get_property('font', state)
+    assert font.get_weight() >= Pango.Weight.BOLD
+    window.destroy()
+
+
+def test_result_intent_replaces_previous_style_class():
+    class _Context:
+        def __init__(self):
+            self.classes = set(('result-success',))
+
+        def add_class(self, name):
+            self.classes.add(name)
+
+        def remove_class(self, name):
+            self.classes.discard(name)
+
+    context = _Context()
+    window = SimpleNamespace(
+        build_result=SimpleNamespace(get_style_context=lambda: context))
+
+    ui.ImageBuilderWindow._set_result_intent(window, 'error')
+
+    assert context.classes == {'result-error'}
+
+
+def test_clean_capture_diagnostic_has_localizable_display_text():
+    title, message = ui.diagnostic_display_text(
+        'clean_capture_allowlist', 'backend message is not displayed')
+
+    assert title == ui._('Reusable changes only')
+    assert message == ui._(
+        'Clean capture uses a strict allowlist. It omits general system '
+        'state, user data, identity files, logs, and caches.')
+
+
+def test_unknown_diagnostic_preserves_backend_text():
+    assert ui.diagnostic_display_text('future_code', 'Future message') == (
+        'future_code', 'Future message')
+
+
+def test_build_failure_detail_prefers_backend_error():
+    assert ui.build_command_failure_detail(2, 'input failed') == ui._(
+        'The image backend reported: {error}').format(error='input failed')
+    assert ui.build_command_failure_detail(2) == ui._(
+        'The image command exited with status {status}.').format(status=2)
 
 
 def test_command_runner_display_argv_does_not_change_execution():
@@ -191,6 +269,160 @@ def test_live_config_text_ui_mapping(key, text, expected):
     ui.ImageBuilderWindow._on_live_config_entry_changed(window, entry, key)
 
     assert observed == [(key, expected)]
+
+
+def test_boot_parameter_controls_parse_existing_project_arguments():
+    settings = ui.parse_boot_parameters(
+        'perchmode=luks perchsize=8GB perchreserve=512 toram=trim '
+        'load=00-04 noload=firefox text default_target=rescue nomodeset '
+        'automount nozram zramcomp=zstd zramsize=2048 locales=ru_RU.UTF-8 '
+        'timezone=Europe/Moscow keyboard-layouts=ru quiet debug '
+        'from=askdisk custom-option=1')
+
+    assert settings == {
+        'persistence_mode': 'luks',
+        'persistence_size': '8GB',
+        'persistence_reserve': '512',
+        'ram_copy': 'trim',
+        'load_modules': '00-04',
+        'skip_modules': 'firefox',
+        'startup': 'text',
+        'graphics': 'nomodeset',
+        'automount': True,
+        'zram': 'off',
+        'zram_compression': 'zstd',
+        'zram_size': '2048',
+        'locale': 'ru_RU.UTF-8',
+        'timezone': 'Europe/Moscow',
+        'keyboard': 'ru',
+        'quiet': True,
+        'debug': True,
+        'extra': 'from=askdisk custom-option=1',
+    }
+
+
+def test_boot_parameter_controls_compile_stable_legacy_kernel_args():
+    settings = dict(ui.BOOT_PARAMETER_DEFAULTS)
+    settings.update({
+        'persistence_mode': 'dynfilefs',
+        'persistence_size': '16GB',
+        'ram_copy': 'full',
+        'skip_modules': 'firefox,libreoffice',
+        'graphics': 'nomodeset',
+        'zram_compression': 'lz4',
+        'locale': 'de_DE.UTF-8',
+        'quiet': True,
+        'extra': 'from=askdisk audit=1',
+    })
+
+    assert ui.compile_boot_parameters(settings) == (
+        'perchmode=dynfilefs perchsize=16GB toram=full '
+        'noload=firefox,libreoffice nomodeset zramcomp=lz4 '
+        'locales=de_DE.UTF-8 quiet from=askdisk audit=1')
+
+
+def test_unknown_typed_values_remain_in_expert_parameters():
+    settings = ui.parse_boot_parameters(
+        'perchmode=future zramcomp=future default-target=future.target')
+
+    assert settings['persistence_mode'] == 'keep'
+    assert settings['zram_compression'] == 'keep'
+    assert settings['startup'] == 'keep'
+    assert settings['extra'] == (
+        'perchmode=future zramcomp=future default-target=future.target')
+    assert ui.compile_boot_parameters(settings) == settings['extra']
+
+
+def test_squashfs_session_mode_round_trips_through_typed_controls():
+    settings = ui.parse_boot_parameters('perchmode=squashfs perchdir=resume')
+
+    assert settings['persistence_mode'] == 'squashfs'
+    assert settings['extra'] == 'perchdir=resume'
+    assert ui.compile_boot_parameters(settings) == (
+        'perchmode=squashfs perchdir=resume')
+
+
+def test_source_boot_menu_editor_uses_recognized_entries():
+    recognized = {
+        'entries': ({
+            'id': 'source-fresh', 'base_mode': 'fresh', 'enabled': True,
+            'default': True, 'title': 'Source fresh',
+            'kernel_args': 'quiet', 'kernel_args_schema': 2,
+        },),
+    }
+    window = SimpleNamespace(
+        _source_boot_menu_settings=lambda: recognized,
+        state=SimpleNamespace(default_boot=None))
+
+    entries = ui.ImageBuilderWindow._source_boot_menu_editor_entries(window)
+
+    assert entries == [dict(recognized['entries'][0])]
+
+
+def test_disabled_boot_options_make_dependent_fields_insensitive():
+    class Choice:
+        def __init__(self, value):
+            self.value = value
+
+        def get_active_id(self):
+            return self.value
+
+    class Field:
+        def __init__(self):
+            self.sensitive = None
+
+        def set_sensitive(self, value):
+            self.sensitive = value
+
+    persistence_size = Field()
+    zram_compression = Field()
+    zram_size = Field()
+    row = {'option_widgets': {
+        'persistence_mode': Choice('squashfs'),
+        'persistence_size': persistence_size,
+        'zram': Choice('off'),
+        'zram_compression': zram_compression,
+        'zram_size': zram_size,
+    }}
+
+    ui.ImageBuilderWindow._refresh_boot_menu_option_dependencies(None, row)
+
+    assert persistence_size.sensitive is False
+    assert zram_compression.sensitive is False
+    assert zram_size.sensitive is False
+
+
+def test_enabled_boot_options_keep_dependent_fields_sensitive():
+    class Choice:
+        def __init__(self, value):
+            self.value = value
+
+        def get_active_id(self):
+            return self.value
+
+    class Field:
+        def __init__(self):
+            self.sensitive = None
+
+        def set_sensitive(self, value):
+            self.sensitive = value
+
+    persistence_size = Field()
+    zram_compression = Field()
+    zram_size = Field()
+    row = {'option_widgets': {
+        'persistence_mode': Choice('dynfilefs'),
+        'persistence_size': persistence_size,
+        'zram': Choice('keep'),
+        'zram_compression': zram_compression,
+        'zram_size': zram_size,
+    }}
+
+    ui.ImageBuilderWindow._refresh_boot_menu_option_dependencies(None, row)
+
+    assert persistence_size.sensitive is True
+    assert zram_compression.sensitive is True
+    assert zram_size.sensitive is True
 
 
 def test_build_runner_receives_plan_cwd_and_redacted_display(monkeypatch):

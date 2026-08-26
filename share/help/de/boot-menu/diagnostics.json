@@ -1,0 +1,185 @@
+{
+  "headings": [
+    {
+      "anchor": "diagnose-und-erweiterte-optionen",
+      "level": 1,
+      "title": "Diagnose und erweiterte Optionen"
+    },
+    {
+      "anchor": "bootmeldungen",
+      "level": 2,
+      "title": "Bootmeldungen"
+    },
+    {
+      "anchor": "zusätzliche-parameter",
+      "level": 2,
+      "title": "Zusätzliche Parameter"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "diagnose-und-erweiterte-optionen",
+      [
+        [
+          "text",
+          "Diagnose und erweiterte Optionen"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Passen Sie das Boot-Logging an oder fügen Sie Parameter hinzu, die von den vorhandenen Eingabefeldern nicht abgedeckt werden."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "bootmeldungen",
+      [
+        [
+          "text",
+          "Bootmeldungen"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          ""
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Routine-Bootmeldungen ausblenden"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " fügt "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "quiet"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " hinzu. "
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Diagnose-Logging aktivieren"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " fügt"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "debug"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " hinzu. Beide Optionen können unabhängig voneinander aktiviert werden. Deaktivieren Sie "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "quiet"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ", wenn detaillierte Bootmeldungen nützlicher sind als ein sauberer Startbildschirm."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "zusätzliche-parameter",
+      [
+        [
+          "text",
+          "Zusätzliche Parameter"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Geben Sie nur Linux-, MiniOS-initramfs- oder live-config-Parameter ein, für die es kein typisiertes Steuerelement gibt. Bereits vorhandene unbekannte Parameter werden hier beibehalten, und die Vervollständigung schlägt weiterhin gängige Optionen vor."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Eintragspezifische Parameter werden nach den Template- und globalen Kernel-Argumenten angehängt. Bei einer wiederholten MiniOS "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "key=value"
+            ]
+          ]
+        ],
+        [
+          "text",
+          "-Option gewinnt normalerweise der letzte Wert. Ungültige oder widersprüchliche Expertenparameter können den Start verhindern."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Diagnose und erweiterte Optionen\nPassen Sie das Boot-Logging an oder fügen Sie Parameter hinzu, die von den vorhandenen Eingabefeldern nicht abgedeckt werden.\nBootmeldungen\nRoutine-Bootmeldungen ausblenden fügt quiet hinzu. Diagnose-Logging aktivieren fügt\ndebug hinzu. Beide Optionen können unabhängig voneinander aktiviert werden. Deaktivieren Sie quiet, wenn detaillierte Bootmeldungen nützlicher sind als ein sauberer Startbildschirm.\nZusätzliche Parameter\nGeben Sie nur Linux-, MiniOS-initramfs- oder live-config-Parameter ein, für die es kein typisiertes Steuerelement gibt. Bereits vorhandene unbekannte Parameter werden hier beibehalten, und die Vervollständigung schlägt weiterhin gängige Optionen vor.\nEintragspezifische Parameter werden nach den Template- und globalen Kernel-Argumenten angehängt. Bei einer wiederholten MiniOS key=value-Option gewinnt normalerweise der letzte Wert. Ungültige oder widersprüchliche Expertenparameter können den Start verhindern.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

@@ -1,0 +1,432 @@
+{
+  "headings": [
+    {
+      "anchor": "sesi-dan-penyimpanan",
+      "level": 1,
+      "title": "Sesi dan penyimpanan"
+    },
+    {
+      "anchor": "pemilihan-sesi",
+      "level": 2,
+      "title": "Pemilihan sesi"
+    },
+    {
+      "anchor": "jenis-penyimpanan",
+      "level": 2,
+      "title": "Jenis penyimpanan"
+    },
+    {
+      "anchor": "kapasitas",
+      "level": 2,
+      "title": "Kapasitas"
+    },
+    {
+      "anchor": "salin-ke-ram",
+      "level": 2,
+      "title": "Salin ke RAM"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "sesi-dan-penyimpanan",
+      [
+        [
+          "text",
+          "Sesi dan penyimpanan"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Pilih cara entri ini menemukan dan menyimpan perubahan yang bersifat permanen."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "pemilihan-sesi",
+      [
+        [
+          "text",
+          "Pemilihan sesi"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Template entri mengontrol apakah MiniOS melanjutkan sesi terbaru, membuat sesi baru, atau menanyakan saat startup. Jenis penyimpanan tidak menggantikan pilihan template tersebut."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "jenis-penyimpanan",
+      [
+        [
+          "text",
+          "Jenis penyimpanan"
+        ]
+      ]
+    ],
+    [
+      "list",
+      {
+        "ordered": false,
+        "start": 1
+      },
+      [
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Otomatis"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " mempertahankan mode template atau sesi yang disimpan."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Native"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " menyimpan perubahan di direktori pada filesystem Linux."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Dynfilefs"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " menggunakan kontainer yang dapat diperluas."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Raw"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " menggunakan image dengan ukuran tetap."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "LUKS"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " menggunakan kontainer terenkripsi."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "SquashFS"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " melanjutkan sesi terkompresi yang sudah ada."
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Initramfs saat ini dapat melanjutkan tetapi tidak dapat membuat sesi SquashFS."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "kapasitas",
+      [
+        [
+          "text",
+          "Kapasitas"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          ""
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Ukuran kontainer"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " hanya berlaku untuk sesi yang didukung kontainer, sehingga dinonaktifkan untuk Native dan SquashFS. "
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Ruang kosong yang dipertahankan"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " menyisakan ruang pada perangkat persistensi agar perubahan yang disimpan tidak memenuhi seluruhnya."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Opsi boot yang sesuai adalah "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "perchmode="
+            ]
+          ]
+        ],
+        [
+          "text",
+          ", "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "perchsize="
+            ]
+          ]
+        ],
+        [
+          "text",
+          ", dan "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "perchreserve="
+            ]
+          ]
+        ],
+        [
+          "text",
+          "."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "salin-ke-ram",
+      [
+        [
+          "text",
+          "Salin ke RAM"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "toram=full"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " menyalin seluruh sistem ke memori. "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "toram=trim"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " hanya menyalin kumpulan modul yang difilter. Ini memungkinkan perangkat boot dilepas, tetapi membutuhkan RAM yang cukup untuk data yang disalin."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Sesi dan penyimpanan\nPilih cara entri ini menemukan dan menyimpan perubahan yang bersifat permanen.\nPemilihan sesi\nTemplate entri mengontrol apakah MiniOS melanjutkan sesi terbaru, membuat sesi baru, atau menanyakan saat startup. Jenis penyimpanan tidak menggantikan pilihan template tersebut.\nJenis penyimpanan\nOtomatis mempertahankan mode template atau sesi yang disimpan.\nNative menyimpan perubahan di direktori pada filesystem Linux.\nDynfilefs menggunakan kontainer yang dapat diperluas.\nRaw menggunakan image dengan ukuran tetap.\nLUKS menggunakan kontainer terenkripsi.\nSquashFS melanjutkan sesi terkompresi yang sudah ada.\nInitramfs saat ini dapat melanjutkan tetapi tidak dapat membuat sesi SquashFS.\nKapasitas\nUkuran kontainer hanya berlaku untuk sesi yang didukung kontainer, sehingga dinonaktifkan untuk Native dan SquashFS. Ruang kosong yang dipertahankan menyisakan ruang pada perangkat persistensi agar perubahan yang disimpan tidak memenuhi seluruhnya.\nOpsi boot yang sesuai adalah perchmode=, perchsize=, dan perchreserve=.\nSalin ke RAM\ntoram=full menyalin seluruh sistem ke memori. toram=trim hanya menyalin kumpulan modul yang difilter. Ini memungkinkan perangkat boot dilepas, tetapi membutuhkan RAM yang cukup untuk data yang disalin.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

@@ -1,0 +1,256 @@
+{
+  "headings": [
+    {
+      "anchor": "lingua-per-questa-voce",
+      "level": 1,
+      "title": "Lingua per questa voce"
+    },
+    {
+      "anchor": "valori-accettati",
+      "level": 2,
+      "title": "Valori accettati"
+    },
+    {
+      "anchor": "completamento",
+      "level": 2,
+      "title": "Completamento"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "lingua-per-questa-voce",
+      [
+        [
+          "text",
+          "Lingua per questa voce"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Sostituisci lingua, fuso orario e impostazioni della tastiera solo per questa voce di avvio."
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "I campi vuoti mantengono i valori predefiniti dell'immagine."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "valori-accettati",
+      [
+        [
+          "text",
+          "Valori accettati"
+        ]
+      ]
+    ],
+    [
+      "list",
+      {
+        "ordered": false,
+        "start": 1
+      },
+      [
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Locale"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " utilizza un nome locale come "
+                ],
+                [
+                  "span",
+                  "code",
+                  [
+                    [
+                      "text",
+                      "ru_RU.UTF-8"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  "."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Fuso orario"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " utilizza un nome IANA come "
+                ],
+                [
+                  "span",
+                  "code",
+                  [
+                    [
+                      "text",
+                      "Europe/Moscow"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  "."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Layout tastiera"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " utilizza un codice layout XKB come "
+                ],
+                [
+                  "span",
+                  "code",
+                  [
+                    [
+                      "text",
+                      "us"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " o "
+                ],
+                [
+                  "span",
+                  "code",
+                  [
+                    [
+                      "text",
+                      "ru"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  "."
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "completamento",
+      [
+        [
+          "text",
+          "Completamento"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "I suggerimenti provengono dai dati di lingua, fuso orario e tastiera installati nel"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "sistema corrente. Un suggerimento aiuta con l'ortografia ma non aggiunge dati"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "locali mancanti all'immagine creata."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Lingua per questa voce\nSostituisci lingua, fuso orario e impostazioni della tastiera solo per questa voce di avvio.\nI campi vuoti mantengono i valori predefiniti dell'immagine.\nValori accettati\nLocale utilizza un nome locale come ru_RU.UTF-8.\nFuso orario utilizza un nome IANA come Europe/Moscow.\nLayout tastiera utilizza un codice layout XKB come us o ru.\nCompletamento\nI suggerimenti provengono dai dati di lingua, fuso orario e tastiera installati nel\nsistema corrente. Un suggerimento aiuta con l'ortografia ma non aggiunge dati\nlocali mancanti all'immagine creata.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

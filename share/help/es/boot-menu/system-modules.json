@@ -1,0 +1,283 @@
+{
+  "headings": [
+    {
+      "anchor": "sistema-y-módulos",
+      "level": 1,
+      "title": "Sistema y módulos"
+    },
+    {
+      "anchor": "filtros-de-módulos",
+      "level": 2,
+      "title": "Filtros de módulos"
+    },
+    {
+      "anchor": "entorno-de-inicio",
+      "level": 2,
+      "title": "Entorno de inicio"
+    },
+    {
+      "anchor": "compatibilidad-gráfica",
+      "level": 2,
+      "title": "Compatibilidad gráfica"
+    },
+    {
+      "anchor": "montaje-automático-de-discos",
+      "level": 2,
+      "title": "Montaje automático de discos"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "sistema-y-módulos",
+      [
+        [
+          "text",
+          "Sistema y módulos"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Selecciona los módulos y el entorno de inicio para esta entrada."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "filtros-de-módulos",
+      [
+        [
+          "text",
+          "Filtros de módulos"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          ""
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Cargar módulos"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " restringe la carga a nombres de módulos o rangos coincidentes."
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          ""
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Omitir módulos"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " excluye los módulos que coincidan. Las sugerencias provienen de los módulos"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "detectados en la fuente MiniOS seleccionada."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Estos controles generan "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "load=FILTER"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " y "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "noload=FILTER"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ". Utilice solo los formatos de filtro"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "soportados por el initramfs de MiniOS."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "entorno-de-inicio",
+      [
+        [
+          "text",
+          "Entorno de inicio"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Mantenga la imagen predeterminada, inicie el escritorio gráfico, use una consola de texto o"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "entre en modo de rescate. El modo texto y el modo de rescate están pensados para administración"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "y solución de problemas en lugar de uso normal del escritorio."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "compatibilidad-gráfica",
+      [
+        [
+          "text",
+          "Compatibilidad gráfica"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "El modo de compatibilidad añade la opción del kernel de Linux "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "nomodeset"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ". Úselo cuando el modo"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "normal de configuración del kernel impida que el sistema gráfico se inicie. Puede reducir"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "la resolución y la aceleración de pantalla."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "montaje-automático-de-discos",
+      [
+        [
+          "text",
+          "Montaje automático de discos"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Active el montaje automático solo cuando la sesión deba exponer otros sistemas de archivos"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "adjuntos después del inicio."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Sistema y módulos\nSelecciona los módulos y el entorno de inicio para esta entrada.\nFiltros de módulos\nCargar módulos restringe la carga a nombres de módulos o rangos coincidentes.\nOmitir módulos excluye los módulos que coincidan. Las sugerencias provienen de los módulos\ndetectados en la fuente MiniOS seleccionada.\nEstos controles generan load=FILTER y noload=FILTER. Utilice solo los formatos de filtro\nsoportados por el initramfs de MiniOS.\nEntorno de inicio\nMantenga la imagen predeterminada, inicie el escritorio gráfico, use una consola de texto o\nentre en modo de rescate. El modo texto y el modo de rescate están pensados para administración\ny solución de problemas en lugar de uso normal del escritorio.\nCompatibilidad gráfica\nEl modo de compatibilidad añade la opción del kernel de Linux nomodeset. Úselo cuando el modo\nnormal de configuración del kernel impida que el sistema gráfico se inicie. Puede reducir\nla resolución y la aceleración de pantalla.\nMontaje automático de discos\nActive el montaje automático solo cuando la sesión deba exponer otros sistemas de archivos\nadjuntos después del inicio.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

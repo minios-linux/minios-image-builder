@@ -6,7 +6,7 @@ minios-image-compose - generate MiniOS ISO image with specified modules
 
 # SYNOPSIS
 
-**minios-image-compose** [**-e** *REGEX*] [**-n** *NAME*] [**--source** *MINIOS_DIR*] [**--config** *FILE*] [**--volume-label** *LABEL*] [**--manifest** *FILE*] [**--capture-changes** *MODE*] [**--capture-selection** *FILE*] [**--capture-compression** *TYPE*] [**--boot-timeout** *SECONDS*] [**--default-boot** *MODE*] [**--kernel-args** *TEXT*] [**--boot-background** *PNG*] [**--overlay-directory** *DIR*] [**--menu** *TYPE*] [**--overwrite**] [**--no-color**] [**--help**] [**--version**] [*MODULE*...]
+**minios-image-compose** [**-e** *REGEX*] [**-n** *NAME*] [**--source** *MINIOS_DIR*] [**--config** *FILE*] [**--volume-label** *LABEL*] [**--manifest** *FILE*] [**--capture-changes** *MODE*] [**--capture-selection** *FILE*] [**--capture-compression** *TYPE*] [**--boot-timeout** *SECONDS*] [**--default-boot** *MODE*] [**--boot-menu-json** *JSON*] [**--kernel-args** *TEXT*] [**--boot-background** *PNG*] [**--overlay-directory** *DIR*] [**--menu** *TYPE*] [**--overwrite**] [**--no-color**] [**--help**] [**--version**] [*MODULE*...]
 
 # DESCRIPTION
 
@@ -53,7 +53,10 @@ Image customization is limited to boot configuration, boot artwork, and one decl
 : Set the timeout in every authoritative GRUB and native SYSLINUX configuration reached from the active bootloader roots. The value is an integer from 0 through 300. GRUB receives seconds and SYSLINUX receives deciseconds. Without this option, source timeout directives are preserved. In a multilingual layout, both the language menu and each reachable session menu are updated. The minimal MiniOS SYSLINUX-to-GRUB chainloader remains unchanged because GRUB is authoritative after its fixed immediate handoff.
 
 **--default-boot** *MODE*
-: Select **resume**, **new**, **choose**, **fresh**, or **toram** as the default MiniOS session. GRUB entries are identified by the MiniOS semantic classes **resume**, **new**, **switch**, **live**, and **ram**, with kernel session arguments used as a consistency check or fallback. Native SYSLINUX entries are identified from **APPEND** session arguments and checked against known **LABEL** values. Translated **MENU LABEL** and GRUB title text are never used. Every authoritative reachable session menu must prove the requested mapping or the build fails. A multilingual first-stage language menu keeps its language default; its reachable **main.cfg** or `lang/*.cfg` session menus are changed instead. The exact MiniOS `LINUX /minios/boot/grub/i386-pc/lnxboot.img` and `INITRD /minios/boot/grub/i386-pc/core.img` chain delegates session semantics to the reachable GRUB graph; malformed or mixed chainloader/native layouts are rejected.
+: Select **resume**, **new**, **choose**, **fresh**, or **toram** as the default MiniOS session while preserving the source menu. GRUB entries are identified by the MiniOS semantic classes **resume**, **new**, **switch**, **live**, and **ram**, with kernel session arguments used as a consistency check or fallback. Native SYSLINUX entries are identified from **APPEND** session arguments and checked against known **LABEL** values. Translated **MENU LABEL** and GRUB title text are never used. Every authoritative reachable session menu must prove the requested mapping or the build fails. A multilingual first-stage language menu keeps its language default; its reachable **main.cfg** or `lang/*.cfg` session menus are changed instead. The exact MiniOS `LINUX /minios/boot/grub/i386-pc/lnxboot.img` and `INITRD /minios/boot/grub/i386-pc/core.img` chain delegates session semantics to the reachable GRUB graph; malformed or mixed chainloader/native layouts are rejected. This option cannot be combined with **--boot-menu-json**, because a constructed menu carries its own default entry.
+
+**--boot-menu-json** *JSON*
+: Construct a MiniOS session menu with 1 to 32 entries. Each array element has exactly six fields: **id** (a unique safe internal identifier), **base_mode** (**resume**, **new**, **choose**, **fresh**, or **toram**), boolean **enabled**, boolean **default**, nullable **title**, and string **kernel_args**. Exactly one entry is the enabled default. Entries may reuse the same **base_mode**, so frontends can create variants such as a normal fresh boot and a second fresh boot with `nomodeset`, or several persistence/RAM profiles. The base mode supplies the trusted kernel/initramfs stanza and MiniOS session selector; **kernel_args** is validated with the same bootloader-safe grammar as **--kernel-args** and is appended only to that entry after the base selector and global arguments. An empty title preserves the source/template title when available. ASCII custom titles are portable in **multilang** mode; single-language native SYSLINUX also accepts characters representable by its menu encoding (CP866 for `ru_RU`, ISO-8859-1 for the other currently supported native menus). GRUB/SYSLINUX semantics are generated from **base_mode**, never inferred from the visible title. **--boot-menu-json** cannot be combined with **--default-boot**.
 
 **--kernel-args** *TEXT*
 : Append *TEXT* unchanged to every actual GRUB **linux**, **linuxefi**, or **linux16** command and every SYSLINUX kernel stanza **APPEND** line in the effective config graph. The UTF-8 encoding must be 1 to 4096 bytes, printable, use ordinary spaces only, and avoid quoting, expansion, comment, redirection, grouping, wildcard, and command-separator characters that cannot have identical GRUB and SYSLINUX meaning. The text is never evaluated or passed through shell substitution. Logs and **image-customization.json** contain only its UTF-8 byte count and SHA256.
@@ -130,6 +133,12 @@ Create an image with a five-second session menu, a fresh-session default, and ad
 
     minios-image-compose --boot-timeout 5 --default-boot fresh \
         --kernel-args 'audit=1 mitigations=auto' --name ./custom-boot.iso
+
+Create a menu with a normal boot and a separate safe-graphics variant:
+
+    minios-image-compose --menu en_US \
+        --boot-menu-json '[{"id":"normal","base_mode":"fresh","enabled":true,"default":true,"title":"Normal boot","kernel_args":""},{"id":"safe-graphics","base_mode":"fresh","enabled":true,"default":false,"title":"Safe graphics","kernel_args":"nomodeset"}]' \
+        --name ./custom-menu.iso
 
 Add a project filesystem overlay and boot artwork without changing the source tree:
 

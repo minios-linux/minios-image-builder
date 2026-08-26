@@ -139,10 +139,14 @@ COMPOSE_CAPTURE_OPTIONS = (
     '--capture-changes', '--capture-selection', '--capture-compression',
 )
 COMPOSE_CUSTOMIZATION_OPTIONS = (
-    '--boot-timeout', '--default-boot', '--kernel-args',
+    '--boot-timeout', '--default-boot', '--boot-menu-json', '--kernel-args',
     '--boot-background', '--overlay-directory',
 )
 DEFAULT_BOOT_MODES = ('resume', 'new', 'choose', 'fresh', 'toram')
+BOOT_MENU_TITLE_MAX_BYTES = 512
+BOOT_MENU_MAX_ENTRIES = 32
+BOOT_MENU_MAX_JSON_BYTES = 65536
+_BOOT_MENU_ENTRY_ID_RE = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_-]{0,47}$')
 LIVE_CONFIG_OVERRIDE_KEYS = (
     'DEFAULT_TARGET', 'DISABLE_SERVICES', 'ENABLE_SERVICES', 'EXPORT_LOGS',
     'LIVE_BIND_USER_DIRS', 'LIVE_CONFIG_CMDLINE', 'LIVE_CONFIG_DEBUG',
@@ -1097,6 +1101,115 @@ def customization_target_set_identity(targets):
         digest.update(encoded)
         digest.update(b'\x00')
     return len(targets), digest.hexdigest()
+
+
+def validate_boot_menu_entries(entries):
+    """Validate an optional boot-menu composition built from MiniOS templates."""
+    if entries is None:
+        return None
+    if (not isinstance(entries, (list, tuple)) or not entries or
+            len(entries) > BOOT_MENU_MAX_ENTRIES):
+        raise ValueError('boot_menu_entries must contain 1 to 32 entries')
+    normalized = []
+    seen_ids = set()
+    default_count = 0
+    for item in entries:
+        old_keys = {
+            'id', 'base_mode', 'enabled', 'default', 'title', 'kernel_args'}
+        new_keys = old_keys | {'kernel_args_schema'}
+        if (not isinstance(item, (dict, MappingProxyType)) or
+                set(item) not in (old_keys, new_keys)):
+            raise ValueError('boot menu entry schema is invalid')
+        arguments_schema = item.get('kernel_args_schema')
+        if arguments_schema is not None and arguments_schema not in (2, 3):
+            raise ValueError('boot menu entry kernel_args_schema is invalid')
+        entry_id = item.get('id')
+        if (not isinstance(entry_id, str) or
+                not _BOOT_MENU_ENTRY_ID_RE.match(entry_id) or
+                entry_id in seen_ids):
+            raise ValueError('boot menu entry id is invalid or duplicated')
+        seen_ids.add(entry_id)
+        base_mode = item.get('base_mode')
+        if base_mode not in DEFAULT_BOOT_MODES:
+            raise ValueError('boot menu entry base mode is invalid')
+        enabled = _require_bool(item.get('enabled'), 'boot menu entry enabled')
+        is_default = _require_bool(item.get('default'), 'boot menu entry default')
+        if is_default:
+            default_count += 1
+            if not enabled:
+                raise ValueError('default boot menu entry must be enabled')
+        title = item.get('title')
+        if title is not None:
+            if not isinstance(title, str):
+                raise ValueError('boot menu entry title must be a string or null')
+            title = title.strip()
+            if not title:
+                title = None
+            else:
+                try:
+                    encoded = title.encode('utf-8', 'strict')
+                except UnicodeError:
+                    raise ValueError('boot menu entry title must be valid UTF-8')
+                if len(encoded) > BOOT_MENU_TITLE_MAX_BYTES:
+                    raise ValueError('boot menu entry title is too long')
+                if (any(not character.isprintable() for character in title) or
+                        any(character in '\"\\$`' for character in title)):
+                    raise ValueError(
+                        'boot menu entry title contains unsafe bootloader syntax')
+        extra = item.get('kernel_args')
+        if not isinstance(extra, str):
+            raise ValueError('boot menu entry kernel_args must be a string')
+        extra = extra.strip()
+        if extra:
+            validate_kernel_arguments(extra)
+        normalized_item = {
+            'id': entry_id, 'base_mode': base_mode, 'enabled': enabled,
+            'default': is_default, 'title': title, 'kernel_args': extra,
+        }
+        if arguments_schema is not None:
+            normalized_item['kernel_args_schema'] = arguments_schema
+        normalized.append(normalized_item)
+    if not any(item['enabled'] for item in normalized):
+        raise ValueError('boot menu must keep at least one enabled entry')
+    if default_count != 1:
+        raise ValueError('boot menu must have exactly one default entry')
+    serialized = json.dumps(
+        normalized, ensure_ascii=True, allow_nan=False, sort_keys=True,
+        separators=(',', ':')).encode('ascii')
+    if len(serialized) > BOOT_MENU_MAX_JSON_BYTES:
+        raise ValueError('boot menu customization exceeds 65536 JSON bytes')
+    return tuple(_freeze(item) for item in normalized)
+
+
+def _boot_menu_public(entries):
+    if entries is None:
+        return None
+    keys = ('id', 'base_mode', 'enabled', 'default', 'title', 'kernel_args')
+    result = []
+    for item in entries:
+        public = dict((key, item[key]) for key in keys)
+        if 'kernel_args_schema' in item:
+            public['kernel_args_schema'] = item['kernel_args_schema']
+        result.append(public)
+    return result
+
+def _boot_menu_plan_summary(entries):
+    if entries is None:
+        return None
+    result = []
+    for item in entries:
+        extra = item['kernel_args']
+        if extra:
+            count, digest = validate_kernel_arguments(extra)
+            extra_summary = {'bytes': count, 'sha256': digest}
+        else:
+            extra_summary = None
+        result.append({
+            'id': item['id'], 'base_mode': item['base_mode'],
+            'enabled': item['enabled'], 'default': item['default'],
+            'title': item['title'], 'kernel_args': extra_summary,
+        })
+    return result
 
 
 def validate_kernel_arguments(value):
@@ -2551,7 +2664,303 @@ def _grub_menu_entries(lines):
     return entries
 
 
-def _transform_grub_payload(payload, timeout, default_boot, kernel_args):
+def _boot_menu_sequence(entries):
+    normalized = validate_boot_menu_entries(entries)
+    if normalized is None:
+        return None
+    return [dict(item) for item in normalized]
+
+
+_GRUB_MODE_CLASSES_REVERSE = {
+    'resume': 'resume', 'new': 'new', 'choose': 'switch',
+    'fresh': 'live', 'toram': 'ram',
+}
+_BOOT_MODE_SELECTORS = {
+    'resume': 'perchdir=resume',
+    'new': 'perchdir=new',
+    'choose': 'perchdir=ask',
+    'fresh': None,
+    'toram': 'toram',
+}
+_BOOT_MODE_FALLBACK_TITLES = {
+    'resume': 'Resume previous session',
+    'new': 'Start a new session',
+    'choose': 'Choose session during startup',
+    'fresh': 'Fresh start',
+    'toram': 'Copy to RAM',
+}
+_SESSION_SELECTOR_TOKENS = frozenset((
+    'perchdir=resume', 'perchdir=new', 'perchdir=ask', 'toram',
+))
+
+_MANAGED_BOOT_ARGUMENT_FLAGS = frozenset((
+    'text', 'nomodeset', 'automount', 'nozram', 'quiet', 'debug',
+))
+_MANAGED_BOOT_ARGUMENT_KEYS = frozenset((
+    'perchmode', 'perchsize', 'perchreserve', 'load', 'noload',
+    'zramcomp', 'zramsize', 'locales', 'timezone', 'keyboard-layouts',
+    'default-target', 'default_target',
+))
+_MANAGED_LOCALE_ARGUMENT_KEYS = frozenset((
+    'locales', 'timezone', 'keyboard-layouts',
+))
+
+
+def _managed_boot_argument(token):
+    if token in _MANAGED_BOOT_ARGUMENT_FLAGS:
+        return True
+    if token in ('toram=full', 'toram=trim'):
+        return True
+    if '=' not in token:
+        return False
+    name, value = token.split('=', 1)
+    if not value or name not in _MANAGED_BOOT_ARGUMENT_KEYS:
+        return False
+    allowed = {
+        'perchmode': frozenset((
+            'native', 'dynfilefs', 'raw', 'luks', 'squashfs')),
+        'zramcomp': frozenset(('lzo', 'lzo-rle', 'lz4', 'lz4hc', 'zstd')),
+        'default-target': frozenset((
+            'graphical', 'graphical.target', 'multi-user',
+            'multi-user.target', 'rescue', 'rescue.target')),
+        'default_target': frozenset((
+            'graphical', 'graphical.target', 'multi-user',
+            'multi-user.target', 'rescue', 'rescue.target')),
+    }.get(name)
+    return allowed is None or value in allowed
+
+
+def _managed_locale_argument(token):
+    return ('=' in token and
+            token.split('=', 1)[0] in _MANAGED_LOCALE_ARGUMENT_KEYS)
+
+
+def _constructor_arguments(arguments):
+    return ' '.join(token for token in arguments.split()
+                    if _managed_boot_argument(token))
+
+
+def _kernel_arguments_for_base(arguments, base_mode, replace_managed=False,
+                               preserve_locale=False):
+    tokens = [token for token in arguments.split()
+              if token not in _SESSION_SELECTOR_TOKENS and
+              not (replace_managed and _managed_boot_argument(token) and
+                   not (preserve_locale and
+                        _managed_locale_argument(token)))]
+    selector = _BOOT_MODE_SELECTORS[base_mode]
+    if selector:
+        tokens.append(selector)
+    return ' '.join(tokens)
+
+
+def _append_extra_arguments(arguments, *values):
+    result = arguments.strip()
+    for value in values:
+        value = (value or '').strip()
+        if value:
+            result = (result + ' ' + value).strip()
+    return result
+
+
+def _rename_grub_menu_block(block, title):
+    if not block:
+        raise ImageProjectError('GRUB menu entry block is empty')
+    body, ending = _boot_line_body(block[0])
+    match = re.match(r'^(\s*menuentry\s+)"([^"]*)"(.*)$', body)
+    if not match:
+        raise ImageProjectError('GRUB menu entry title syntax is unsupported')
+    block[0] = '{}"{}"{}{}'.format(
+        match.group(1), title, match.group(3), ending)
+    return block
+
+
+def _set_grub_menu_block_mode(block, base_mode, replace_managed=False,
+                              preserve_locale=False):
+    body, ending = _boot_line_body(block[0])
+    target_class = _GRUB_MODE_CLASSES_REVERSE[base_mode]
+    replaced = [False]
+
+    def class_replacement(match):
+        value = match.group(2)
+        if value in _GRUB_CLASS_MODES:
+            replaced[0] = True
+            return match.group(1) + target_class
+        return match.group(0)
+
+    body = re.sub(
+        r'(--class(?:=|\s+))([A-Za-z0-9_-]+)', class_replacement, body)
+    if not replaced[0]:
+        brace = body.rfind('{')
+        if brace < 0:
+            raise ImageProjectError('GRUB menu entry declaration is unsupported')
+        body = body[:brace].rstrip() + ' --class ' + target_class + ' ' + body[brace:]
+    block[0] = body + ending
+    kernel_count = 0
+    for index in range(1, len(block) - 1):
+        body, ending = _boot_line_body(block[index])
+        match = re.match(
+            r'^(\s*(?:linux|linuxefi|linux16)\s+\S+)(?:\s+(.*))?$', body)
+        if not match:
+            continue
+        arguments = _kernel_arguments_for_base(
+            match.group(2) or '', base_mode, replace_managed=replace_managed,
+            preserve_locale=preserve_locale)
+        block[index] = match.group(1) + (
+            ' ' + arguments if arguments else '') + ending
+        kernel_count += 1
+    if kernel_count == 0:
+        raise ImageProjectError('GRUB session template has no kernel command')
+    return block
+
+
+def _append_grub_block_arguments(block, *values):
+    for index in range(1, len(block) - 1):
+        body, ending = _boot_line_body(block[index])
+        match = re.match(
+            r'^(\s*(?:linux|linuxefi|linux16)\s+\S+)(?:\s+(.*))?$', body)
+        if not match:
+            continue
+        arguments = _append_extra_arguments(match.group(2) or '', *values)
+        block[index] = match.group(1) + (
+            ' ' + arguments if arguments else '') + ending
+    return block
+
+
+def _syslinux_title_text(title, menu_locale):
+    codec = 'cp866' if menu_locale == 'ru_RU' else 'iso-8859-1'
+    try:
+        return title.encode(codec, 'strict').decode('latin-1')
+    except UnicodeError:
+        raise ImageProjectError(
+            'custom boot menu title cannot be represented by the selected '
+            'SYSLINUX menu encoding')
+
+
+def _rename_syslinux_menu_block(block, title, menu_locale):
+    replacement = _syslinux_title_text(title, menu_locale)
+    matches = []
+    for index, line in enumerate(block):
+        body, ending = _boot_line_body(line)
+        if re.match(r'^\s*MENU\s+LABEL(?:\s|$)', body, re.IGNORECASE):
+            matches.append((index, body, ending))
+    if len(matches) != 1:
+        raise ImageProjectError(
+            'SYSLINUX session entry needs exactly one MENU LABEL directive')
+    index, body, ending = matches[0]
+    indent = body[:len(body) - len(body.lstrip())]
+    block[index] = '{}MENU LABEL {}{}'.format(indent, replacement, ending)
+    return block
+
+
+def _set_syslinux_menu_block_mode(block, base_mode, entry_id,
+                                  replace_managed=False,
+                                  preserve_locale=False):
+    label_count = 0
+    append_count = 0
+    output = []
+    for line in block:
+        body, ending = _boot_line_body(line)
+        label_match = re.match(r'^(\s*LABEL\s+)\S+\s*$', body, re.IGNORECASE)
+        if label_match:
+            output.append(label_match.group(1) + entry_id + ending)
+            label_count += 1
+            continue
+        if re.match(r'^\s*MENU\s+DEFAULT\s*$', body, re.IGNORECASE):
+            continue
+        append_match = re.match(r'^(\s*APPEND)(?:\s+(.*))?$', body, re.IGNORECASE)
+        if append_match:
+            arguments = _kernel_arguments_for_base(
+                append_match.group(2) or '', base_mode,
+                replace_managed=replace_managed,
+                preserve_locale=preserve_locale)
+            output.append(append_match.group(1) + (
+                ' ' + arguments if arguments else '') + ending)
+            append_count += 1
+            continue
+        output.append(line)
+    if label_count != 1 or append_count != 1:
+        raise ImageProjectError(
+            'SYSLINUX session template needs one LABEL and one APPEND directive')
+    return output
+
+
+def _append_syslinux_block_arguments(block, *values):
+    for index, line in enumerate(block):
+        body, ending = _boot_line_body(line)
+        match = re.match(r'^(\s*APPEND)(?:\s+(.*))?$', body, re.IGNORECASE)
+        if not match:
+            continue
+        arguments = _append_extra_arguments(match.group(2) or '', *values)
+        block[index] = match.group(1) + (
+            ' ' + arguments if arguments else '') + ending
+    return block
+
+
+def _rebuild_semantic_menu_blocks(lines, blocks, boot_menu, kind,
+                                  menu_locale='en_US', global_args=None):
+    """Rebuild one contiguous MiniOS session menu from reusable templates."""
+    if not blocks:
+        return lines, None
+    ordered = sorted(blocks, key=lambda item: item[0])
+    for index in range(len(ordered) - 1):
+        gap = lines[ordered[index][1] + 1:ordered[index + 1][0]]
+        if any(_boot_line_body(line)[0].strip() for line in gap):
+            raise ImageProjectError(
+                'MiniOS session entries are not a contiguous boot-menu block')
+    templates = {}
+    for start, end, mode in ordered:
+        templates.setdefault(mode, list(lines[start:end + 1]))
+    generic = list(lines[ordered[0][0]:ordered[0][1] + 1])
+    first_start = ordered[0][0]
+    last_end = ordered[-1][1]
+    gap_template = (lines[ordered[0][1] + 1:ordered[1][0]]
+                    if len(ordered) > 1 else [])
+    enabled_entries = []
+    rebuilt = []
+    for item in boot_menu:
+        if not item['enabled']:
+            continue
+        base_mode = item['base_mode']
+        arguments_schema = item.get('kernel_args_schema')
+        replace_managed = arguments_schema in (2, 3)
+        preserve_locale = arguments_schema == 3
+        has_native_template = base_mode in templates
+        block = list(templates.get(base_mode, generic))
+        if kind == 'grub':
+            block = _set_grub_menu_block_mode(
+                block, base_mode, replace_managed=replace_managed,
+                preserve_locale=preserve_locale)
+            if item['title']:
+                block = _rename_grub_menu_block(block, item['title'])
+            elif not has_native_template:
+                block = _rename_grub_menu_block(
+                    block, _BOOT_MODE_FALLBACK_TITLES[base_mode])
+            block = _append_grub_block_arguments(
+                block, global_args, item['kernel_args'])
+        else:
+            block = _set_syslinux_menu_block_mode(
+                block, base_mode, item['id'],
+                replace_managed=replace_managed,
+                preserve_locale=preserve_locale)
+            if item['title']:
+                block = _rename_syslinux_menu_block(
+                    block, item['title'], menu_locale)
+            elif not has_native_template:
+                block = _rename_syslinux_menu_block(
+                    block, _BOOT_MODE_FALLBACK_TITLES[base_mode], menu_locale)
+            block = _append_syslinux_block_arguments(
+                block, global_args, item['kernel_args'])
+        if rebuilt and gap_template:
+            rebuilt.extend(gap_template)
+        rebuilt.extend(block)
+        enabled_entries.append(item)
+    if not enabled_entries:
+        raise ImageProjectError('custom boot menu removed every session entry')
+    return lines[:first_start] + rebuilt + lines[last_end + 1:], enabled_entries
+
+
+def _transform_grub_payload(payload, timeout, default_boot, kernel_args,
+                            boot_menu_entries=None):
     try:
         text = payload.decode('utf-8', 'strict')
     except UnicodeError:
@@ -2565,10 +2974,11 @@ def _transform_grub_payload(payload, timeout, default_boot, kernel_args):
             for line in lines):
         raise ImageProjectError(
             'GRUB submenu default selector is unsupported')
+    all_menu_entries = _grub_menu_entries(lines)
     semantic_entries = []
+    semantic_blocks = []
     kernel_indexes = []
-    for menu_index, (start, end, declaration) in enumerate(
-            _grub_menu_entries(lines)):
+    for menu_index, (start, end, declaration) in enumerate(all_menu_entries):
         classes = re.findall(
             r'--class(?:=|\s+)([A-Za-z0-9_-]+)', declaration)
         known = set(_GRUB_CLASS_MODES[value] for value in classes
@@ -2604,14 +3014,31 @@ def _transform_grub_payload(payload, timeout, default_boot, kernel_args):
                 raise ImageProjectError(
                     'GRUB semantic entry has no kernel command')
             semantic_entries.append((menu_index, semantic))
+            semantic_blocks.append((start, end, semantic))
         kernel_indexes.extend(entry_kernel_indexes)
     references = _boot_config_references_payload(payload, 'grub')
     session = bool(semantic_entries)
-    if kernel_args and session:
+    boot_menu = _boot_menu_sequence(boot_menu_entries)
+    enabled_entries = None
+    if boot_menu is not None and session:
+        if len(all_menu_entries) != len(semantic_entries):
+            raise ImageProjectError(
+                'custom GRUB session menu contains non-session entries')
+        lines, enabled_entries = _rebuild_semantic_menu_blocks(
+            lines, semantic_blocks, boot_menu, 'grub', global_args=kernel_args)
+    elif kernel_args and session:
         for line_index in kernel_indexes:
             body, ending = _boot_line_body(lines[line_index])
             lines[line_index] = body + ' ' + kernel_args + ending
-    if default_boot and session:
+    if enabled_entries is not None:
+        default_indexes = [index for index, item in enumerate(enabled_entries)
+                           if item['default']]
+        if len(default_indexes) != 1:
+            raise ImageProjectError('custom GRUB menu has an invalid default entry')
+        lines = _boot_replace_or_prepend(
+            lines, re.compile(r'^\s*set\s+default\s*='),
+            'set default={}'.format(default_indexes[0]))
+    elif default_boot and session:
         matches = [menu_index for menu_index, semantic in semantic_entries
                    if semantic == default_boot]
         if len(matches) != 1:
@@ -2624,14 +3051,15 @@ def _transform_grub_payload(payload, timeout, default_boot, kernel_args):
         lines = _boot_replace_or_prepend(
             lines, re.compile(r'^\s*set\s+timeout\s*='),
             'set timeout={}'.format(timeout))
-    if (default_boot or kernel_args) and not session and not references:
+    if (default_boot or kernel_args or boot_menu is not None) and not session and not references:
         raise ImageProjectError(
             'effective GRUB config has no provable session menu or chain')
     return ''.join(lines).encode('utf-8'), references, session
 
 
-def _transform_syslinux_payload(payload, timeout, default_boot, kernel_args):
-    text = payload.decode('utf-8', 'surrogateescape')
+def _transform_syslinux_payload(payload, timeout, default_boot, kernel_args,
+                                boot_menu_entries=None, menu_locale='en_US'):
+    text = payload.decode('latin-1')
     lines = text.splitlines(True)
     if default_boot and any(re.match(
             r'^\s*MENU\s+BEGIN(?:\s|$)', _boot_line_body(line)[0],
@@ -2646,6 +3074,7 @@ def _transform_syslinux_payload(payload, timeout, default_boot, kernel_args):
         if match:
             label_starts.append((index, match.group(1)))
     semantic_entries = []
+    semantic_blocks = []
     append_indexes = []
     for position, (start, label) in enumerate(label_starts):
         end = (label_starts[position + 1][0]
@@ -2676,29 +3105,38 @@ def _transform_syslinux_payload(payload, timeout, default_boot, kernel_args):
         label_semantic = _SYSLINUX_LABEL_MODES.get(label.lower())
         if semantic is None:
             raise ImageProjectError(
-                'SYSLINUX kernel entry has no provable session semantics')
+                'SYSLINUX kernel entry has no provable MiniOS session semantics')
         if label_semantic is not None and label_semantic != semantic:
             raise ImageProjectError(
                 'SYSLINUX label conflicts with APPEND semantics')
         semantic_entries.append((label, semantic))
+        semantic_blocks.append((start, end - 1, semantic))
         append_indexes.append(appends[0][0])
     session = bool(semantic_entries)
-    if kernel_args and session:
+    boot_menu = _boot_menu_sequence(boot_menu_entries)
+    enabled_entries = None
+    if boot_menu is not None and session:
+        if len(label_starts) != len(semantic_entries):
+            raise ImageProjectError(
+                'custom SYSLINUX session menu contains non-session entries')
+        lines, enabled_entries = _rebuild_semantic_menu_blocks(
+            lines, semantic_blocks, boot_menu, 'syslinux',
+            menu_locale=menu_locale, global_args=kernel_args)
+    elif kernel_args and session:
         for line_index in append_indexes:
             body, ending = _boot_line_body(lines[line_index])
             lines[line_index] = body + ' ' + kernel_args + ending
-    if default_boot and session:
-        matches = [label for label, semantic in semantic_entries
-                   if semantic == default_boot]
-        if len(matches) != 1:
-            raise ImageProjectError(
-                'effective SYSLINUX menu cannot prove the requested default')
+    if enabled_entries is not None:
+        defaults = [item for item in enabled_entries if item['default']]
+        if len(defaults) != 1:
+            raise ImageProjectError('custom SYSLINUX menu has an invalid default entry')
+        default_label = defaults[0]['id']
         lines = [line for line in lines if not re.match(
             r'^\s*MENU\s+DEFAULT\s*$', _boot_line_body(line)[0],
             re.IGNORECASE)]
         lines = _boot_replace_or_prepend(
             lines, re.compile(r'^\s*DEFAULT(?:\s|$)', re.IGNORECASE),
-            'DEFAULT {}'.format(matches[0]))
+            'DEFAULT {}'.format(default_label))
         timeout_default = re.compile(
             r'^\s*ONTIMEOUT(?:\s|$)', re.IGNORECASE)
         replaced = []
@@ -2706,7 +3144,31 @@ def _transform_syslinux_payload(payload, timeout, default_boot, kernel_args):
             body, ending = _boot_line_body(line)
             if timeout_default.match(body):
                 indent = body[:len(body) - len(body.lstrip())]
-                replaced.append(indent + 'ONTIMEOUT ' + matches[0] + ending)
+                replaced.append(indent + 'ONTIMEOUT ' + default_label + ending)
+            else:
+                replaced.append(line)
+        lines = replaced
+    elif default_boot and session:
+        matches = [label for label, semantic in semantic_entries
+                   if semantic == default_boot]
+        if len(matches) != 1:
+            raise ImageProjectError(
+                'effective SYSLINUX menu cannot prove the requested default')
+        default_label = matches[0]
+        lines = [line for line in lines if not re.match(
+            r'^\s*MENU\s+DEFAULT\s*$', _boot_line_body(line)[0],
+            re.IGNORECASE)]
+        lines = _boot_replace_or_prepend(
+            lines, re.compile(r'^\s*DEFAULT(?:\s|$)', re.IGNORECASE),
+            'DEFAULT {}'.format(default_label))
+        timeout_default = re.compile(
+            r'^\s*ONTIMEOUT(?:\s|$)', re.IGNORECASE)
+        replaced = []
+        for line in lines:
+            body, ending = _boot_line_body(line)
+            if timeout_default.match(body):
+                indent = body[:len(body) - len(body.lstrip())]
+                replaced.append(indent + 'ONTIMEOUT ' + default_label + ending)
             else:
                 replaced.append(line)
         lines = replaced
@@ -2714,15 +3176,328 @@ def _transform_syslinux_payload(payload, timeout, default_boot, kernel_args):
         lines = _boot_replace_or_prepend(
             lines, re.compile(r'^\s*TIMEOUT(?:\s|$)', re.IGNORECASE),
             'TIMEOUT {}'.format(timeout * 10))
-    if (default_boot or kernel_args) and not session and not references:
+    if (default_boot or kernel_args or boot_menu is not None) and not session and not references:
         raise ImageProjectError(
             'effective SYSLINUX config has no provable session menu or chain')
-    return ''.join(lines).encode('utf-8', 'surrogateescape'), references, session
+    return ''.join(lines).encode('latin-1'), references, session
+
+
+def _source_entry_id(mode, used):
+    candidate = mode
+    number = 2
+    while candidate in used:
+        candidate = '{}-{}'.format(mode, number)
+        number += 1
+    used.add(candidate)
+    return candidate
+
+
+def _grub_source_menu(payload):
+    try:
+        text = payload.decode('utf-8', 'strict')
+    except UnicodeError:
+        raise ImageProjectError(
+            'effective GRUB configuration is not valid UTF-8')
+    lines = text.splitlines(True)
+    menu_blocks = _grub_menu_entries(lines)
+    entries = []
+    used = set()
+    for menu_index, (start, end, declaration) in enumerate(menu_blocks):
+        classes = re.findall(
+            r'--class(?:=|\s+)([A-Za-z0-9_-]+)', declaration)
+        known = set(_GRUB_CLASS_MODES[value] for value in classes
+                    if value in _GRUB_CLASS_MODES)
+        if len(known) > 1:
+            raise ImageProjectError(
+                'GRUB menuentry has conflicting semantic classes')
+        arguments = []
+        modes = []
+        for line_index in range(start + 1, end):
+            body, unused_ending = _boot_line_body(lines[line_index])
+            match = re.match(
+                r'^\s*(?:linux|linuxefi|linux16)\s+\S+(?:\s+(.*))?$', body)
+            if not match:
+                continue
+            value = match.group(1) or ''
+            if '#' in value or body.rstrip().endswith('\\'):
+                raise ImageProjectError(
+                    'GRUB kernel command syntax is unsupported')
+            arguments.append(value)
+            semantic = _boot_semantic(value)
+            if semantic is not None:
+                modes.append(semantic)
+        if len(set(modes)) > 1:
+            raise ImageProjectError(
+                'GRUB menuentry kernel lines disagree on session semantics')
+        inferred = modes[0] if modes else None
+        declared = next(iter(known)) if known else None
+        if declared is not None and inferred is not None and declared != inferred:
+            raise ImageProjectError(
+                'GRUB semantic class conflicts with kernel arguments')
+        mode = declared or inferred
+        if mode is None:
+            continue
+        if len(arguments) != 1:
+            raise ImageProjectError(
+                'recognized GRUB source entry needs exactly one kernel command')
+        title_match = re.match(r'^\s*menuentry\s+"([^"]*)"', declaration)
+        if not title_match:
+            raise ImageProjectError(
+                'GRUB menu entry title syntax is unsupported')
+        entries.append({
+            'id': _source_entry_id(mode, used), 'base_mode': mode,
+            'enabled': True, 'default': False,
+            'title': title_match.group(1).strip() or None,
+            'kernel_args': _constructor_arguments(arguments[0]),
+            'kernel_args_schema': 2, '_selector': menu_index,
+        })
+    default_index = None
+    default_known = False
+    default_values = []
+    dynamic_default = False
+    timeout_values = []
+    dynamic_timeout = False
+    for line in lines:
+        body, unused_ending = _boot_line_body(line)
+        match = re.match(r'^\s*set\s+default\s*=\s*([0-9]+)\s*$', body)
+        if match:
+            default_values.append(int(match.group(1)))
+        elif re.match(r'^\s*set\s+default\s*=', body):
+            dynamic_default = True
+        match = re.match(r'^\s*set\s+timeout\s*=\s*([0-9]+)\s*$', body)
+        if match:
+            timeout_values.append(int(match.group(1)))
+        elif re.match(r'^\s*set\s+timeout\s*=', body):
+            dynamic_timeout = True
+    if default_values and not dynamic_default and len(set(default_values)) == 1:
+        default_index = default_values[0]
+        matches = [item for item in entries if item['_selector'] == default_index]
+        if len(matches) == 1:
+            matches[0]['default'] = True
+            default_known = True
+    timeout = None
+    timeout_known = False
+    if timeout_values and not dynamic_timeout and len(set(timeout_values)) == 1:
+        timeout = timeout_values[0]
+        timeout_known = timeout <= 300
+        if not timeout_known:
+            timeout = None
+    for item in entries:
+        del item['_selector']
+    return {
+        'entries': entries, 'default_known': default_known,
+        'timeout': timeout, 'timeout_known': timeout_known,
+        'references': _boot_config_references_payload(payload, 'grub'),
+    }
+
+
+def _syslinux_source_menu(payload, menu_locale='en_US'):
+    lines = payload.decode('latin-1').splitlines(True)
+    labels = []
+    for index, line in enumerate(lines):
+        body, unused_ending = _boot_line_body(line)
+        match = re.match(r'^\s*LABEL\s+(\S+)\s*$', body, re.IGNORECASE)
+        if match:
+            labels.append((index, match.group(1)))
+    entries = []
+    by_label = {}
+    menu_defaults = []
+    used = set()
+    for position, (start, label) in enumerate(labels):
+        end = labels[position + 1][0] if position + 1 < len(labels) else len(lines)
+        kernel = False
+        appends = []
+        titles = []
+        is_menu_default = False
+        for line_index in range(start + 1, end):
+            body, unused_ending = _boot_line_body(lines[line_index])
+            kernel_match = re.match(
+                r'^\s*(?:KERNEL|LINUX)\s+(\S+)\s*$', body, re.IGNORECASE)
+            if kernel_match and 'vmlinuz' in kernel_match.group(1).lower():
+                kernel = True
+            append_match = re.match(
+                r'^\s*APPEND(?:\s+(.*))?$', body, re.IGNORECASE)
+            if append_match:
+                value = append_match.group(1) or ''
+                if '#' in value or body.rstrip().endswith('\\'):
+                    raise ImageProjectError(
+                        'SYSLINUX APPEND syntax is unsupported')
+                appends.append(value)
+            title_match = re.match(
+                r'^\s*MENU\s+LABEL(?:\s+(.*))?$', body, re.IGNORECASE)
+            if title_match:
+                titles.append((title_match.group(1) or '').strip())
+            if re.match(r'^\s*MENU\s+DEFAULT\s*$', body, re.IGNORECASE):
+                is_menu_default = True
+        if not kernel:
+            continue
+        if len(appends) != 1:
+            raise ImageProjectError(
+                'SYSLINUX kernel entry needs exactly one APPEND directive')
+        mode = _boot_semantic(appends[0])
+        label_mode = _SYSLINUX_LABEL_MODES.get(label.lower())
+        if mode is None:
+            raise ImageProjectError(
+                'SYSLINUX kernel entry has no provable MiniOS session semantics')
+        if label_mode is not None and label_mode != mode:
+            raise ImageProjectError(
+                'SYSLINUX label conflicts with APPEND semantics')
+        if len(titles) > 1:
+            raise ImageProjectError(
+                'SYSLINUX source entry has multiple MENU LABEL directives')
+        title = titles[0] if titles and titles[0] else None
+        if title:
+            codec = 'cp866' if menu_locale == 'ru_RU' else 'iso-8859-1'
+            try:
+                title = title.encode('latin-1').decode(codec)
+            except UnicodeError:
+                raise ImageProjectError(
+                    'SYSLINUX menu title uses an invalid source encoding')
+        entry = {
+            'id': _source_entry_id(mode, used), 'base_mode': mode,
+            'enabled': True, 'default': False,
+            'title': title,
+            'kernel_args': _constructor_arguments(appends[0]),
+            'kernel_args_schema': 2,
+        }
+        entries.append(entry)
+        by_label[label.lower()] = entry
+        if is_menu_default:
+            menu_defaults.append(entry)
+    selected_defaults = list(menu_defaults)
+    timeout_values = []
+    dynamic_timeout = False
+    for line in lines:
+        body, unused_ending = _boot_line_body(line)
+        match = re.match(r'^\s*(?:DEFAULT|ONTIMEOUT)\s+(\S+)\s*$', body,
+                         re.IGNORECASE)
+        if match:
+            selected = by_label.get(match.group(1).lower())
+            if selected is not None:
+                selected_defaults.append(selected)
+        match = re.match(r'^\s*TIMEOUT\s+([0-9]+)\s*$', body, re.IGNORECASE)
+        if match:
+            timeout_values.append(int(match.group(1)))
+        elif re.match(r'^\s*TIMEOUT(?:\s|$)', body, re.IGNORECASE):
+            dynamic_timeout = True
+    default_ids = set(item['id'] for item in selected_defaults)
+    default_known = len(default_ids) == 1
+    if default_known:
+        selected_defaults[0]['default'] = True
+    timeout = None
+    timeout_known = False
+    if timeout_values and not dynamic_timeout and len(set(timeout_values)) == 1:
+        deciseconds = timeout_values[0]
+        if deciseconds % 10 == 0 and deciseconds // 10 <= 300:
+            timeout = deciseconds // 10
+            timeout_known = True
+    return {
+        'entries': entries, 'default_known': default_known,
+        'timeout': timeout, 'timeout_known': timeout_known,
+        'references': _boot_config_references_payload(payload, 'syslinux'),
+    }
+
+
+def inspect_source_boot_menu(source_info, menu_locale):
+    """Read and recognize the effective MiniOS boot menu for a source."""
+    if not isinstance(source_info, SourceInfo) or not source_info.supported:
+        raise ValueError('a supported SourceInfo is required')
+    if menu_locale not in MENU_LOCALES:
+        raise ValueError('unsupported menu locale: {}'.format(menu_locale))
+    bootloader = source_info.metadata.get('bootloader')
+    included = tuple(item['relative_path'] for item in source_info.input_manifest)
+    mapping, roots = _effective_boot_config_mapping(
+        source_info.source_path, bootloader, menu_locale, included)
+    candidates = []
+
+    def visit(target, root, visiting, visited):
+        if target in visited:
+            return
+        if target in visiting:
+            raise SourceInspectionError('effective boot config graph has a cycle')
+        item = mapping.get(target)
+        if item is None:
+            raise SourceInspectionError(
+                'effective boot config references an unavailable config')
+        visiting.add(target)
+        result = (_grub_source_menu(item[0]) if item[1] == 'grub'
+                  else _syslinux_source_menu(
+                      item[0], _syslinux_menu_locale_for_target(
+                          target, menu_locale)))
+        if result['entries']:
+            candidates.append((root, target, item[1], result))
+        for reference in result['references']:
+            visit(_resolve_boot_config_reference(target, reference, item[1]),
+                  root, visiting, visited)
+        visiting.remove(target)
+        visited.add(target)
+
+    try:
+        for root in roots:
+            visit(root, root, set(), set())
+    except ImageProjectError as error:
+        raise SourceInspectionError(str(error))
+    if not candidates:
+        raise SourceInspectionError(
+            'effective boot config graph has no recognized MiniOS menu')
+
+    if menu_locale == 'multilang':
+        for unused_root, unused_target, unused_kind, result in candidates:
+            for item in result['entries']:
+                item['kernel_args'] = ' '.join(
+                    token for token in item['kernel_args'].split()
+                    if not _managed_locale_argument(token))
+                item['kernel_args_schema'] = 3
+
+    def structure(result):
+        return (
+            tuple((item['base_mode'], item['kernel_args'])
+                  for item in result['entries']),
+            result['default_known'],
+            next((index for index, item in enumerate(result['entries'])
+                  if item['default']), None),
+            result['timeout_known'], result['timeout'],
+        )
+
+    structures = set(structure(item[3]) for item in candidates)
+    if len(structures) != 1:
+        raise SourceInspectionError(
+            'effective boot config roots have conflicting MiniOS menu structures')
+    preferred_kind = 'syslinux' if bootloader == 'syslinux-native' else 'grub'
+    selected = sorted(
+        candidates,
+        key=lambda item: (item[2] != preferred_kind, item[1], item[0]))[0]
+    result = selected[3]
+    if menu_locale == 'multilang':
+        # Each language menu owns its translated titles. Leaving them unset
+        # preserves those source titles when a recognized menu is customized.
+        result = dict(result)
+        result['entries'] = [dict(item, title=None)
+                             for item in result['entries']]
+    diagnostics = []
+    if not result['default_known']:
+        diagnostics.append('source boot default is dynamic or unsupported')
+    if not result['timeout_known']:
+        diagnostics.append('source boot timeout is dynamic or unsupported')
+    return {
+        'entries': tuple(_freeze(dict(item)) for item in result['entries']),
+        'default_known': result['default_known'],
+        'timeout': result['timeout'], 'timeout_known': result['timeout_known'],
+        'representative': selected[1], 'bootloader': selected[2],
+        'diagnostics': tuple(diagnostics),
+    }
+
+
+def _syslinux_menu_locale_for_target(target, configured_locale):
+    if configured_locale != 'multilang':
+        return configured_locale
+    match = re.match(r'^minios/boot/syslinux/lang/([A-Za-z0-9_-]+)[.]cfg$', target)
+    return match.group(1) if match else 'en_US'
 
 
 def _expected_boot_customization_records(
         source_path, bootloader, menu_locale, included_relative, timeout,
-        default_boot, kernel_args):
+        default_boot, kernel_args, boot_menu_entries=None):
     mapping, roots = _effective_boot_config_mapping(
         source_path, bootloader, menu_locale, included_relative)
     visiting = set()
@@ -2742,10 +3517,14 @@ def _expected_boot_customization_records(
         visiting.add(target)
         if item[1] == 'grub':
             transformed, references, session = _transform_grub_payload(
-                item[0], timeout, default_boot, kernel_args)
+                item[0], timeout, default_boot, kernel_args,
+                boot_menu_entries=boot_menu_entries)
         else:
             transformed, references, session = _transform_syslinux_payload(
-                item[0], timeout, default_boot, kernel_args)
+                item[0], timeout, default_boot, kernel_args,
+                boot_menu_entries=boot_menu_entries,
+                menu_locale=_syslinux_menu_locale_for_target(
+                    target, menu_locale))
         records.append({
             'target': target, 'size': len(transformed),
             'sha256': hashlib.sha256(transformed).hexdigest(),
@@ -2761,7 +3540,7 @@ def _expected_boot_customization_records(
 
     for root in roots:
         sessions = visit(root)
-        if (default_boot or kernel_args) and sessions == 0:
+        if (default_boot or kernel_args or boot_menu_entries is not None) and sessions == 0:
             raise ImageProjectError(
                 'effective boot root has no provable MiniOS session menu')
     return (tuple(sorted(records, key=lambda item: item['target'])),
@@ -3053,7 +3832,8 @@ class ImageProject(_Immutable):
         'overwrite_output', 'capture_include_paths', 'capture_exclude_paths',
         'capture_compression', 'sensitive_capture_acknowledged',
         'live_config_overrides', 'boot_timeout', 'default_boot',
-        'kernel_args', 'boot_background_path', 'overlay_directory',
+        'boot_menu_entries', 'kernel_args', 'boot_background_path',
+        'overlay_directory',
         'project_path',
     )
 
@@ -3069,8 +3849,9 @@ class ImageProject(_Immutable):
                   sensitive_capture_acknowledged=False,
                   source_fingerprint_algorithm=SOURCE_FINGERPRINT_ALGORITHM,
                   project_path=None, live_config_overrides=None,
-                  boot_timeout=None, default_boot=None, kernel_args=None,
-                  boot_background_path=None, overlay_directory=None):
+                  boot_timeout=None, default_boot=None, boot_menu_entries=None,
+                  kernel_args=None, boot_background_path=None,
+                  overlay_directory=None):
         self.project_base = os.path.abspath(_path_string(
             project_base, 'project_base'))
         self.source_backend = _optional_string(
@@ -3155,6 +3936,16 @@ class ImageProject(_Immutable):
         if default_boot is not None and default_boot not in DEFAULT_BOOT_MODES:
             raise ValueError('unsupported default_boot mode')
         self.default_boot = default_boot
+        self.boot_menu_entries = validate_boot_menu_entries(boot_menu_entries)
+        if self.boot_menu_entries is not None:
+            if default_boot is not None:
+                raise ValueError(
+                    'default_boot and boot_menu_entries cannot be combined')
+            if (menu_locale == 'multilang' and
+                    any(item['title'] and any(ord(character) >= 128 for character in item['title'])
+                        for item in self.boot_menu_entries)):
+                raise ValueError(
+                    'multilingual custom boot-menu titles must be ASCII')
         if kernel_args is not None:
             validate_kernel_arguments(kernel_args)
         self.kernel_args = kernel_args
@@ -3175,7 +3966,8 @@ class ImageProject(_Immutable):
     def customization_requested(self):
         return bool(
             self.live_config_overrides or self.boot_timeout is not None or
-            self.default_boot is not None or self.kernel_args is not None or
+            self.default_boot is not None or self.boot_menu_entries is not None or
+            self.kernel_args is not None or
             self.boot_background_path is not None or
             self.overlay_directory is not None)
 
@@ -3229,6 +4021,7 @@ class ImageProject(_Immutable):
             'live_config_overrides': _thaw(self.live_config_overrides),
             'boot_timeout': self.boot_timeout,
             'default_boot': self.default_boot,
+            'boot_menu_entries': _boot_menu_public(self.boot_menu_entries),
             'kernel_args': self.kernel_args,
             'boot_background_path': (
                 _relative_path(self.boot_background_path, base_dir)
@@ -3261,8 +4054,10 @@ _PROJECT_CUSTOMIZATION_KEYS = set((
     'live_config_overrides', 'boot_timeout', 'default_boot', 'kernel_args',
     'boot_background_path', 'overlay_directory',
 ))
+_PROJECT_OPTIONAL_KEYS = set(('boot_menu_entries',))
 _PROJECT_KEYS = (
-    _PROJECT_BASE_KEYS | _PROJECT_CAPTURE_KEYS | _PROJECT_CUSTOMIZATION_KEYS)
+    _PROJECT_BASE_KEYS | _PROJECT_CAPTURE_KEYS | _PROJECT_CUSTOMIZATION_KEYS |
+    _PROJECT_OPTIONAL_KEYS)
 _SOURCE_KEYS = set((
     'kind', 'backend', 'root_path', 'tree_path', 'fingerprint',
     'fingerprint_algorithm',
@@ -3355,6 +4150,7 @@ def load_image_project(path):
             live_config_overrides=payload.get('live_config_overrides', {}),
             boot_timeout=payload.get('boot_timeout'),
             default_boot=payload.get('default_boot'),
+            boot_menu_entries=payload.get('boot_menu_entries'),
             kernel_args=payload.get('kernel_args'),
             boot_background_path=payload.get('boot_background_path'),
             overlay_directory=payload.get('overlay_directory'),
@@ -4452,6 +5248,7 @@ def _redacted_build_argv(argv, additional_paths=()):
         '--name': '<private-partial-output>',
         '--manifest': '<private-build-manifest>',
         '--kernel-args': '<redacted-kernel-arguments>',
+        '--boot-menu-json': '<redacted-boot-menu-json>',
         '--boot-background': '<boot-background-input>',
         '--overlay-directory': '<overlay-directory-input>',
         '--capture-selection': '<private-capture-selection>',
@@ -4549,7 +5346,7 @@ def create_build_plan(project, source_info=None,
     capture_requested = project.capture_mode in SESSION_CAPTURE_MODES
     boot_customization_requested = (
         project.boot_timeout is not None or project.default_boot is not None or
-        project.kernel_args is not None)
+        project.boot_menu_entries is not None or project.kernel_args is not None)
     background_requested = project.boot_background_path is not None
     overlay_requested = project.overlay_directory is not None
     adapter_customization_requested = (
@@ -5182,7 +5979,7 @@ def create_build_plan(project, source_info=None,
                  source_info.source_path, boot['bootloader'],
                  project.menu_locale, included_relative_paths,
                  project.boot_timeout, project.default_boot,
-                 project.kernel_args)
+                 project.kernel_args, project.boot_menu_entries)
             boot_customization_targets = tuple(
                 item['target'] for item in boot_expected_records)
             boot_target_count, boot_target_digest = (
@@ -5470,6 +6267,8 @@ def create_build_plan(project, source_info=None,
                 'requested': boot_customization_requested,
                 'timeout_seconds': project.boot_timeout,
                 'default_boot': project.default_boot,
+                'menu_entries': _boot_menu_plan_summary(
+                    project.boot_menu_entries),
                 'kernel_args': kernel_argument_summary,
                 'config_target_count': boot_target_count,
                 'config_target_set_sha256': boot_target_digest,
@@ -5683,6 +6482,12 @@ def create_build_plan(project, source_info=None,
         argv.extend(('--boot-timeout', str(project.boot_timeout)))
     if project.default_boot is not None:
         argv.extend(('--default-boot', project.default_boot))
+    if project.boot_menu_entries is not None:
+        boot_menu_json = json.dumps(
+            _boot_menu_public(project.boot_menu_entries),
+            ensure_ascii=True, allow_nan=False, sort_keys=True,
+            separators=(',', ':'))
+        argv.extend(('--boot-menu-json', boot_menu_json))
     if project.kernel_args is not None:
         argv.extend(('--kernel-args', project.kernel_args))
     if project.boot_background_path is not None:
@@ -7615,7 +8420,8 @@ __all__ = [
     'BUILD_PHASE_PREPARE',
     'CAPTURE_COMPRESSIONS', 'CAPTURE_MODES', 'CAPTURE_PHASE_IDS',
     'COMPOSE_BACKEND_NAME', 'COMPOSE_BACKEND_PATH',
-    'CURRENT_COMPOSITION', 'DEFAULT_BOOT_MODES',
+    'CURRENT_COMPOSITION', 'DEFAULT_BOOT_MODES', 'BOOT_MENU_MAX_ENTRIES',
+    'BOOT_MENU_MAX_JSON_BYTES', 'BOOT_MENU_TITLE_MAX_BYTES',
     'FILESYSTEM_CLASS_PERSISTENT', 'FILESYSTEM_CLASS_RAM_BACKED',
     'FILESYSTEM_CLASS_LIVE_OVERLAY', 'FILESYSTEM_CLASS_REMOVABLE',
     'FILESYSTEM_CLASS_UNKNOWN',
@@ -7642,7 +8448,7 @@ __all__ = [
     'discover_running_source', 'discover_mounted_source',
     'list_optical_devices', 'MOUNTED_SOURCE_BACKENDS',
     'resolve_device_mountpoint', 'find_loop_backing_device',
-    'grep_ere_validate', 'inspect_source_modules',
+    'grep_ere_validate', 'inspect_source_boot_menu', 'inspect_source_modules',
     'inspect_overlay_directory', 'load_image_project',
     'load_session_inventory', 'module_exclusion_regex', 'overlay_fingerprint',
     'parse_application_install_intent', 'parse_module_manager_handoff',
@@ -7654,6 +8460,7 @@ __all__ = [
     'request_session_inventory_cancel', 'revalidate_build_plan_inputs',
     'compose_module_target', 'sha256_file',
     'source_tree_fingerprint', 'source_tree_inventory',
-    'validate_kernel_arguments', 'validate_live_config_overrides',
+    'validate_boot_menu_entries', 'validate_kernel_arguments',
+    'validate_live_config_overrides',
     'validate_squashfs', 'verify_iso',
 ]

@@ -1,0 +1,339 @@
+{
+  "headings": [
+    {
+      "anchor": "parametri-di-boot-e-kernel",
+      "level": 1,
+      "title": "Parametri di boot e kernel"
+    },
+    {
+      "anchor": "sessione-e-persistenza",
+      "level": 2,
+      "title": "Sessione e persistenza"
+    },
+    {
+      "anchor": "copia-in-ram",
+      "level": 2,
+      "title": "Copia in RAM"
+    },
+    {
+      "anchor": "moduli",
+      "level": 2,
+      "title": "Moduli"
+    },
+    {
+      "anchor": "memoria-e-grafica",
+      "level": 2,
+      "title": "Memoria e grafica"
+    },
+    {
+      "anchor": "origine-e-localizzazione",
+      "level": 2,
+      "title": "Origine e localizzazione"
+    },
+    {
+      "anchor": "diagnostica",
+      "level": 2,
+      "title": "Diagnostica"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "parametri-di-boot-e-kernel",
+      [
+        [
+          "text",
+          "Parametri di boot e kernel"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Inserisci i parametri separati da spazi. Il completamento suggerisce le opzioni comuni di MiniOS e Linux. I parametri globali si applicano a tutte le voci di sessione MiniOS create o preservate. I parametri specifici per ogni voce vengono aggiunti successivamente e possono sovrascrivere un'opzione MiniOS ripetuta in formato chiave-valore."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "sessione-e-persistenza",
+      [
+        [
+          "text",
+          "Sessione e persistenza"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Queste opzioni abilitano le modifiche persistenti, riprendono l'ultima sessione compatibile,"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "creano una nuova sessione, chiedono all'avvio o selezionano direttamente una sessione numerata:"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "perch, perchdir=resume, perchdir=new, perchdir=ask e perchdir=NUMERO."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Le modalità di archiviazione sono native, dynfilefs, raw, luks e squashfs. SquashFS può"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "riprendere una sessione compressa esistente, ma l'attuale initramfs non può crearne una nuova."
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "Le dimensioni dei contenitori accettano i suffissi MB, GB o TB. Lo spazio libero riservato è misurato in MiB; il valore predefinito è 256 e il massimo è 4096."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Le opzioni corrispondenti sono perchmode=MODE, perchsize=SIZE e"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "perchreserve=MIB."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "copia-in-ram",
+      [
+        [
+          "text",
+          "Copia in RAM"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Le opzioni toram, toram=full e toram=trim copiano il sistema predefinito, completo o"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "filtrato nella RAM."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "moduli",
+      [
+        [
+          "text",
+          "Moduli"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Il filtro load carica solo i moduli corrispondenti; il filtro noload esclude"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "i moduli corrispondenti. I filtri possono contenere nomi di moduli, elenchi o intervalli MiniOS"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "supportati dall'initramfs. Le opzioni sono load=FILTER e noload=FILTER."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "memoria-e-grafica",
+      [
+        [
+          "text",
+          "Memoria e grafica"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Le opzioni di memoria disabilitano zRAM, scelgono la compressione lzo, lzo-rle, lz4, lz4hc o zstd"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "e impostano la dimensione di zRAM in MiB. La modalità testo avvia senza il"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "desktop grafico. Nomodeset disabilita l'impostazione normale della modalità kernel ed è utile"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "per la risoluzione dei problemi grafici. Le opzioni sono nozram, zramcomp=ALGORITHM,"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "zramsize=MIB, text e nomodeset."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "origine-e-localizzazione",
+      [
+        [
+          "text",
+          "Origine e localizzazione"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Queste opzioni selezionano la fonte dei dati MiniOS e sovrascrivono lingua, fuso orario"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "e impostazioni della tastiera per la voce. Le opzioni sono from=SOURCE, from=askdisk,"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "locales=LOCALE, timezone=ZONE e keyboard-layouts=LAYOUT."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "diagnostica",
+      [
+        [
+          "text",
+          "Diagnostica"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Quiet riduce i messaggi di avvio. Debug abilita ulteriori diagnostiche. Usa solo"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "parametri compresi da Linux, dall'initramfs di MiniOS o da live-config. Le"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "opzioni sono quiet e debug."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Parametri di boot e kernel\nInserisci i parametri separati da spazi. Il completamento suggerisce le opzioni comuni di MiniOS e Linux. I parametri globali si applicano a tutte le voci di sessione MiniOS create o preservate. I parametri specifici per ogni voce vengono aggiunti successivamente e possono sovrascrivere un'opzione MiniOS ripetuta in formato chiave-valore.\nSessione e persistenza\nQueste opzioni abilitano le modifiche persistenti, riprendono l'ultima sessione compatibile,\ncreano una nuova sessione, chiedono all'avvio o selezionano direttamente una sessione numerata:\nperch, perchdir=resume, perchdir=new, perchdir=ask e perchdir=NUMERO.\nLe modalità di archiviazione sono native, dynfilefs, raw, luks e squashfs. SquashFS può\nriprendere una sessione compressa esistente, ma l'attuale initramfs non può crearne una nuova.\nLe dimensioni dei contenitori accettano i suffissi MB, GB o TB. Lo spazio libero riservato è misurato in MiB; il valore predefinito è 256 e il massimo è 4096.\nLe opzioni corrispondenti sono perchmode=MODE, perchsize=SIZE e\nperchreserve=MIB.\nCopia in RAM\nLe opzioni toram, toram=full e toram=trim copiano il sistema predefinito, completo o\nfiltrato nella RAM.\nModuli\nIl filtro load carica solo i moduli corrispondenti; il filtro noload esclude\ni moduli corrispondenti. I filtri possono contenere nomi di moduli, elenchi o intervalli MiniOS\nsupportati dall'initramfs. Le opzioni sono load=FILTER e noload=FILTER.\nMemoria e grafica\nLe opzioni di memoria disabilitano zRAM, scelgono la compressione lzo, lzo-rle, lz4, lz4hc o zstd\ne impostano la dimensione di zRAM in MiB. La modalità testo avvia senza il\ndesktop grafico. Nomodeset disabilita l'impostazione normale della modalità kernel ed è utile\nper la risoluzione dei problemi grafici. Le opzioni sono nozram, zramcomp=ALGORITHM,\nzramsize=MIB, text e nomodeset.\nOrigine e localizzazione\nQueste opzioni selezionano la fonte dei dati MiniOS e sovrascrivono lingua, fuso orario\ne impostazioni della tastiera per la voce. Le opzioni sono from=SOURCE, from=askdisk,\nlocales=LOCALE, timezone=ZONE e keyboard-layouts=LAYOUT.\nDiagnostica\nQuiet riduce i messaggi di avvio. Debug abilita ulteriori diagnostiche. Usa solo\nparametri compresi da Linux, dall'initramfs di MiniOS o da live-config. Le\nopzioni sono quiet e debug.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

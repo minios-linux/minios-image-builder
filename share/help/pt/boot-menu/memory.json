@@ -1,0 +1,281 @@
+{
+  "headings": [
+    {
+      "anchor": "memória",
+      "level": 1,
+      "title": "Memória"
+    },
+    {
+      "anchor": "estado-do-zram",
+      "level": 2,
+      "title": "Estado do zRAM"
+    },
+    {
+      "anchor": "compressão",
+      "level": 2,
+      "title": "Compressão"
+    },
+    {
+      "anchor": "tamanho",
+      "level": 2,
+      "title": "Tamanho"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "memória",
+      [
+        [
+          "text",
+          "Memória"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Controle o swap zRAM compactado criado para esta entrada."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "estado-do-zram",
+      [
+        [
+          "text",
+          "Estado do zRAM"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          ""
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Automático"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " mantém os padrões de memória do MiniOS. "
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Desativado"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " adiciona "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "nozram"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " e"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "desativa os controles de compressão e tamanho porque eles não se aplicam mais."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "compressão",
+      [
+        [
+          "text",
+          "Compressão"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "zramcomp="
+            ]
+          ]
+        ],
+        [
+          "text",
+          " seleciona o algoritmo de compressão. As opções disponíveis são "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "lzo"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ","
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "lzo-rle"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ", "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "lz4"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ", "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "lz4hc"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " e "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "zstd"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ". A disponibilidade do algoritmo também depende"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "do kernel em execução."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "tamanho",
+      [
+        [
+          "text",
+          "Tamanho"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "zramsize="
+            ]
+          ]
+        ],
+        [
+          "text",
+          " define o tamanho do zRAM em MiB. Deixe o campo vazio para permitir que o MiniOS"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "calcule o tamanho automaticamente. Um valor maior não é memória física livre:"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "páginas compactadas ainda consomem RAM."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Memória\nControle o swap zRAM compactado criado para esta entrada.\nEstado do zRAM\nAutomático mantém os padrões de memória do MiniOS. Desativado adiciona nozram e\ndesativa os controles de compressão e tamanho porque eles não se aplicam mais.\nCompressão\nzramcomp= seleciona o algoritmo de compressão. As opções disponíveis são lzo,\nlzo-rle, lz4, lz4hc e zstd. A disponibilidade do algoritmo também depende\ndo kernel em execução.\nTamanho\nzramsize= define o tamanho do zRAM em MiB. Deixe o campo vazio para permitir que o MiniOS\ncalcule o tamanho automaticamente. Um valor maior não é memória física livre:\npáginas compactadas ainda consomem RAM.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

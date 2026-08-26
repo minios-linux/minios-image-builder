@@ -1356,3 +1356,27 @@ def test_safe_cleanup_refuses_replaced_or_unrelated_directory(tmp_path):
     result = controller.cleanup_plan_job(unrelated)
     assert not result.cleaned
     assert outside.is_dir()
+
+
+def test_boot_menu_state_owns_default_and_restores_source(tmp_path):
+    state = controller.ProjectState(
+        str(tmp_path / 'custom.iso'), project_base=str(tmp_path))
+    state.default_boot = 'fresh'
+    entries = [
+        {
+            'id': 'ram', 'base_mode': 'toram', 'enabled': True,
+            'default': True, 'title': None, 'kernel_args': 'toram=trim',
+        },
+        {
+            'id': 'safe', 'base_mode': 'fresh', 'enabled': True,
+            'default': False, 'title': 'Safe graphics', 'kernel_args': 'nomodeset',
+        },
+    ]
+    assert state.set_boot_menu_entries(entries)
+    assert state.default_boot is None
+    assert state.boot_menu_entries[0]['default'] is True
+    with pytest.raises(ValueError, match='own default'):
+        state.set_default_boot('resume')
+    assert state.set_boot_menu_entries(None)
+    assert state.boot_menu_entries is None
+    assert state.default_boot is None

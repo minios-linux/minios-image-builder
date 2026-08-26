@@ -1,0 +1,245 @@
+{
+  "headings": [
+    {
+      "anchor": "memori",
+      "level": 1,
+      "title": "Memori"
+    },
+    {
+      "anchor": "status-zram",
+      "level": 2,
+      "title": "Status zRAM"
+    },
+    {
+      "anchor": "kompresi",
+      "level": 2,
+      "title": "Kompresi"
+    },
+    {
+      "anchor": "ukuran",
+      "level": 2,
+      "title": "Ukuran"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "memori",
+      [
+        [
+          "text",
+          "Memori"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Kelola swap zRAM terkompresi yang dibuat untuk entri ini."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "status-zram",
+      [
+        [
+          "text",
+          "Status zRAM"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          ""
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Otomatis"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " menjaga pengaturan memori MiniOS secara default. "
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Nonaktif"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " menambahkan "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "nozram"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " dan menonaktifkan kontrol kompresi serta ukuran karena tidak lagi berlaku."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "kompresi",
+      [
+        [
+          "text",
+          "Kompresi"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "zramcomp="
+            ]
+          ]
+        ],
+        [
+          "text",
+          " memilih algoritma kompresi. Pilihan yang tersedia adalah "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "lzo"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ", "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "lzo-rle"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ", "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "lz4"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ", "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "lz4hc"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ", dan "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "zstd"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ". Ketersediaan algoritma juga tergantung pada kernel yang sedang berjalan."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "ukuran",
+      [
+        [
+          "text",
+          "Ukuran"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "zramsize="
+            ]
+          ]
+        ],
+        [
+          "text",
+          " mengatur ukuran zRAM dalam MiB. Biarkan kolom kosong agar MiniOS menghitung ukuran secara otomatis. Nilai yang lebih besar bukan berarti memori fisik gratis: halaman yang terkompresi tetap menggunakan RAM."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Memori\nKelola swap zRAM terkompresi yang dibuat untuk entri ini.\nStatus zRAM\nOtomatis menjaga pengaturan memori MiniOS secara default. Nonaktif menambahkan nozram dan menonaktifkan kontrol kompresi serta ukuran karena tidak lagi berlaku.\nKompresi\nzramcomp= memilih algoritma kompresi. Pilihan yang tersedia adalah lzo, lzo-rle, lz4, lz4hc, dan zstd. Ketersediaan algoritma juga tergantung pada kernel yang sedang berjalan.\nUkuran\nzramsize= mengatur ukuran zRAM dalam MiB. Biarkan kolom kosong agar MiniOS menghitung ukuran secara otomatis. Nilai yang lebih besar bukan berarti memori fisik gratis: halaman yang terkompresi tetap menggunakan RAM.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

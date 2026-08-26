@@ -1,0 +1,307 @@
+{
+  "headings": [
+    {
+      "anchor": "costruttore-del-menu-di-avvio",
+      "level": 1,
+      "title": "Costruttore del menu di avvio"
+    },
+    {
+      "anchor": "menu-di-origine-esistente",
+      "level": 2,
+      "title": "Menu di origine esistente"
+    },
+    {
+      "anchor": "come-viene-assemblata-una-voce",
+      "level": 2,
+      "title": "Come viene assemblata una voce"
+    },
+    {
+      "anchor": "template-di-sessione",
+      "level": 2,
+      "title": "Template di sessione"
+    },
+    {
+      "anchor": "tipi-di-persistenza",
+      "level": 2,
+      "title": "Tipi di persistenza"
+    },
+    {
+      "anchor": "impostazioni-dipendenti",
+      "level": 2,
+      "title": "Impostazioni dipendenti"
+    },
+    {
+      "anchor": "completamento-e-input-esperto",
+      "level": 2,
+      "title": "Completamento e input esperto"
+    },
+    {
+      "anchor": "predefiniti-e-nomi",
+      "level": 2,
+      "title": "Predefiniti e nomi"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "costruttore-del-menu-di-avvio",
+      [
+        [
+          "text",
+          "Costruttore del menu di avvio"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Crea il menu di avvio visibile a partire da voci indipendenti. Scegli un modello, poi personalizza quella voce con i controlli disponibili. Le voci disabilitate restano nel progetto ma vengono escluse dal menu generato."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "menu-di-origine-esistente",
+      [
+        [
+          "text",
+          "Menu di origine esistente"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Prima della personalizzazione, il costruttore legge le voci MiniOS riconosciute, il loro valore predefinito e timeout, e i parametri supportati dal menu GRUB effettivo o SYSLINUX nativo. Modificare una voce importata sostituisce solo i parametri rappresentati dai controlli tipizzati. Gli altri argomenti della sorgente restano nel template di avvio. In un menu multilingue, ogni lingua mantiene la propria locale, fuso orario e impostazioni tastiera, a meno che tu non li sovrascriva esplicitamente."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "come-viene-assemblata-una-voce",
+      [
+        [
+          "text",
+          "Come viene assemblata una voce"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Il template fornisce il comportamento base di MiniOS. Gli argomenti kernel globali per esperti vengono applicati successivamente, seguiti dalle opzioni tipizzate e dai Parametri aggiuntivi per questa voce. Per le opzioni MiniOS ripetute in formato chiave-valore, prevale sempre l'ultimo valore."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "template-di-sessione",
+      [
+        [
+          "text",
+          "Template di sessione"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Resume utilizza perchdir=resume. New utilizza perchdir=new. Choose utilizza perchdir=ask."
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "Fresh non ha selettore di persistenza. Copia in RAM utilizza toram."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Puoi creare più voci dallo stesso template."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "tipi-di-persistenza",
+      [
+        [
+          "text",
+          "Tipi di persistenza"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Native salva le modifiche in una directory. Dynfilefs utilizza un contenitore espandibile,"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "Raw usa un'immagine a dimensione fissa e LUKS utilizza un contenitore cifrato. SquashFS"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "riprende una sessione compressa esistente. L'attuale"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "initramfs non può creare una nuova sessione SquashFS."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "impostazioni-dipendenti",
+      [
+        [
+          "text",
+          "Impostazioni dipendenti"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "I controlli diventano non disponibili quando non sono applicabili. Disabilitare zRAM disattiva"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "anche i controlli di compressione e dimensione. La persistenza Native e SquashFS non utilizzano"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "il campo dimensione contenitore."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "completamento-e-input-esperto",
+      [
+        [
+          "text",
+          "Completamento e input esperto"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "I filtri dei moduli completano dai moduli rilevati nella sorgente selezionata. I campi di lingua,"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "fuso orario e tastiera si completano dai dati di sistema installati. Usa"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "Parametri aggiuntivi solo per opzioni senza un controllo tipizzato. Gli argomenti sconosciuti caricati da un progetto precedente vengono mantenuti lì."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "predefiniti-e-nomi",
+      [
+        [
+          "text",
+          "Predefiniti e nomi"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Un menu personalizzato ha esattamente una voce predefinita. Disabilitare il predefinito seleziona"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "automaticamente un'altra voce abilitata. Un nome vuoto mantiene il titolo della sorgente o del template."
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "I nomi personalizzati in ASCII funzionano nei menu multilingue; un menu monolingua può utilizzare caratteri supportati dalla codifica del menu di quel bootloader."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Costruttore del menu di avvio\nCrea il menu di avvio visibile a partire da voci indipendenti. Scegli un modello, poi personalizza quella voce con i controlli disponibili. Le voci disabilitate restano nel progetto ma vengono escluse dal menu generato.\nMenu di origine esistente\nPrima della personalizzazione, il costruttore legge le voci MiniOS riconosciute, il loro valore predefinito e timeout, e i parametri supportati dal menu GRUB effettivo o SYSLINUX nativo. Modificare una voce importata sostituisce solo i parametri rappresentati dai controlli tipizzati. Gli altri argomenti della sorgente restano nel template di avvio. In un menu multilingue, ogni lingua mantiene la propria locale, fuso orario e impostazioni tastiera, a meno che tu non li sovrascriva esplicitamente.\nCome viene assemblata una voce\nIl template fornisce il comportamento base di MiniOS. Gli argomenti kernel globali per esperti vengono applicati successivamente, seguiti dalle opzioni tipizzate e dai Parametri aggiuntivi per questa voce. Per le opzioni MiniOS ripetute in formato chiave-valore, prevale sempre l'ultimo valore.\nTemplate di sessione\nResume utilizza perchdir=resume. New utilizza perchdir=new. Choose utilizza perchdir=ask.\nFresh non ha selettore di persistenza. Copia in RAM utilizza toram.\nPuoi creare più voci dallo stesso template.\nTipi di persistenza\nNative salva le modifiche in una directory. Dynfilefs utilizza un contenitore espandibile,\nRaw usa un'immagine a dimensione fissa e LUKS utilizza un contenitore cifrato. SquashFS\nriprende una sessione compressa esistente. L'attuale\ninitramfs non può creare una nuova sessione SquashFS.\nImpostazioni dipendenti\nI controlli diventano non disponibili quando non sono applicabili. Disabilitare zRAM disattiva\nanche i controlli di compressione e dimensione. La persistenza Native e SquashFS non utilizzano\nil campo dimensione contenitore.\nCompletamento e input esperto\nI filtri dei moduli completano dai moduli rilevati nella sorgente selezionata. I campi di lingua,\nfuso orario e tastiera si completano dai dati di sistema installati. Usa\nParametri aggiuntivi solo per opzioni senza un controllo tipizzato. Gli argomenti sconosciuti caricati da un progetto precedente vengono mantenuti lì.\nPredefiniti e nomi\nUn menu personalizzato ha esattamente una voce predefinita. Disabilitare il predefinito seleziona\nautomaticamente un'altra voce abilitata. Un nome vuoto mantiene il titolo della sorgente o del template.\nI nomi personalizzati in ASCII funzionano nei menu multilingue; un menu monolingua può utilizzare caratteri supportati dalla codifica del menu di quel bootloader.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

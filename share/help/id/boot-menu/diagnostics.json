@@ -1,0 +1,225 @@
+{
+  "headings": [
+    {
+      "anchor": "diagnostik-dan-opsi-lanjutan",
+      "level": 1,
+      "title": "Diagnostik dan opsi lanjutan"
+    },
+    {
+      "anchor": "pesan-boot",
+      "level": 2,
+      "title": "Pesan boot"
+    },
+    {
+      "anchor": "parameter-tambahan",
+      "level": 2,
+      "title": "Parameter tambahan"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "diagnostik-dan-opsi-lanjutan",
+      [
+        [
+          "text",
+          "Diagnostik dan opsi lanjutan"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Sesuaikan pencatatan boot atau tambahkan parameter yang tidak tersedia pada kontrol yang dapat diketik."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "pesan-boot",
+      [
+        [
+          "text",
+          "Pesan boot"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          ""
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Sembunyikan pesan boot rutin"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " menambahkan "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "quiet"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ". "
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Aktifkan log diagnostik"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " menambahkan"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "debug"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ". Keduanya dapat diaktifkan secara independen. Nonaktifkan "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "quiet"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " ketika pesan boot"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "yang detail lebih berguna daripada tampilan startup yang bersih."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "parameter-tambahan",
+      [
+        [
+          "text",
+          "Parameter tambahan"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Masukkan hanya parameter Linux, MiniOS initramfs, atau live-config yang tidak memiliki"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "kontrol bertipe. Parameter tidak dikenal yang sudah ada akan dipertahankan di sini, dan pelengkapan"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "akan terus menyarankan opsi umum."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Parameter khusus entri akan ditambahkan setelah argumen kernel template dan global."
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "Untuk opsi MiniOS "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "key=value"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " yang berulang, nilai terakhir biasanya"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "yang digunakan. Parameter ahli yang tidak valid atau bertentangan dapat mencegah startup."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Diagnostik dan opsi lanjutan\nSesuaikan pencatatan boot atau tambahkan parameter yang tidak tersedia pada kontrol yang dapat diketik.\nPesan boot\nSembunyikan pesan boot rutin menambahkan quiet. Aktifkan log diagnostik menambahkan\ndebug. Keduanya dapat diaktifkan secara independen. Nonaktifkan quiet ketika pesan boot\nyang detail lebih berguna daripada tampilan startup yang bersih.\nParameter tambahan\nMasukkan hanya parameter Linux, MiniOS initramfs, atau live-config yang tidak memiliki\nkontrol bertipe. Parameter tidak dikenal yang sudah ada akan dipertahankan di sini, dan pelengkapan\nakan terus menyarankan opsi umum.\nParameter khusus entri akan ditambahkan setelah argumen kernel template dan global.\nUntuk opsi MiniOS key=value yang berulang, nilai terakhir biasanya\nyang digunakan. Parameter ahli yang tidak valid atau bertentangan dapat mencegah startup.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

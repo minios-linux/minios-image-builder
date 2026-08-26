@@ -1,0 +1,275 @@
+{
+  "headings": [
+    {
+      "anchor": "sistema-e-módulos",
+      "level": 1,
+      "title": "Sistema e módulos"
+    },
+    {
+      "anchor": "filtros-de-módulos",
+      "level": 2,
+      "title": "Filtros de módulos"
+    },
+    {
+      "anchor": "ambiente-de-inicialização",
+      "level": 2,
+      "title": "Ambiente de inicialização"
+    },
+    {
+      "anchor": "compatibilidade-gráfica",
+      "level": 2,
+      "title": "Compatibilidade gráfica"
+    },
+    {
+      "anchor": "montagem-automática-de-disco",
+      "level": 2,
+      "title": "Montagem automática de disco"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "sistema-e-módulos",
+      [
+        [
+          "text",
+          "Sistema e módulos"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Selecione os módulos e o ambiente de inicialização para esta entrada."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "filtros-de-módulos",
+      [
+        [
+          "text",
+          "Filtros de módulos"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          ""
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Carregar módulos"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " restringe o carregamento para nomes ou intervalos de módulos correspondentes."
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          ""
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Ignorar módulos"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " exclui módulos correspondentes. As sugestões vêm dos módulos"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "detectados na fonte MiniOS selecionada."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Esses controles geram "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "load=FILTER"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " e "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "noload=FILTER"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ". Use apenas os formatos de filtro"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "suportados pelo initramfs do MiniOS."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "ambiente-de-inicialização",
+      [
+        [
+          "text",
+          "Ambiente de inicialização"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Mantenha o padrão da imagem, inicie o desktop gráfico, use um console de texto ou"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "entre no modo de resgate. O modo texto e o modo de resgate são destinados à administração"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "e à solução de problemas, em vez do uso normal do desktop."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "compatibilidade-gráfica",
+      [
+        [
+          "text",
+          "Compatibilidade gráfica"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "O modo de compatibilidade adiciona a opção do kernel Linux "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "nomodeset"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ". Use-o quando o modo normal"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "de configuração do kernel impedir o sistema gráfico de iniciar. Isso pode reduzir"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "a resolução da tela e a aceleração."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "montagem-automática-de-disco",
+      [
+        [
+          "text",
+          "Montagem automática de disco"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Ative a montagem automática somente quando a sessão deve expor outros sistemas de arquivos conectados após a inicialização."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Sistema e módulos\nSelecione os módulos e o ambiente de inicialização para esta entrada.\nFiltros de módulos\nCarregar módulos restringe o carregamento para nomes ou intervalos de módulos correspondentes.\nIgnorar módulos exclui módulos correspondentes. As sugestões vêm dos módulos\ndetectados na fonte MiniOS selecionada.\nEsses controles geram load=FILTER e noload=FILTER. Use apenas os formatos de filtro\nsuportados pelo initramfs do MiniOS.\nAmbiente de inicialização\nMantenha o padrão da imagem, inicie o desktop gráfico, use um console de texto ou\nentre no modo de resgate. O modo texto e o modo de resgate são destinados à administração\ne à solução de problemas, em vez do uso normal do desktop.\nCompatibilidade gráfica\nO modo de compatibilidade adiciona a opção do kernel Linux nomodeset. Use-o quando o modo normal\nde configuração do kernel impedir o sistema gráfico de iniciar. Isso pode reduzir\na resolução da tela e a aceleração.\nMontagem automática de disco\nAtive a montagem automática somente quando a sessão deve expor outros sistemas de arquivos conectados após a inicialização.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

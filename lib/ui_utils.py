@@ -39,9 +39,11 @@ ICON_OPEN     = 'document-open-symbolic'
 ICON_INFO     = 'dialog-information-symbolic'
 
 def apply_css_if_exists(css_paths):
-    """Load and apply the first CSS file that exists from css_paths."""
+    """Load existing CSS files in order so later application rules can win."""
     if isinstance(css_paths, str):
         css_paths = [css_paths]
+    loaded = []
+    screen = Gdk.Screen.get_default()
     for css_file_path in css_paths:
         if css_file_path and os.path.exists(css_file_path):
             provider = Gtk.CssProvider()
@@ -49,12 +51,13 @@ def apply_css_if_exists(css_paths):
                 provider.load_from_path(css_file_path)
             except Exception:
                 continue
-            Gtk.StyleContext.add_provider_for_screen(
-                Gdk.Screen.get_default(),
-                provider,
-                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-            )
-            return
+            if screen is not None:
+                Gtk.StyleContext.add_provider_for_screen(
+                    screen, provider,
+                    Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+                )
+            loaded.append(css_file_path)
+    return tuple(loaded)
 
 
 def show_error_dialog(parent_window, message, secondary=None):

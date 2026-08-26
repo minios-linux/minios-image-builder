@@ -1,0 +1,432 @@
+{
+  "headings": [
+    {
+      "anchor": "session-et-stockage",
+      "level": 1,
+      "title": "Session et stockage"
+    },
+    {
+      "anchor": "sélection-de-session",
+      "level": 2,
+      "title": "Sélection de session"
+    },
+    {
+      "anchor": "type-de-stockage",
+      "level": 2,
+      "title": "Type de stockage"
+    },
+    {
+      "anchor": "capacité",
+      "level": 2,
+      "title": "Capacité"
+    },
+    {
+      "anchor": "copier-en-ram",
+      "level": 2,
+      "title": "Copier en RAM"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "session-et-stockage",
+      [
+        [
+          "text",
+          "Session et stockage"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Choisissez comment cette entrée détecte et enregistre les modifications persistantes."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "sélection-de-session",
+      [
+        [
+          "text",
+          "Sélection de session"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Le modèle d'entrée contrôle si MiniOS reprend la dernière session, en crée une nouvelle ou demande au démarrage. Le type de stockage ne remplace pas ce choix de modèle."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "type-de-stockage",
+      [
+        [
+          "text",
+          "Type de stockage"
+        ]
+      ]
+    ],
+    [
+      "list",
+      {
+        "ordered": false,
+        "start": 1
+      },
+      [
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Automatique"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " conserve le mode du modèle ou de la session sauvegardée."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Natif"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " stocke les modifications dans un répertoire sur un système de fichiers Linux."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Dynfilefs"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " utilise un conteneur extensible."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Brut"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " utilise une image de taille fixe."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "LUKS"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " utilise un conteneur chiffré."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "SquashFS"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " reprend une session compressée existante."
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "L'initramfs actuel peut reprendre mais ne peut pas créer de sessions SquashFS."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "capacité",
+      [
+        [
+          "text",
+          "Capacité"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          ""
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Taille du conteneur"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " s'applique uniquement aux sessions basées sur un conteneur, donc elle est désactivée pour Natif et SquashFS. "
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Espace libre à conserver"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " réserve de la place sur le périphérique de persistance afin que les modifications sauvegardées ne le remplissent pas complètement."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Les options de démarrage correspondantes sont "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "perchmode="
+            ]
+          ]
+        ],
+        [
+          "text",
+          ", "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "perchsize="
+            ]
+          ]
+        ],
+        [
+          "text",
+          " et "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "perchreserve="
+            ]
+          ]
+        ],
+        [
+          "text",
+          "."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "copier-en-ram",
+      [
+        [
+          "text",
+          "Copier en RAM"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "toram=full"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " copie l'ensemble du système en mémoire. "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "toram=trim"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " ne copie que l'ensemble filtré des modules. Cela peut permettre de retirer le périphérique de démarrage, mais nécessite suffisamment de RAM pour les données copiées."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Session et stockage\nChoisissez comment cette entrée détecte et enregistre les modifications persistantes.\nSélection de session\nLe modèle d'entrée contrôle si MiniOS reprend la dernière session, en crée une nouvelle ou demande au démarrage. Le type de stockage ne remplace pas ce choix de modèle.\nType de stockage\nAutomatique conserve le mode du modèle ou de la session sauvegardée.\nNatif stocke les modifications dans un répertoire sur un système de fichiers Linux.\nDynfilefs utilise un conteneur extensible.\nBrut utilise une image de taille fixe.\nLUKS utilise un conteneur chiffré.\nSquashFS reprend une session compressée existante.\nL'initramfs actuel peut reprendre mais ne peut pas créer de sessions SquashFS.\nCapacité\nTaille du conteneur s'applique uniquement aux sessions basées sur un conteneur, donc elle est désactivée pour Natif et SquashFS. Espace libre à conserver réserve de la place sur le périphérique de persistance afin que les modifications sauvegardées ne le remplissent pas complètement.\nLes options de démarrage correspondantes sont perchmode=, perchsize= et perchreserve=.\nCopier en RAM\ntoram=full copie l'ensemble du système en mémoire. toram=trim ne copie que l'ensemble filtré des modules. Cela peut permettre de retirer le périphérique de démarrage, mais nécessite suffisamment de RAM pour les données copiées.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

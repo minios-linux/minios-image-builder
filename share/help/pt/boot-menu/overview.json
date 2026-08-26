@@ -1,0 +1,235 @@
+{
+  "headings": [
+    {
+      "anchor": "construtor-do-menu-de-boot",
+      "level": 1,
+      "title": "Construtor do menu de boot"
+    },
+    {
+      "anchor": "menu-de-origem-existente",
+      "level": 2,
+      "title": "Menu de origem existente"
+    },
+    {
+      "anchor": "como-uma-entrada-é-montada",
+      "level": 2,
+      "title": "Como uma entrada é montada"
+    },
+    {
+      "anchor": "templates-de-sessão",
+      "level": 2,
+      "title": "Templates de sessão"
+    },
+    {
+      "anchor": "tipos-de-persistência",
+      "level": 2,
+      "title": "Tipos de persistência"
+    },
+    {
+      "anchor": "configurações-dependentes",
+      "level": 2,
+      "title": "Configurações dependentes"
+    },
+    {
+      "anchor": "conclusão-e-entrada-avançada",
+      "level": 2,
+      "title": "Conclusão e entrada avançada"
+    },
+    {
+      "anchor": "padrões-e-nomes",
+      "level": 2,
+      "title": "Padrões e nomes"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "construtor-do-menu-de-boot",
+      [
+        [
+          "text",
+          "Construtor do menu de boot"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Monte o menu de inicialização visível a partir de entradas independentes. Escolha um modelo e, em seguida, refine essa entrada com os controles específicos. Entradas desativadas permanecem no projeto, mas são omitidas do menu gerado."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "menu-de-origem-existente",
+      [
+        [
+          "text",
+          "Menu de origem existente"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Antes da personalização, o construtor lê as entradas reconhecidas do MiniOS, seus valores padrão e tempo limite, além dos parâmetros suportados, a partir do menu GRUB efetivo ou SYSLINUX nativo. Editar uma entrada importada substitui apenas os parâmetros representados por controles tipados. Os demais argumentos de origem permanecem no template de boot. Em um menu multilíngue, cada idioma mantém seus argumentos de localidade, fuso horário e teclado, a menos que você os substitua explicitamente."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "como-uma-entrada-é-montada",
+      [
+        [
+          "text",
+          "Como uma entrada é montada"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "O template fornece o comportamento base do MiniOS. Em seguida, são aplicados os argumentos globais de kernel para especialistas, seguidos pelas opções tipadas e Parâmetros adicionais para esta entrada. Para opções MiniOS de chave-valor repetidas, o último valor prevalece."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "templates-de-sessão",
+      [
+        [
+          "text",
+          "Templates de sessão"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Resume usa perchdir=resume. New usa perchdir=new. Choose usa perchdir=ask."
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "Fresh não possui seletor de persistência. Copiar para RAM usa toram."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Você pode criar várias entradas a partir do mesmo template."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "tipos-de-persistência",
+      [
+        [
+          "text",
+          "Tipos de persistência"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Native armazena alterações em um diretório. Dynfilefs utiliza um contêiner expansível, Raw usa uma imagem de tamanho fixo e LUKS utiliza um contêiner criptografado. SquashFS retoma uma sessão comprimida existente. O initramfs atual não pode criar uma nova sessão SquashFS."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "configurações-dependentes",
+      [
+        [
+          "text",
+          "Configurações dependentes"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Os controles ficam indisponíveis quando não se aplicam. Desabilitar o zRAM desativa seus controles de compressão e tamanho. As persistências Native e SquashFS não utilizam o campo de tamanho do contêiner."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "conclusão-e-entrada-avançada",
+      [
+        [
+          "text",
+          "Conclusão e entrada avançada"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Os filtros de módulos completam a partir dos módulos detectados na fonte selecionada. Os campos de localidade, fuso horário e teclado completam a partir dos dados instalados no sistema. Use Parâmetros adicionais apenas para opções sem controle tipado. Argumentos desconhecidos carregados de um projeto antigo são preservados ali."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "padrões-e-nomes",
+      [
+        [
+          "text",
+          "Padrões e nomes"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Um menu personalizado possui exatamente uma entrada padrão. Desabilitar o padrão seleciona automaticamente outra entrada habilitada. Um nome vazio mantém o título de origem ou do template. Nomes personalizados em ASCII funcionam em menus multilíngues; um menu de idioma único pode usar caracteres suportados pela codificação do menu do bootloader."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Construtor do menu de boot\nMonte o menu de inicialização visível a partir de entradas independentes. Escolha um modelo e, em seguida, refine essa entrada com os controles específicos. Entradas desativadas permanecem no projeto, mas são omitidas do menu gerado.\nMenu de origem existente\nAntes da personalização, o construtor lê as entradas reconhecidas do MiniOS, seus valores padrão e tempo limite, além dos parâmetros suportados, a partir do menu GRUB efetivo ou SYSLINUX nativo. Editar uma entrada importada substitui apenas os parâmetros representados por controles tipados. Os demais argumentos de origem permanecem no template de boot. Em um menu multilíngue, cada idioma mantém seus argumentos de localidade, fuso horário e teclado, a menos que você os substitua explicitamente.\nComo uma entrada é montada\nO template fornece o comportamento base do MiniOS. Em seguida, são aplicados os argumentos globais de kernel para especialistas, seguidos pelas opções tipadas e Parâmetros adicionais para esta entrada. Para opções MiniOS de chave-valor repetidas, o último valor prevalece.\nTemplates de sessão\nResume usa perchdir=resume. New usa perchdir=new. Choose usa perchdir=ask.\nFresh não possui seletor de persistência. Copiar para RAM usa toram.\nVocê pode criar várias entradas a partir do mesmo template.\nTipos de persistência\nNative armazena alterações em um diretório. Dynfilefs utiliza um contêiner expansível, Raw usa uma imagem de tamanho fixo e LUKS utiliza um contêiner criptografado. SquashFS retoma uma sessão comprimida existente. O initramfs atual não pode criar uma nova sessão SquashFS.\nConfigurações dependentes\nOs controles ficam indisponíveis quando não se aplicam. Desabilitar o zRAM desativa seus controles de compressão e tamanho. As persistências Native e SquashFS não utilizam o campo de tamanho do contêiner.\nConclusão e entrada avançada\nOs filtros de módulos completam a partir dos módulos detectados na fonte selecionada. Os campos de localidade, fuso horário e teclado completam a partir dos dados instalados no sistema. Use Parâmetros adicionais apenas para opções sem controle tipado. Argumentos desconhecidos carregados de um projeto antigo são preservados ali.\nPadrões e nomes\nUm menu personalizado possui exatamente uma entrada padrão. Desabilitar o padrão seleciona automaticamente outra entrada habilitada. Um nome vazio mantém o título de origem ou do template. Nomes personalizados em ASCII funcionam em menus multilíngues; um menu de idioma único pode usar caracteres suportados pela codificação do menu do bootloader.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

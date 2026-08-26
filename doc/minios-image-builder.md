@@ -29,9 +29,8 @@ optional writable-session capture authorizes only trusted **savechanges**(1).
 
 **Source**
 : Select the current livekit or dracut session, a MiniOS ISO file, or an optical
-disc asynchronously. The page
-shows backend, media category, source path, release, version, architecture,
-bootloader, size, module counts, and diagnostics.
+disc asynchronously. The page shows the source path, release, version,
+architecture, bootloader support, size, module counts, and diagnostics.
 
 **Content**
 : Select source modules and add external **.sb** files. Required core and kernel
@@ -53,8 +52,8 @@ collisions block continuation.
 : Create a fresh build plan and show selected, deselected, and additional
   modules, output defaults, path-free customization intent, capture mode and
   privilege boundary, size estimates, warnings, and stable diagnostic codes.
-  Configuration values, raw kernel arguments, private customization paths, and
-  selected capture paths are never shown. An existing output is replaced
+  Configuration values, raw global or per-entry kernel arguments, private
+  customization paths, and selected capture paths are never shown. An existing output is replaced
 only after confirmation and a new backend plan bound to the same observed file
 identity. Cancellation, failure, or an identity mismatch clears approval, so
 every retry asks again.
@@ -73,9 +72,54 @@ sudo, polkit, SSH, XRDP, X11, lock-screen, and issue-hint modes. User data can
 link or bind user directories, but not both, and accepts a validated
 root-relative user-directory path.
 
-Boot controls preserve or set a 0-300 second timeout and default
-resume/new/choose/fresh/toram session. Expert kernel arguments are validated for
-bootloader-safe syntax. Boot backgrounds must be valid PNG files.
+Boot controls preserve or set a 0-300 second timeout and can preserve the
+source menu/default or switch to the boot-menu constructor. The constructor
+starts from the five MiniOS session templates: resume (`perchdir=resume`), new
+(`perchdir=new`), choose (`perchdir=ask`), fresh (no persistence selector), and
+copy-to-RAM (`toram`). Existing entries can be hidden or reordered, and any
+template can be duplicated to create additional entries with a unique internal
+identifier and custom visible title. Each entry exposes typed controls for the
+persistence backend (`native`, `dynfilefs`, `raw`, `luks`, or compressed
+`squashfs` sessions) and size, RAM-copy scope, module filters, graphical, text,
+or rescue startup, compatible graphics, disk automounting, zRAM, locale,
+timezone, keyboard layout, quiet startup, and diagnostics. Settings understood
+by LiveKit and live-config are compiled to the existing per-entry kernel
+argument format, so saved schema-1 projects and the composition CLI remain
+compatible. Before customization, the constructor recognizes the effective
+GRUB and native SYSLINUX entries, titles, default, timeout, and typed parameters
+from the selected source. Editing a recognized entry replaces only parameters
+owned by its typed controls; unknown and required source arguments remain in
+the bootloader template. Multilingual source locale arguments remain per-language
+unless the user explicitly overrides them. Unknown arguments from an existing
+project remain in the Additional parameters field. A custom menu has exactly
+one enabled default entry. ASCII
+custom titles are portable across a multilingual menu; native single-language
+SYSLINUX additionally permits characters representable by that menu's legacy
+encoding. Module filters complete from the detected source modules, while
+locale, timezone, and keyboard fields complete from the current system data.
+Choosing disabled zRAM makes its compression and size fields insensitive;
+directory and SquashFS persistence likewise disable the inapplicable container
+size field. The constructor's general help explains entry assembly, templates,
+parameter precedence, persistence types, dependencies, and compatibility. Each
+option section also has contextual help for its own controls.
+
+Kernel-parameter completion and contextual help document the commonly useful
+MiniOS controls: `perch`, `perchdir=`, `perchmode=`, `perchsize=`,
+`perchreserve=`, `toram`, `toram=full`, `toram=trim`, `load=`, `noload=`,
+`from=`, `text`, `automount`, zRAM settings, locale/timezone/keyboard settings,
+and common Linux diagnostic options such as `nomodeset`, `quiet`, and `debug`.
+Compiled per-entry parameters are appended after the selected template and
+global expert kernel arguments; MiniOS key=value parameters therefore follow
+the initramfs last-value rule for legacy project entries. Recognized source
+entries use replacement semantics for typed controls to avoid duplicate options
+and permit flags to be disabled. Expert global and per-entry arguments remain
+available separately for options not represented by typed controls.
+
+General, section, and parameter help is installed as localized Markdown under
+`/usr/share/minios-image-builder/help`. `python3-minios-gui` renders it natively
+in a read-only GTK text view without HTML or WebKit. Lookup tries the complete
+interface locale, then its language, and finally English.
+Boot backgrounds must be valid PNG files.
 
 The project filesystem layer is an existing canonical real directory, or a
 mode-0700 directory created by the backend beneath the project directory. The
@@ -128,26 +172,36 @@ overlay, and module targets while invalidating plans when project base changes.
 
 # CAPTURE MODES
 
-**Current composition**
-: Use selected source modules and current configuration without writable-session
-capture. Composition is unprivileged; a root-only current configuration may
-require authorization for the fixed packaged reader.
+The Settings page asks which changes made after the current MiniOS session
+started should be copied into the new image. Source modules and the current
+configuration are independent of this choice. The no-capture option is the
+recommended default when only modules, configuration, boot settings, or image
+customization are being changed.
 
-**Exact session**
-: Preserve writable changes supported by the detected OverlayFS or AUFS
-provider. This union-specific mode may preserve secrets, identities, personal
-files, and logs, and requires explicit acknowledgement.
+**Do not include session changes**
+: Use selected source modules and current configuration without capturing the
+writable session layer.
 
-**Privacy-cleaned**
-: Use the strict software and safe-default allowlist. Broad system, identity,
-cache, log, and user state is intentionally omitted. This is not a guarantee
-that the result is shareable.
+**Include all session changes**
+: Preserve every writable change supported by the detected OverlayFS or AUFS
+provider. This may include secrets, identities, personal files, and logs, and
+requires explicit acknowledgement.
 
-**Selected changes**
-: Capture at least one normalized path selected from an analyzed inventory.
-Selecting a directory represents descendants; **savechanges** enforces actual
-matching. Advanced include/exclude editors expose all loaded rules. Exact and
-ancestor exclusions override matching row selection.
+**Include reusable changes only**
+: Use the strict software and safe-default allowlist. Personal data, identity,
+cache, log, and other broad state is intentionally omitted. This is not a
+guarantee that the result is shareable.
+
+**Choose session changes manually**
+: Analyze the current session and capture at least one normalized path selected
+from the in-memory inventory. Selecting a directory represents descendants;
+**savechanges** enforces actual matching. Advanced include/exclude editors expose
+all loaded rules, and exact or ancestor exclusions override matching selection.
+
+Administrator authorization is a capability detail rather than a capture mode.
+The first option does not capture the writable layer. The other modes use trusted
+**savechanges** and may request administrator authorization while the image
+builder itself remains unprivileged.
 
 # SESSION INVENTORY
 

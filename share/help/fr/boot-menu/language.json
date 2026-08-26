@@ -1,0 +1,240 @@
+{
+  "headings": [
+    {
+      "anchor": "langue-pour-cette-entrée",
+      "level": 1,
+      "title": "Langue pour cette entrée"
+    },
+    {
+      "anchor": "valeurs-acceptées",
+      "level": 2,
+      "title": "Valeurs acceptées"
+    },
+    {
+      "anchor": "saisie-semi-automatique",
+      "level": 2,
+      "title": "Saisie semi-automatique"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "langue-pour-cette-entrée",
+      [
+        [
+          "text",
+          "Langue pour cette entrée"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Remplacez la langue, le fuseau horaire et les paramètres de clavier uniquement pour cette entrée de démarrage."
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "Les champs vides conservent les paramètres par défaut de l’image."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "valeurs-acceptées",
+      [
+        [
+          "text",
+          "Valeurs acceptées"
+        ]
+      ]
+    ],
+    [
+      "list",
+      {
+        "ordered": false,
+        "start": 1
+      },
+      [
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Langue"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " utilise un nom de locale tel que "
+                ],
+                [
+                  "span",
+                  "code",
+                  [
+                    [
+                      "text",
+                      "ru_RU.UTF-8"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  "."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Fuseau horaire"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " utilise un nom IANA tel que "
+                ],
+                [
+                  "span",
+                  "code",
+                  [
+                    [
+                      "text",
+                      "Europe/Moscow"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  "."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Disposition du clavier"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " utilise un code de disposition XKB tel que "
+                ],
+                [
+                  "span",
+                  "code",
+                  [
+                    [
+                      "text",
+                      "us"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " ou "
+                ],
+                [
+                  "span",
+                  "code",
+                  [
+                    [
+                      "text",
+                      "ru"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  "."
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "saisie-semi-automatique",
+      [
+        [
+          "text",
+          "Saisie semi-automatique"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Les suggestions proviennent des données de langue, de fuseau horaire et de clavier installées sur le système actuel. Une suggestion aide à l’orthographe mais n’ajoute pas de données de langue manquantes à l’image générée."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Langue pour cette entrée\nRemplacez la langue, le fuseau horaire et les paramètres de clavier uniquement pour cette entrée de démarrage.\nLes champs vides conservent les paramètres par défaut de l’image.\nValeurs acceptées\nLangue utilise un nom de locale tel que ru_RU.UTF-8.\nFuseau horaire utilise un nom IANA tel que Europe/Moscow.\nDisposition du clavier utilise un code de disposition XKB tel que us ou ru.\nSaisie semi-automatique\nLes suggestions proviennent des données de langue, de fuseau horaire et de clavier installées sur le système actuel. Une suggestion aide à l’orthographe mais n’ajoute pas de données de langue manquantes à l’image générée.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

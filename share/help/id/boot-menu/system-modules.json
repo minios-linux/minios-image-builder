@@ -1,0 +1,283 @@
+{
+  "headings": [
+    {
+      "anchor": "sistem-dan-modul",
+      "level": 1,
+      "title": "Sistem dan modul"
+    },
+    {
+      "anchor": "penyaring-modul",
+      "level": 2,
+      "title": "Penyaring modul"
+    },
+    {
+      "anchor": "lingkungan-startup",
+      "level": 2,
+      "title": "Lingkungan startup"
+    },
+    {
+      "anchor": "kompatibilitas-grafis",
+      "level": 2,
+      "title": "Kompatibilitas grafis"
+    },
+    {
+      "anchor": "automount-disk",
+      "level": 2,
+      "title": "Automount disk"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "sistem-dan-modul",
+      [
+        [
+          "text",
+          "Sistem dan modul"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Pilih modul dan lingkungan awal untuk entri ini."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "penyaring-modul",
+      [
+        [
+          "text",
+          "Penyaring modul"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          ""
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Load modules"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " membatasi pemuatan hanya pada nama atau rentang modul yang cocok."
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          ""
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Skip modules"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " mengecualikan modul yang cocok. Saran berasal dari modul"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "yang terdeteksi di sumber MiniOS yang dipilih."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Kontrol ini menghasilkan "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "load=FILTER"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " dan "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "noload=FILTER"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ". Gunakan hanya bentuk filter"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "yang didukung oleh initramfs MiniOS."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "lingkungan-startup",
+      [
+        [
+          "text",
+          "Lingkungan startup"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Pertahankan gambar default, mulai desktop grafis, gunakan konsol teks, atau"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "masuk ke mode penyelamatan. Mode teks dan mode penyelamatan ditujukan untuk administrasi"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "dan pemecahan masalah, bukan untuk penggunaan desktop normal."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "kompatibilitas-grafis",
+      [
+        [
+          "text",
+          "Kompatibilitas grafis"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Mode kompatibilitas menambahkan opsi kernel Linux "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "nomodeset"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ". Gunakan saat mode kernel normal"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "menghalangi sistem grafis untuk memulai. Ini dapat menurunkan resolusi"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "dan akselerasi tampilan."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "automount-disk",
+      [
+        [
+          "text",
+          "Automount disk"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Aktifkan pemasangan otomatis hanya jika sesi harus menampilkan filesystem lain"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "yang terpasang setelah startup."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Sistem dan modul\nPilih modul dan lingkungan awal untuk entri ini.\nPenyaring modul\nLoad modules membatasi pemuatan hanya pada nama atau rentang modul yang cocok.\nSkip modules mengecualikan modul yang cocok. Saran berasal dari modul\nyang terdeteksi di sumber MiniOS yang dipilih.\nKontrol ini menghasilkan load=FILTER dan noload=FILTER. Gunakan hanya bentuk filter\nyang didukung oleh initramfs MiniOS.\nLingkungan startup\nPertahankan gambar default, mulai desktop grafis, gunakan konsol teks, atau\nmasuk ke mode penyelamatan. Mode teks dan mode penyelamatan ditujukan untuk administrasi\ndan pemecahan masalah, bukan untuk penggunaan desktop normal.\nKompatibilitas grafis\nMode kompatibilitas menambahkan opsi kernel Linux nomodeset. Gunakan saat mode kernel normal\nmenghalangi sistem grafis untuk memulai. Ini dapat menurunkan resolusi\ndan akselerasi tampilan.\nAutomount disk\nAktifkan pemasangan otomatis hanya jika sesi harus menampilkan filesystem lain\nyang terpasang setelah startup.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

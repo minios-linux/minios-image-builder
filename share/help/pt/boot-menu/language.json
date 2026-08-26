@@ -1,0 +1,240 @@
+{
+  "headings": [
+    {
+      "anchor": "idioma-para-esta-entrada",
+      "level": 1,
+      "title": "Idioma para esta entrada"
+    },
+    {
+      "anchor": "valores-aceitos",
+      "level": 2,
+      "title": "Valores aceitos"
+    },
+    {
+      "anchor": "conclusão",
+      "level": 2,
+      "title": "Conclusão"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "idioma-para-esta-entrada",
+      [
+        [
+          "text",
+          "Idioma para esta entrada"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Substitua as configurações de idioma, fuso horário e teclado apenas para esta entrada de inicialização."
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "Campos em branco mantêm os padrões da imagem."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "valores-aceitos",
+      [
+        [
+          "text",
+          "Valores aceitos"
+        ]
+      ]
+    ],
+    [
+      "list",
+      {
+        "ordered": false,
+        "start": 1
+      },
+      [
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Localidade"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " usa um nome de localidade como "
+                ],
+                [
+                  "span",
+                  "code",
+                  [
+                    [
+                      "text",
+                      "ru_RU.UTF-8"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  "."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Fuso horário"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " usa um nome IANA como "
+                ],
+                [
+                  "span",
+                  "code",
+                  [
+                    [
+                      "text",
+                      "Europe/Moscow"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  "."
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "item",
+          null,
+          [
+            [
+              "block",
+              "paragraph",
+              [
+                [
+                  "text",
+                  ""
+                ],
+                [
+                  "span",
+                  "strong",
+                  [
+                    [
+                      "text",
+                      "Layout de teclado"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " usa um código de layout XKB como "
+                ],
+                [
+                  "span",
+                  "code",
+                  [
+                    [
+                      "text",
+                      "us"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  " ou "
+                ],
+                [
+                  "span",
+                  "code",
+                  [
+                    [
+                      "text",
+                      "ru"
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  "."
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "conclusão",
+      [
+        [
+          "text",
+          "Conclusão"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "As sugestões vêm dos dados de localidade, fuso horário e teclado instalados no sistema atual. Uma sugestão ajuda com a ortografia, mas não adiciona dados de localidade ausentes à imagem criada."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Idioma para esta entrada\nSubstitua as configurações de idioma, fuso horário e teclado apenas para esta entrada de inicialização.\nCampos em branco mantêm os padrões da imagem.\nValores aceitos\nLocalidade usa um nome de localidade como ru_RU.UTF-8.\nFuso horário usa um nome IANA como Europe/Moscow.\nLayout de teclado usa um código de layout XKB como us ou ru.\nConclusão\nAs sugestões vêm dos dados de localidade, fuso horário e teclado instalados no sistema atual. Uma sugestão ajuda com a ortografia, mas não adiciona dados de localidade ausentes à imagem criada.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

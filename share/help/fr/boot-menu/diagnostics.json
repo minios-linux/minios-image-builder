@@ -1,0 +1,225 @@
+{
+  "headings": [
+    {
+      "anchor": "diagnostics-et-options-avancées",
+      "level": 1,
+      "title": "Diagnostics et options avancées"
+    },
+    {
+      "anchor": "messages-de-démarrage",
+      "level": 2,
+      "title": "Messages de démarrage"
+    },
+    {
+      "anchor": "paramètres-supplémentaires",
+      "level": 2,
+      "title": "Paramètres supplémentaires"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "diagnostics-et-options-avancées",
+      [
+        [
+          "text",
+          "Diagnostics et options avancées"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Ajustez la journalisation du démarrage ou ajoutez des paramètres non représentés par les contrôles saisis."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "messages-de-démarrage",
+      [
+        [
+          "text",
+          "Messages de démarrage"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          ""
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Masquer les messages de démarrage courants"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " ajoute "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "quiet"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ". "
+        ],
+        [
+          "span",
+          "strong",
+          [
+            [
+              "text",
+              "Activer la journalisation de diagnostic"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " ajoute"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "debug"
+            ]
+          ]
+        ],
+        [
+          "text",
+          ". Elles peuvent être activées indépendamment. Désactivez "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "quiet"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " lorsque des messages de démarrage détaillés"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "sont plus utiles qu'un écran de démarrage épuré."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "paramètres-supplémentaires",
+      [
+        [
+          "text",
+          "Paramètres supplémentaires"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "N'entrez que les paramètres Linux, MiniOS initramfs ou live-config qui n'ont pas de"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "contrôle typé. Les paramètres inconnus existants sont conservés ici, et la saisie"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "continue de suggérer des options courantes."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Les paramètres spécifiques à l'entrée sont ajoutés après le modèle et les arguments"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "noyau globaux. Pour une option MiniOS "
+        ],
+        [
+          "span",
+          "code",
+          [
+            [
+              "text",
+              "key=value"
+            ]
+          ]
+        ],
+        [
+          "text",
+          " répétée, la dernière valeur"
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "prévaut généralement. Des paramètres experts invalides ou en conflit peuvent empêcher le démarrage."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Diagnostics et options avancées\nAjustez la journalisation du démarrage ou ajoutez des paramètres non représentés par les contrôles saisis.\nMessages de démarrage\nMasquer les messages de démarrage courants ajoute quiet. Activer la journalisation de diagnostic ajoute\ndebug. Elles peuvent être activées indépendamment. Désactivez quiet lorsque des messages de démarrage détaillés\nsont plus utiles qu'un écran de démarrage épuré.\nParamètres supplémentaires\nN'entrez que les paramètres Linux, MiniOS initramfs ou live-config qui n'ont pas de\ncontrôle typé. Les paramètres inconnus existants sont conservés ici, et la saisie\ncontinue de suggérer des options courantes.\nLes paramètres spécifiques à l'entrée sont ajoutés après le modèle et les arguments\nnoyau globaux. Pour une option MiniOS key=value répétée, la dernière valeur\nprévaut généralement. Des paramètres experts invalides ou en conflit peuvent empêcher le démarrage.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}

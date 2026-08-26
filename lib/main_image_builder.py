@@ -51,7 +51,9 @@ from ui_utils import (
     CommandRunner, LogView, apply_css_if_exists, ask_confirmation,
     human_size, show_error_dialog)
 
-from minios_gui import classify_module, new_header_bar, resolve_icon
+from minios_gui import (HelpPopoverButton, TokenCompletionPopover,
+                        classify_module, document_asset_path,
+                        load_localized_document, new_header_bar, resolve_icon)
 
 
 APPLICATION_ID = 'org.minios.imagebuilder'
@@ -64,10 +66,39 @@ CSS_PATHS = (
     os.path.normpath(os.path.join(
         _LIB_DIR, '..', 'share', 'styles', 'style.css')),
 )
+HELP_ROOTS = (
+    os.path.normpath(os.path.join(_LIB_DIR, '..', 'share', 'help')),
+    '/usr/share/minios-image-builder/help',
+)
 
 gettext.bindtextdomain(APP_NAME, LOCALE_DIRECTORY)
 gettext.textdomain(APP_NAME)
 _ = gettext.gettext
+
+
+def _help_document(name):
+    for root in HELP_ROOTS:
+        try:
+            return load_localized_document(root, name)
+        except FileNotFoundError:
+            continue
+    return {
+        'product_kind': 'minios-markup-document',
+        'schema_version': 1,
+        'nodes': [[
+            'block', 'paragraph',
+            [['text', _('Help content is unavailable.')]],
+        ]],
+    }
+
+
+def _help_asset(name):
+    for root in HELP_ROOTS:
+        try:
+            return document_asset_path(root, name)
+        except (FileNotFoundError, ValueError):
+            continue
+    raise FileNotFoundError(name)
 
 MODULE_DESCRIPTION_TRANSLATIONS = {
     'Base filesystem and essential system utilities.': _(
@@ -87,10 +118,33 @@ MODULE_DESCRIPTION_TRANSLATIONS = {
     'A MiniOS SquashFS module.': _('A MiniOS SquashFS module.'),
 }
 
+DIAGNOSTIC_TRANSLATIONS = {
+    'clean_capture_allowlist': (
+        _('Reusable changes only'),
+        _('Clean capture uses a strict allowlist. It omits general system '
+          'state, user data, identity files, logs, and caches.')),
+}
+
+RESULT_INTENT_CLASSES = (
+    'result-success', 'result-error', 'result-cancelled')
+
 
 
 def _module_text(value):
     return MODULE_DESCRIPTION_TRANSLATIONS.get(value, _(value))
+
+
+def diagnostic_display_text(code, message):
+    """Return localized UI text without changing stable backend diagnostics."""
+    return DIAGNOSTIC_TRANSLATIONS.get(code, (code, message))
+
+
+def build_command_failure_detail(returncode, backend_error=None):
+    if backend_error:
+        return _('The image backend reported: {error}').format(
+            error=backend_error)
+    return _('The image command exited with status {status}.').format(
+        status=returncode)
 
 
 MENU_CHOICES = (
@@ -126,28 +180,30 @@ PHASE_LABELS = {
 
 CAPTURE_MODE_CHOICES = (
     (
-        'custom', _('Current composition'),
-        _('Build from the selected source modules and current configuration. '
-          'Writable-session changes are not captured.'),
-        _('Rootless').upper(), 'success',
+        'custom', _('Do not include session changes'),
+        _('Build from the selected source modules and current configuration '
+          'only. Changes made after MiniOS started are ignored.'),
+        _('Recommended').upper(), 'success',
     ),
     (
-        'exact', _('Exact session'),
-        _('Preserve writable changes supported by the detected union provider. '
-          'This is union-specific and may include sensitive state.'),
-        _('Authorization required').upper(), 'warning',
+        'exact', _('Include all session changes'),
+        _('Include every writable change that can be captured from the current '
+          'session. This may include passwords, tokens, personal files, logs, '
+          'and machine-specific state.'),
+        _('Admin access').upper(), 'warning',
     ),
     (
-        'clean', _('Privacy-cleaned'),
-        _('Use the strict software and safe-default allowlist. Broad system, '
-          'identity, cache, and user state is intentionally omitted.'),
-        _('Authorization required').upper(), 'warning',
+        'clean', _('Include reusable changes only'),
+        _('Include only allowlisted software and system settings intended for '
+          'reuse. Personal data, identity, logs, caches, and other broad state '
+          'are omitted.'),
+        _('Admin access').upper(), 'warning',
     ),
     (
-        'selected', _('Selected changes'),
-        _('Capture only analyzed paths you explicitly select. Selecting a '
-          'directory represents its descendants.'),
-        _('Authorization required').upper(), 'warning',
+        'selected', _('Choose session changes manually'),
+        _('Analyze the current session and choose specific files or directories '
+          'to include in the image.'),
+        _('Admin access').upper(), 'warning',
     ),
 )
 
@@ -182,22 +238,245 @@ DEFAULT_BOOT_TITLES = {
     'toram': _('Copy the system to RAM'),
 }
 
+BOOT_MODE_DESCRIPTIONS = {
+    'resume': _('Continue the most recent compatible saved session.'),
+    'new': _('Always create a separate persistent session.'),
+    'choose': _('Ask which saved session to use during startup.'),
+    'fresh': _('Start without loading persistent changes.'),
+    'toram': _('Copy MiniOS to memory so the boot device can be removed.'),
+}
+
+BOOT_MODE_PARAMETERS = {
+    'resume': 'perchdir=resume',
+    'new': 'perchdir=new',
+    'choose': 'perchdir=ask',
+    'fresh': _('no persistence selector'),
+    'toram': 'toram',
+}
+
+BOOT_PARAMETER_SUGGESTIONS = (
+    'text', 'automount', 'toram=full', 'toram=trim',
+    'nozram', 'zramcomp=lzo', 'zramcomp=lzo-rle', 'zramcomp=lz4',
+    'zramcomp=lz4hc', 'zramcomp=zstd', 'zramsize=',
+    'from=askdisk', 'perch', 'perchdir=resume', 'perchdir=new',
+    'perchdir=ask', 'perchdir=', 'perchmode=native',
+    'perchmode=dynfilefs', 'perchmode=raw', 'perchmode=luks',
+    'perchmode=squashfs',
+    'perchsize=', 'perchreserve=', 'load=', 'noload=',
+    'locales=', 'timezone=', 'keyboard-layouts=',
+    'nomodeset', 'quiet', 'debug',
+)
+
+BOOT_PARAMETER_DEFAULTS = {
+    'persistence_mode': 'keep',
+    'persistence_size': '',
+    'persistence_reserve': '',
+    'ram_copy': 'keep',
+    'load_modules': '',
+    'skip_modules': '',
+    'startup': 'keep',
+    'graphics': 'keep',
+    'automount': False,
+    'zram': 'keep',
+    'zram_compression': 'keep',
+    'zram_size': '',
+    'locale': '',
+    'timezone': '',
+    'keyboard': '',
+    'quiet': False,
+    'debug': False,
+    'extra': '',
+}
+
+_BOOT_PARAMETER_VALUE_KEYS = {
+    'perchmode': 'persistence_mode',
+    'perchsize': 'persistence_size',
+    'perchreserve': 'persistence_reserve',
+    'load': 'load_modules',
+    'noload': 'skip_modules',
+    'zramcomp': 'zram_compression',
+    'zramsize': 'zram_size',
+    'locales': 'locale',
+    'timezone': 'timezone',
+    'keyboard-layouts': 'keyboard',
+    'default-target': 'startup',
+    'default_target': 'startup',
+}
+
+_BOOT_PARAMETER_ENUM_VALUES = {
+    'persistence_mode': ('native', 'dynfilefs', 'raw', 'luks', 'squashfs'),
+    'zram_compression': ('lzo', 'lzo-rle', 'lz4', 'lz4hc', 'zstd'),
+    'startup': ('graphical', 'graphical.target', 'multi-user',
+                'multi-user.target', 'rescue', 'rescue.target'),
+}
+
+
+def parse_boot_parameters(value):
+    """Split supported MiniOS options from an opaque expert tail."""
+    result = dict(BOOT_PARAMETER_DEFAULTS)
+    extra = []
+    text_mode = False
+    for token in (value or '').split():
+        if token in ('toram=full', 'toram=trim'):
+            result['ram_copy'] = token.split('=', 1)[1]
+        elif token == 'text':
+            text_mode = True
+        elif token == 'nomodeset':
+            result['graphics'] = 'nomodeset'
+        elif token == 'automount':
+            result['automount'] = True
+        elif token == 'nozram':
+            result['zram'] = 'off'
+        elif token == 'quiet':
+            result['quiet'] = True
+        elif token == 'debug':
+            result['debug'] = True
+        elif '=' in token and token.split('=', 1)[0] in _BOOT_PARAMETER_VALUE_KEYS:
+            name, setting = token.split('=', 1)
+            key = _BOOT_PARAMETER_VALUE_KEYS[name]
+            allowed = _BOOT_PARAMETER_ENUM_VALUES.get(key)
+            if setting and (allowed is None or setting in allowed):
+                if key == 'startup' and not setting.endswith('.target'):
+                    setting += '.target'
+                result[key] = setting
+            else:
+                extra.append(token)
+        else:
+            extra.append(token)
+    if text_mode:
+        result['startup'] = 'text'
+    result['extra'] = ' '.join(extra)
+    return result
+
+
+def compile_boot_parameters(settings):
+    """Compile typed controls to the stable boot-menu kernel_args format."""
+    values = dict(BOOT_PARAMETER_DEFAULTS)
+    values.update(settings or {})
+    tokens = []
+    if values['persistence_mode'] != 'keep':
+        tokens.append('perchmode={}'.format(values['persistence_mode']))
+    for name, key in (
+            ('perchsize', 'persistence_size'),
+            ('perchreserve', 'persistence_reserve')):
+        if values[key]:
+            tokens.append('{}={}'.format(name, values[key]))
+    if values['ram_copy'] != 'keep':
+        tokens.append('toram={}'.format(values['ram_copy']))
+    for name, key in (('load', 'load_modules'), ('noload', 'skip_modules')):
+        if values[key]:
+            tokens.append('{}={}'.format(name, values[key]))
+    if values['startup'] == 'text':
+        tokens.append('text')
+    elif values['startup'] != 'keep':
+        tokens.append('default-target={}'.format(values['startup']))
+    if values['graphics'] == 'nomodeset':
+        tokens.append('nomodeset')
+    if values['automount']:
+        tokens.append('automount')
+    if values['zram'] == 'off':
+        tokens.append('nozram')
+    if values['zram_compression'] != 'keep':
+        tokens.append('zramcomp={}'.format(values['zram_compression']))
+    if values['zram_size']:
+        tokens.append('zramsize={}'.format(values['zram_size']))
+    for name, key in (
+            ('locales', 'locale'), ('timezone', 'timezone'),
+            ('keyboard-layouts', 'keyboard')):
+        if values[key]:
+            tokens.append('{}={}'.format(name, values[key]))
+    if values['quiet']:
+        tokens.append('quiet')
+    if values['debug']:
+        tokens.append('debug')
+    if values['extra']:
+        tokens.extend(values['extra'].split())
+    return ' '.join(tokens)
+
 LIVE_CONFIG_TEXT_FIELDS = (
     ('LIVE_HOSTNAME', _('Hostname'), _('Keep current hostname')),
     ('LIVE_TIMEZONE', _('Timezone'), _('Keep current timezone')),
-    ('ENABLE_SERVICES', _('Enable services'), _('Comma-separated service names')),
-    ('DISABLE_SERVICES', _('Disable services'), _('Comma-separated service names')),
+    ('ENABLE_SERVICES', _('Enable services'), _('None')),
+    ('DISABLE_SERVICES', _('Disable services'), _('None')),
 )
 
+LIVE_CONFIG_HELP = {
+    'LIVE_HOSTNAME': _(
+        "Set the computer's network name (hostname).\n\n"
+        "• Allowed characters: letters, numbers, hyphens.\n"
+        "• Example: 'minios-pc'.\n\n"
+        "See: man 7 live-config (search 'hostname')"),
+    'LIVE_TIMEZONE': _(
+        "Set the system timezone (e.g., 'Europe/Berlin', "
+        "'America/New_York').\n\n"
+        "• Affects system clock and displayed times.\n\n"
+        "See: man 7 live-config (search 'timezone')"),
+    'DEFAULT_TARGET': _(
+        "Set the default boot target:\n"
+        "• 'graphical.target' – start with a desktop.\n"
+        "• 'multi-user.target' – console mode.\n"
+        "• 'rescue.target' – minimal rescue mode."),
+    'ENABLE_SERVICES': _(
+        "List services to enable at boot, separated by commas.\n\n"
+        "• Example: 'ssh, NetworkManager'.\n"
+        "• systemd units and sysvinit script names are supported."),
+    'DISABLE_SERVICES': _(
+        "List services to disable at boot, separated by commas.\n\n"
+        "• Example: 'bluetooth, ModemManager'.\n"
+        "• systemd units and sysvinit script names are supported."),
+    'SECURITY_PRESET': _(
+        "Choose a preset to fill the settings below. You can customize any "
+        "setting afterward. Only the individual settings are saved."),
+    'LIVE_SUDO_MODE': _(
+        "passwordless keeps historical MiniOS behavior; password requires "
+        "the user password; disabled removes the MiniOS sudo grant."),
+    'LIVE_POLKIT_MODE': _(
+        "passwordless keeps historical MiniOS GUI admin convenience; "
+        "password/disabled remove that rule and use normal PolicyKit "
+        "authentication."),
+    'LIVE_SSH_PERMIT_ROOT_LOGIN': _(
+        "Allow or deny root login through OpenSSH."),
+    'LIVE_SSH_PASSWORD_AUTHENTICATION': _(
+        "Allow or deny password authentication through OpenSSH."),
+    'LIVE_XRDP_MODE': _(
+        "relaxed keeps MiniOS defaults; hardened binds to localhost and "
+        "disables root login; disabled disables common XRDP service links."),
+    'LIVE_X11_MODE': _(
+        "relaxed keeps compatibility; hardened removes the permissive -ac "
+        "launch option and tightens Xwrapper where present."),
+    'LIVE_LOCKSCREEN_MODE': _(
+        "relaxed keeps live-session convenience; hardened preserves/enables "
+        "screen locking where supported."),
+    'LIVE_ISSUE_PASSWORD_HINTS': _(
+        "Show default root/live password hints in /etc/issue."),
+    'LIVE_LINK_USER_DIRS': _(
+        "If enabled, user home directories will be symlinked to persistent "
+        "storage.\n\n"
+        "• Uses the FAT32, exFAT, or NTFS MiniOS drive.\n"
+        "• Unavailable with toram, toram=full, and toram=trim.\n"
+        "• Conflicting non-empty folders are never merged automatically.\n\n"
+        "See: man 7 live-config (search 'link-user-dirs')"),
+    'LIVE_BIND_USER_DIRS': _(
+        "If enabled, user home directories will be bind-mounted to persistent "
+        "storage.\n\n"
+        "• Uses the FAT32, exFAT, or NTFS MiniOS drive.\n"
+        "• Unavailable with toram, toram=full, and toram=trim.\n"
+        "• Conflicting non-empty folders are never merged automatically.\n\n"
+        "See: man 7 live-config (search 'bind-user-dirs')"),
+    'LIVE_USER_DIRS_PATH': _(
+        "Set the base path on persistent storage for user directories.\n\n"
+        "• Example: '/minios/userdirs'.\n\n"
+        "• The path must stay inside the MiniOS drive; '.', '..', and empty "
+        "segments are not allowed.\n\n"
+        "See: man 7 live-config (search 'user-dirs-path')"),
+}
+
 LIVE_CONFIG_CHOICE_FIELDS = (
-    ('DEFAULT_TARGET', _('Default target'), (
+    ('DEFAULT_TARGET', _('Default boot target'), (
         ('keep', _('Keep current')),
-        ('graphical', _('Graphical')),
-        ('graphical.target', _('Graphical target')),
-        ('multi-user', _('Multi-user')),
-        ('multi-user.target', _('Multi-user target')),
-        ('rescue', _('Rescue')),
-        ('rescue.target', _('Rescue target')),
+        ('graphical.target', 'graphical.target'),
+        ('multi-user.target', 'multi-user.target'),
+        ('rescue.target', 'rescue.target'),
     )),
     ('LIVE_SUDO_MODE', _('Sudo mode'), (
         ('keep', _('Keep current')),
@@ -205,7 +484,7 @@ LIVE_CONFIG_CHOICE_FIELDS = (
         ('password', _('Require password')),
         ('disabled', _('Disabled')),
     )),
-    ('LIVE_POLKIT_MODE', _('Polkit mode'), (
+    ('LIVE_POLKIT_MODE', _('PolicyKit mode'), (
         ('keep', _('Keep current')),
         ('passwordless', _('Passwordless')),
         ('password', _('Require password')),
@@ -216,7 +495,7 @@ LIVE_CONFIG_CHOICE_FIELDS = (
         ('true', _('Enabled')),
         ('false', _('Disabled')),
     )),
-    ('LIVE_SSH_PASSWORD_AUTHENTICATION', _('SSH password login'), (
+    ('LIVE_SSH_PASSWORD_AUTHENTICATION', _('SSH password authentication'), (
         ('keep', _('Keep current')),
         ('true', _('Enabled')),
         ('false', _('Disabled')),
@@ -237,17 +516,17 @@ LIVE_CONFIG_CHOICE_FIELDS = (
         ('relaxed', _('Relaxed')),
         ('hardened', _('Hardened')),
     )),
-    ('LIVE_ISSUE_PASSWORD_HINTS', _('Password hints in issue'), (
+    ('LIVE_ISSUE_PASSWORD_HINTS', _('Show password hints'), (
         ('keep', _('Keep current')),
         ('true', _('Enabled')),
         ('false', _('Disabled')),
     )),
-    ('LIVE_LINK_USER_DIRS', _('Link user directories'), (
+    ('LIVE_LINK_USER_DIRS', _('Link user directories to storage'), (
         ('keep', _('Keep current')),
         ('true', _('Link')),
         ('false', _('Do not link')),
     )),
-    ('LIVE_BIND_USER_DIRS', _('Bind user directories'), (
+    ('LIVE_BIND_USER_DIRS', _('Bind user directories to storage'), (
         ('keep', _('Keep current')),
         ('true', _('Bind mount')),
         ('false', _('Do not bind mount')),
@@ -371,6 +650,79 @@ def _run_background(worker, callback):
         worker, completed, dispatcher=GLib.idle_add).start()
 
 
+def _read_available_timezones():
+    try:
+        from zoneinfo import available_timezones
+        return set(available_timezones())
+    except (ImportError, OSError):
+        zones = set()
+        zone_root = '/usr/share/zoneinfo'
+        for root, _directories, files in os.walk(zone_root):
+            for filename in files:
+                path = os.path.join(root, filename)
+                zones.add(os.path.relpath(path, zone_root))
+        return zones
+
+
+def _read_available_services():
+    services = set()
+    systemctl = shutil.which('systemctl')
+    if systemctl:
+        try:
+            output = subprocess.check_output(
+                [systemctl, 'list-unit-files', '--type=service', '--no-legend',
+                 '--no-pager'], universal_newlines=True, timeout=5)
+            for line in output.splitlines():
+                fields = line.split()
+                if not fields:
+                    continue
+                unit = fields[0]
+                services.add(unit)
+                if unit.endswith('.service'):
+                    services.add(unit[:-8])
+        except (OSError, subprocess.SubprocessError):
+            pass
+    try:
+        for name in os.listdir('/etc/init.d'):
+            path = os.path.join('/etc/init.d', name)
+            if os.path.isfile(path) and not name.startswith('.'):
+                services.add(name)
+    except OSError:
+        pass
+    return services
+
+
+def _read_available_locales():
+    locales = set()
+    try:
+        with open('/usr/share/i18n/SUPPORTED', 'r') as supported:
+            for line in supported:
+                fields = line.split()
+                if fields:
+                    locales.add(fields[0])
+    except OSError:
+        pass
+    return locales
+
+
+def _read_available_keyboard_layouts():
+    layouts = set()
+    in_layouts = False
+    try:
+        with open('/usr/share/X11/xkb/rules/base.lst', 'r') as rules:
+            for line in rules:
+                if line.startswith('!'):
+                    in_layouts = line.split()[1:2] == ['layout']
+                    continue
+                if in_layouts:
+                    fields = line.split()
+                    if fields:
+                        layouts.add(fields[0])
+    except OSError:
+        pass
+    return layouts
+
+
 class ImageBuilderWindow(Gtk.ApplicationWindow):
     def __init__(self, application):
         Gtk.ApplicationWindow.__init__(
@@ -417,10 +769,15 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         self._inventory_search_source = None
         self._capture_store_signature = None
         self._build_output_redactions = ()
+        self._last_command_error = None
         self.inventory_view = CaptureInventoryViewModel()
         self.capture_probe_error = None
         self._syncing = False
         self._applying_security_preset = False
+        self.available_timezones = _read_available_timezones()
+        self.available_services = _read_available_services()
+        self.available_locales = _read_available_locales()
+        self.available_keyboard_layouts = _read_available_keyboard_layouts()
 
         apply_css_if_exists(CSS_PATHS)
         self._build_header()
@@ -647,19 +1004,31 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         grid.set_hexpand(True)
         return grid
 
-    def _compact_row(self, grid, row, title, widget):
+    def _compact_row(self, grid, row, title, widget, help_text=None):
         label = Gtk.Label(label=title, xalign=0)
         label.set_valign(Gtk.Align.CENTER)
         label.set_hexpand(False)
         label.get_style_context().add_class('field-label')
+        label_widget = label
+        if help_text:
+            label.set_tooltip_text(help_text)
+            widget.set_tooltip_text(help_text)
+            label_widget = Gtk.Box(
+                orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
+            label_widget.set_valign(Gtk.Align.CENTER)
+            label_widget.pack_start(label, True, True, 0)
+            help_button = HelpPopoverButton(
+                title, summary=help_text, compact=True, tooltip=help_text)
+            help_button.set_valign(Gtk.Align.CENTER)
+            label_widget.pack_end(help_button, False, False, 0)
         widget.set_hexpand(True)
         label_group = getattr(self, '_settings_label_group', None)
         if label_group is not None:
-            label_group.add_widget(label)
+            label_group.add_widget(label_widget)
         field_group = getattr(self, '_settings_field_group', None)
         if field_group is not None:
             field_group.add_widget(widget)
-        grid.attach(label, 0, row, 1, 1)
+        grid.attach(label_widget, 0, row, 1, 1)
         grid.attach(widget, 1, row, 1, 1)
 
     def _choice_combo(self, choices, callback, *callback_args):
@@ -673,6 +1042,20 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
     def _on_choice_combo_scroll(self, _combo, _event):
         # Prevent page scrolling from silently changing a focused choice.
         return True
+
+    def _attach_live_config_completion(self, entry, key):
+        if key == 'LIVE_TIMEZONE':
+            items = self.available_timezones
+            aliases = None
+        elif key in ('ENABLE_SERVICES', 'DISABLE_SERVICES'):
+            items = self.available_services
+            aliases = lambda value: (
+                value, value[:-8] if value.endswith('.service') else value)
+        else:
+            return
+        TokenCompletionPopover(
+            entry, items=items, delimiters=',', min_chars=1,
+            max_results=12, aliases=aliases)
 
     def _section(self, parent, title, description=None):
         separator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
@@ -791,7 +1174,6 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             self.source_metadata_grid, False, False, 0)
         self.source_metadata = {}
         metadata_fields = (
-            ('backend', _('Initramfs / medium')),
             ('path', _('Source path')),
             ('release', _('Release')),
             ('version', _('Version')),
@@ -1171,16 +1553,6 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             version = (metadata.get('version') or
                        metadata.get('version_id') or
                        metadata.get('build_id') or _('Unknown'))
-            media_labels = {
-                'data': _('data medium'),
-                'medium': _('boot medium'),
-                'iso': _('ISO image'),
-            }
-            media = (media_labels.get(info.media_category, info.media_category)
-                     if info.media_category else _('Unknown'))
-            self.source_metadata['backend'].set_text(
-                '{} / {}'.format(
-                    info.backend or _('Unknown'), media))
             self.source_metadata['path'].set_text(
                 info.source_path or _('Unavailable'))
             self.source_metadata['path'].set_tooltip_text(info.source_path)
@@ -1681,10 +2053,37 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         self._build_customization_controls(body)
 
         capture_card = self._settings_card(
-            body, _('Writable session changes'),
-            _('Image composition remains unprivileged. Reading a root-only '
-              'current configuration can require the fixed helper; session '
-              'modes authorize only trusted savechanges.'))
+            body, _('Changes from the current session'),
+            _('Choose whether changes made after this MiniOS session started '
+              'should be copied into the new image. If you only want to change '
+              'modules, configuration, and image settings, keep the first '
+              'option.'))
+        capture_help = HelpPopoverButton(
+            _('Changes from the current session'),
+            summary=_('A live MiniOS session has a writable layer containing '
+                      'changes made after startup, such as installed software, '
+                      'changed settings, logs, and user files.'),
+            sections=((_('Which option should I choose?'),
+                       _('Choose Do not include session changes when you only '
+                         'want the selected source modules and configuration. '
+                         'Choose Include all session changes to preserve the '
+                         'whole capturable writable layer. Choose Include '
+                         'reusable changes only for the narrow software/system '
+                         'allowlist. Choose Choose session changes manually when '
+                         'you want to inspect and select paths yourself.')),
+                      (_('Administrator access'),
+                       _('The first option does not capture the writable layer. '
+                         'The other options use trusted savechanges and may ask '
+                         'for administrator authorization; the image builder '
+                         'itself is not elevated.')),
+                      (_('Privacy'),
+                       _('Including all session changes can copy passwords, '
+                         'tokens, personal files, logs, and machine identity. '
+                         'The reusable and manual modes reduce what is copied '
+                         'but are not a guarantee that an image is safe to '
+                         'share.'))),
+            compact=True, tooltip=_('Explain session-change options'))
+        capture_card.pack_start(capture_help, False, False, 0)
         self.capture_mode_buttons = {}
         group = None
         for mode, title, detail, badge, badge_style in CAPTURE_MODE_CHOICES:
@@ -1716,7 +2115,7 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             _('Compression applies only to a captured writable-session layer.'))
 
         self.capture_ack_check = Gtk.CheckButton(
-            label=_('I understand that Exact session can preserve passwords, '
+            label=_('I understand that Include all session changes can preserve passwords, '
                     'tokens, identity, personal files, logs, and other '
                     'sensitive writable state. This acknowledgement is stored '
                     'in the project and remains in effect until I revoke it'))
@@ -1793,8 +2192,11 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             entry = Gtk.Entry()
             entry.set_placeholder_text(placeholder)
             entry.connect('changed', self._on_live_config_entry_changed, key)
+            if key == 'LIVE_TIMEZONE':
+                self._attach_live_config_completion(entry, key)
             self.live_config_widgets[key] = entry
-            self._compact_row(system_grid, row, title, entry)
+            self._compact_row(
+                system_grid, row, title, entry, LIVE_CONFIG_HELP[key])
             row += 1
         target = dict((key, choices)
                       for key, unused_title, choices
@@ -1803,15 +2205,18 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             target, self._on_live_config_choice_changed, 'DEFAULT_TARGET')
         self.live_config_widgets['DEFAULT_TARGET'] = target_combo
         self._compact_row(
-            system_grid, row, _('Default target'), target_combo)
+            system_grid, row, _('Default boot target'), target_combo,
+            LIVE_CONFIG_HELP['DEFAULT_TARGET'])
         row += 1
         for key in ('ENABLE_SERVICES', 'DISABLE_SERVICES'):
             title, placeholder = text_fields[key]
             entry = Gtk.Entry()
             entry.set_placeholder_text(placeholder)
             entry.connect('changed', self._on_live_config_entry_changed, key)
+            self._attach_live_config_completion(entry, key)
             self.live_config_widgets[key] = entry
-            self._compact_row(system_grid, row, title, entry)
+            self._compact_row(
+                system_grid, row, title, entry, LIVE_CONFIG_HELP[key])
             row += 1
 
         security_box = self._settings_card(body, _('Security & access'))
@@ -1825,7 +2230,8 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         self.security_preset_combo.connect(
             'changed', self._on_security_preset_changed)
         self._compact_row(
-            preset_grid, 0, _('Security preset'), self.security_preset_combo)
+            preset_grid, 0, _('Security preset'), self.security_preset_combo,
+            LIVE_CONFIG_HELP['SECURITY_PRESET'])
         security_box.pack_start(preset_grid, False, False, 0)
         preset_note = Gtk.Label(
             label=_('Choose a preset to fill the settings below. You can '
@@ -1851,7 +2257,8 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             combo = self._choice_combo(
                 choices, self._on_live_config_choice_changed, key)
             self.live_config_widgets[key] = combo
-            self._compact_row(security_grid, row, title, combo)
+            self._compact_row(
+                security_grid, row, title, combo, LIVE_CONFIG_HELP[key])
         security_box.pack_start(security_grid, False, False, 0)
 
         user_data = self._settings_card(body, _('User data'))
@@ -1863,7 +2270,8 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             combo = self._choice_combo(
                 choices, self._on_live_config_choice_changed, key)
             self.live_config_widgets[key] = combo
-            self._compact_row(user_grid, row, title, combo)
+            self._compact_row(
+                user_grid, row, title, combo, LIVE_CONFIG_HELP[key])
         user_path = Gtk.Entry()
         user_path.set_placeholder_text(
             _('Root-relative path, for example home/live'))
@@ -1872,7 +2280,8 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             'LIVE_USER_DIRS_PATH')
         self.live_config_widgets['LIVE_USER_DIRS_PATH'] = user_path
         self._compact_row(
-            user_grid, 2, _('User directories path'), user_path)
+            user_grid, 2, _('User directories path on storage'), user_path,
+            LIVE_CONFIG_HELP['LIVE_USER_DIRS_PATH'])
 
         self.customization_status = Gtk.Label(xalign=0)
         self.customization_status.set_line_wrap(True)
@@ -1915,6 +2324,8 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         self._compact_row(
             boot_grid, 1, _('Default session'), self.default_boot_combo)
 
+        self._build_boot_menu_constructor(boot_card)
+
         background_actions = Gtk.Box(
             orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         self.background_choose_button = Gtk.Button(label=_('Choose PNG'))
@@ -1946,12 +2357,24 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         kernel_warning.set_line_wrap(True)
         kernel_warning.get_style_context().add_class('warning-panel')
         kernel_box.pack_start(kernel_warning, False, False, 0)
+        kernel_entry_row = Gtk.Box(
+            orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         self.kernel_args_entry = Gtk.Entry()
         self.kernel_args_entry.set_placeholder_text(
             _('Empty preserves source kernel arguments'))
         self.kernel_args_entry.connect(
             'changed', self._on_kernel_args_changed)
-        kernel_box.pack_start(self.kernel_args_entry, False, False, 0)
+        TokenCompletionPopover(
+            self.kernel_args_entry, items=BOOT_PARAMETER_SUGGESTIONS,
+            delimiters=' ', min_chars=1, max_results=12)
+        kernel_entry_row.pack_start(
+            self.kernel_args_entry, True, True, 0)
+        kernel_help = HelpPopoverButton(
+            _('Kernel parameters'),
+            document=_help_document('boot-menu/parameters.json'),
+            asset_resolver=_help_asset, compact=True, tooltip=_('Explain boot and kernel parameters'))
+        kernel_entry_row.pack_end(kernel_help, False, False, 0)
+        kernel_box.pack_start(kernel_entry_row, False, False, 0)
         kernel_expander.add(kernel_box)
         boot_card.pack_start(kernel_expander, False, False, 0)
 
@@ -1991,11 +2414,391 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         self.overlay_status.get_style_context().add_class('field-description')
         overlay_card.pack_start(self.overlay_status, False, False, 0)
 
+    def _build_boot_menu_constructor(self, boot_card):
+        expander = Gtk.Expander(label=_('Boot menu entries'))
+        expander.set_expanded(True)
+        expander.get_style_context().add_class('advanced-expander')
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        _set_margins(box, top=8, bottom=4, start=2, end=2)
+
+        intro = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        note = Gtk.Label(
+            label=_('Choose what people see at startup. Each entry can have '
+                    'its own persistence, memory, module, graphics, language, '
+                    'and diagnostic settings.'),
+            xalign=0)
+        note.set_line_wrap(True)
+        note.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR)
+        note.get_style_context().add_class('field-description')
+        intro.pack_start(note, True, True, 0)
+        help_button = HelpPopoverButton(
+            _('Boot menu constructor'),
+            document=_help_document('boot-menu/overview.json'),
+            asset_resolver=_help_asset, compact=True, tooltip=_('Boot menu constructor help'))
+        intro.pack_end(help_button, False, False, 0)
+        box.pack_start(intro, False, False, 0)
+
+        self.boot_menu_status = Gtk.Label(xalign=0)
+        self.boot_menu_status.set_line_wrap(True)
+        self.boot_menu_status.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR)
+        self.boot_menu_status.get_style_context().add_class('availability-note')
+        box.pack_start(self.boot_menu_status, False, False, 0)
+
+        self.boot_menu_rows_box = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        self.boot_menu_rows = {}
+        self.boot_menu_order = []
+        self.boot_menu_field_label_group = Gtk.SizeGroup(
+            Gtk.SizeGroupMode.HORIZONTAL)
+        box.pack_start(self.boot_menu_rows_box, False, False, 0)
+
+        actions = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        add_button = Gtk.Button(label=_('Add boot entry'))
+        add_button.set_image(Gtk.Image.new_from_icon_name(
+            'list-add-symbolic', Gtk.IconSize.BUTTON))
+        add_button.get_style_context().add_class('minios-text-button')
+        add_button.connect('clicked', self._on_boot_menu_add)
+        actions.pack_start(add_button, False, False, 0)
+        reset_button = Gtk.Button(label=_('Restore source menu'))
+        reset_button.get_style_context().add_class('minios-text-button')
+        reset_button.connect('clicked', self._on_boot_menu_reset)
+        actions.pack_start(reset_button, False, False, 0)
+        parameter_help = HelpPopoverButton(
+            _('Kernel parameter reference'),
+            document=_help_document('boot-menu/parameters.json'),
+            asset_resolver=_help_asset, label=_('Parameter help'),
+            tooltip=_('Explain common boot and kernel parameters'))
+        actions.pack_end(parameter_help, False, False, 0)
+        box.pack_start(actions, False, False, 0)
+
+        expander.add(box)
+        boot_card.pack_start(expander, False, False, 0)
+
+    def _source_boot_menu_settings(self):
+        info = self.state.source_info
+        if info is not None and info.supported:
+            try:
+                return backend.inspect_source_boot_menu(
+                    info, self.state.menu_locale)
+            except (OSError, ValueError, backend.ImageProjectError):
+                pass
+        return None
+
+    def _source_boot_menu_editor_entries(self):
+        source_menu = self._source_boot_menu_settings()
+        if source_menu is not None:
+            return [dict(item) for item in source_menu['entries']]
+        default_mode = (self.state.default_boot
+                        if self.state.default_boot in backend.DEFAULT_BOOT_MODES
+                        else backend.DEFAULT_BOOT_MODES[0])
+        return [
+            {
+                'id': mode, 'base_mode': mode, 'enabled': True,
+                'default': mode == default_mode, 'title': None,
+                'kernel_args': '',
+            }
+            for mode in backend.DEFAULT_BOOT_MODES
+        ]
+
+    def _next_boot_menu_entry_id(self, entries=None):
+        entries = entries or self._boot_menu_editor_entries()
+        used = set(item['id'] for item in entries)
+        for number in range(1, backend.BOOT_MENU_MAX_ENTRIES + 1):
+            candidate = 'custom-{}'.format(number)
+            if candidate not in used:
+                return candidate
+        raise ValueError(_('The boot menu already contains the maximum number of entries.'))
+
+    def _create_boot_menu_row(self, entry, default_group):
+        entry_id = entry['id']
+        frame = Gtk.Frame()
+        inner = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        _set_margins(inner, top=7, bottom=7, start=8, end=8)
+        frame.add(inner)
+
+        top = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        enabled = Gtk.CheckButton(label=_('Show'))
+        enabled.set_tooltip_text(_('Show this entry in the boot menu'))
+        enabled.connect('toggled', self._on_boot_menu_enabled_toggled, entry_id)
+        top.pack_start(enabled, False, False, 0)
+
+        default = Gtk.RadioButton.new_from_widget(default_group)
+        default.set_label(_('Default'))
+        default.set_tooltip_text(_('Use this as the default boot entry'))
+        default.connect('toggled', self._on_boot_menu_default_toggled, entry_id)
+        top.pack_start(default, False, False, 0)
+
+        template_label = Gtk.Label(label=_('Template'), xalign=0)
+        template_label.get_style_context().add_class('field-label')
+        top.pack_start(template_label, False, False, 0)
+        template = Gtk.ComboBoxText()
+        for mode in backend.DEFAULT_BOOT_MODES:
+            template.append(mode, DEFAULT_BOOT_TITLES[mode])
+        template.connect('scroll-event', self._on_choice_combo_scroll)
+        template.connect('changed', self._on_boot_menu_base_changed, entry_id)
+        top.pack_start(template, False, False, 0)
+
+        duplicate = Gtk.Button()
+        duplicate.set_relief(Gtk.ReliefStyle.NONE)
+        duplicate.add(Gtk.Image.new_from_icon_name(
+            'edit-copy-symbolic', Gtk.IconSize.MENU))
+        duplicate.set_tooltip_text(_('Duplicate entry'))
+        duplicate.connect('clicked', self._on_boot_menu_duplicate, entry_id)
+        top.pack_start(duplicate, False, False, 0)
+
+        up = Gtk.Button()
+        up.set_relief(Gtk.ReliefStyle.NONE)
+        up.add(Gtk.Image.new_from_icon_name('go-up-symbolic', Gtk.IconSize.MENU))
+        up.set_tooltip_text(_('Move entry up'))
+        up.connect('clicked', self._on_boot_menu_move, entry_id, -1)
+        top.pack_start(up, False, False, 0)
+        down = Gtk.Button()
+        down.set_relief(Gtk.ReliefStyle.NONE)
+        down.add(Gtk.Image.new_from_icon_name('go-down-symbolic', Gtk.IconSize.MENU))
+        down.set_tooltip_text(_('Move entry down'))
+        down.connect('clicked', self._on_boot_menu_move, entry_id, 1)
+        top.pack_start(down, False, False, 0)
+
+        remove = Gtk.Button()
+        remove.set_relief(Gtk.ReliefStyle.NONE)
+        remove.add(Gtk.Image.new_from_icon_name(
+            'edit-delete-symbolic', Gtk.IconSize.MENU))
+        remove.set_tooltip_text(_('Remove custom entry'))
+        remove.connect('clicked', self._on_boot_menu_remove, entry_id)
+        remove.set_visible(entry_id not in backend.DEFAULT_BOOT_MODES)
+        top.pack_start(remove, False, False, 0)
+        inner.pack_start(top, False, False, 0)
+
+        template_detail = Gtk.Label(xalign=0)
+        template_detail.set_line_wrap(True)
+        template_detail.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR)
+        template_detail.get_style_context().add_class('field-description')
+        inner.pack_start(template_detail, False, False, 0)
+
+        title_row = Gtk.Box(
+            orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        title_label = Gtk.Label(label=_('Name'), xalign=0)
+        title_label.get_style_context().add_class('field-label')
+        self.boot_menu_field_label_group.add_widget(title_label)
+        title_row.pack_start(title_label, False, False, 0)
+        title = Gtk.Entry()
+        title.set_max_length(128)
+        title.set_placeholder_text(_('Keep template title'))
+        title.set_tooltip_text(_('Visible name of this boot menu entry'))
+        title.connect('changed', self._on_boot_menu_title_changed, entry_id)
+        title_row.pack_start(title, True, True, 0)
+        inner.pack_start(title_row, False, False, 0)
+
+        options = Gtk.Expander(label=_('Startup options'))
+        options.get_style_context().add_class('advanced-expander')
+        options_box = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        _set_margins(options_box, top=8, bottom=4, start=2, end=2)
+        option_widgets = {}
+
+        def add_heading(text, document):
+            heading = Gtk.Box(
+                orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+            heading.set_hexpand(True)
+            heading.get_style_context().add_class('boot-option-heading')
+            _set_margins(heading, top=10, bottom=3)
+            label = Gtk.Label(label=text, xalign=0)
+            label.get_style_context().add_class('section-heading')
+            heading.pack_start(label, True, True, 0)
+            help_button = HelpPopoverButton(
+                text, document=_help_document(document), asset_resolver=_help_asset,
+                compact=True,
+                tooltip=_('Help for {section}').format(section=text))
+            heading.pack_end(help_button, False, False, 0)
+            options_box.pack_start(heading, False, False, 1)
+
+        def add_grid():
+            grid = Gtk.Grid(column_spacing=10, row_spacing=6)
+            grid.set_hexpand(True)
+            options_box.pack_start(grid, False, False, 0)
+            return grid
+
+        def add_field(grid, row, column, text, widget):
+            display_row = row * 2 + column
+            label = Gtk.Label(label=text, xalign=0)
+            label.get_style_context().add_class('field-label')
+            grid.attach(label, 0, display_row, 1, 1)
+            widget.set_hexpand(True)
+            grid.attach(widget, 1, display_row, 1, 1)
+
+        def new_combo(key, choices):
+            widget = Gtk.ComboBoxText()
+            for value, text in choices:
+                widget.append(value, text)
+            widget.connect('scroll-event', self._on_choice_combo_scroll)
+            widget.connect(
+                'changed', self._on_boot_menu_options_changed, entry_id)
+            option_widgets[key] = widget
+            return widget
+
+        def new_entry(key, placeholder, completion_items=None, aliases=None):
+            widget = Gtk.Entry()
+            widget.set_placeholder_text(placeholder)
+            widget.connect(
+                'changed', self._on_boot_menu_options_changed, entry_id)
+            option_widgets[key] = widget
+            if completion_items:
+                TokenCompletionPopover(
+                    widget, items=completion_items, delimiters=',',
+                    min_chars=1, max_results=12, aliases=aliases)
+            return widget
+
+        module_completions = set()
+        if self.state.source_info is not None:
+            module_completions.update(
+                module.basename for module in self.state.source_info.modules)
+        module_completions.update(
+            os.path.basename(path) for path in self.state.additional_module_paths)
+        module_aliases = lambda value: (
+            value, value[:-3] if value.endswith('.sb') else value)
+
+        add_heading(
+            _('Session and storage'),
+            'boot-menu/session-storage.json')
+        session_grid = add_grid()
+        add_field(session_grid, 0, 0, _('Changes storage'), new_combo(
+            'persistence_mode', (
+                ('keep', _('Automatic')),
+                ('native', _('Directory on a Linux filesystem')),
+                ('dynfilefs', _('Expandable container')),
+                ('raw', _('Fixed-size image')),
+                ('luks', _('Encrypted container')),
+                ('squashfs', _('SquashFS session')))))
+        add_field(session_grid, 0, 1, _('Container size'), new_entry(
+            'persistence_size', _('Automatic, or for example 8GB')))
+        add_field(session_grid, 1, 0, _('Free space to keep'), new_entry(
+            'persistence_reserve', _('Default: 256 MiB')))
+        add_field(session_grid, 1, 1, _('Copy to RAM'), new_combo(
+            'ram_copy', (
+                ('keep', _('Template default')),
+                ('full', _('Entire system')),
+                ('trim', _('Loaded modules only')))))
+
+        add_heading(
+            _('System and modules'),
+            'boot-menu/system-modules.json')
+        system_grid = add_grid()
+        add_field(system_grid, 0, 0, _('Load modules'), new_entry(
+            'load_modules', _('All modules'), module_completions,
+            module_aliases))
+        add_field(system_grid, 0, 1, _('Skip modules'), new_entry(
+            'skip_modules', _('None'), module_completions, module_aliases))
+        add_field(system_grid, 1, 0, _('Startup environment'), new_combo(
+            'startup', (
+                ('keep', _('Image default')),
+                ('graphical.target', _('Graphical desktop')),
+                ('text', _('Text console')),
+                ('rescue.target', _('Rescue mode')))))
+        add_field(system_grid, 1, 1, _('Graphics'), new_combo(
+            'graphics', (
+                ('keep', _('Normal graphics')),
+                ('nomodeset', _('Compatibility mode (nomodeset)')))))
+        automount = Gtk.CheckButton(label=_('Mount other disks automatically'))
+        automount.connect(
+            'toggled', self._on_boot_menu_options_changed, entry_id)
+        option_widgets['automount'] = automount
+        system_grid.attach(automount, 0, 4, 2, 1)
+
+        add_heading(
+            _('Memory'),
+            'boot-menu/memory.json')
+        memory_grid = add_grid()
+        add_field(memory_grid, 0, 0, _('zRAM'), new_combo(
+            'zram', (
+                ('keep', _('Automatic')),
+                ('off', _('Disabled')))))
+        add_field(memory_grid, 0, 1, _('Compression'), new_combo(
+            'zram_compression', (
+                ('keep', _('Automatic')),
+                ('lzo', 'LZO'), ('lzo-rle', 'LZO-RLE'), ('lz4', 'LZ4'),
+                ('lz4hc', 'LZ4HC'), ('zstd', 'Zstandard'))))
+        add_field(memory_grid, 1, 0, _('zRAM size'), new_entry(
+            'zram_size', _('Automatic, in MiB')))
+
+        add_heading(
+            _('Language for this entry'),
+            'boot-menu/language.json')
+        locale_grid = add_grid()
+        add_field(locale_grid, 0, 0, _('Locale'), new_entry(
+            'locale', _('Image default, for example ru_RU.UTF-8'),
+            self.available_locales))
+        add_field(locale_grid, 0, 1, _('Timezone'), new_entry(
+            'timezone', _('Image default, for example Europe/Moscow'),
+            self.available_timezones))
+        add_field(locale_grid, 1, 0, _('Keyboard layout'), new_entry(
+            'keyboard', _('Image default, for example us or ru'),
+            self.available_keyboard_layouts))
+
+        add_heading(
+            _('Diagnostics and advanced options'),
+            'boot-menu/diagnostics.json')
+        diagnostic_row = Gtk.Box(
+            orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        quiet = Gtk.CheckButton(label=_('Hide routine boot messages'))
+        quiet.connect(
+            'toggled', self._on_boot_menu_options_changed, entry_id)
+        option_widgets['quiet'] = quiet
+        diagnostic_row.pack_start(quiet, False, False, 0)
+        debug = Gtk.CheckButton(label=_('Enable diagnostic logging'))
+        debug.connect(
+            'toggled', self._on_boot_menu_options_changed, entry_id)
+        option_widgets['debug'] = debug
+        diagnostic_row.pack_start(debug, False, False, 0)
+        options_box.pack_start(diagnostic_row, False, False, 2)
+
+        expert_row = Gtk.Box(
+            orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        expert_label = Gtk.Label(label=_('Additional parameters'), xalign=0)
+        expert_label.get_style_context().add_class('field-label')
+        expert_row.pack_start(expert_label, False, False, 0)
+        expert = Gtk.Entry()
+        expert.set_placeholder_text(
+            _('Only options not available above'))
+        expert.set_tooltip_text(
+            _('Unrecognized options from existing projects are kept here'))
+        expert.connect(
+            'changed', self._on_boot_menu_options_changed, entry_id)
+        TokenCompletionPopover(
+            expert, items=BOOT_PARAMETER_SUGGESTIONS,
+            delimiters=' ', min_chars=1, max_results=12)
+        option_widgets['extra'] = expert
+        expert_row.pack_start(expert, True, True, 0)
+        parameter_help = HelpPopoverButton(
+            _('Additional parameters'),
+            document=_help_document('boot-menu/parameters.json'),
+            asset_resolver=_help_asset, compact=True, tooltip=_('Explain boot parameters'))
+        expert_row.pack_end(parameter_help, False, False, 0)
+        options_box.pack_start(expert_row, False, False, 0)
+
+        option_summary = Gtk.Label(xalign=0)
+        option_summary.set_line_wrap(True)
+        option_summary.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR)
+        option_summary.get_style_context().add_class('field-description')
+        inner.pack_start(option_summary, False, False, 0)
+        options.add(options_box)
+        inner.pack_start(options, False, False, 0)
+
+        return {
+            'frame': frame, 'enabled': enabled, 'default': default,
+            'template': template, 'template_detail': template_detail,
+            'title': title, 'option_widgets': option_widgets,
+            'option_summary': option_summary, 'options': options,
+            'duplicate': duplicate, 'up': up, 'down': down, 'remove': remove,
+            'kernel_args_schema': entry.get('kernel_args_schema'),
+        }
+
+
     def _capture_mode_button(self, group, mode, title, description,
                              badge, badge_style):
         button = Gtk.RadioButton.new_from_widget(group)
         button.set_hexpand(True)
         button.get_style_context().add_class('capture-mode-row')
+        button.get_style_context().add_class('choice-card')
         button.get_style_context().add_class('minios-choice')
         content = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
@@ -2234,15 +3037,30 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             if isinstance(widget, Gtk.Entry):
                 widget.set_text(value or '')
             else:
+                if key == 'DEFAULT_TARGET':
+                    value = {
+                        'graphical': 'graphical.target',
+                        'multi-user': 'multi-user.target',
+                        'rescue': 'rescue.target',
+                    }.get(value, value)
                 widget.set_active_id(value or 'keep')
         self._sync_security_preset()
+        self._sync_boot_menu_editor()
         preserve_timeout = self.state.boot_timeout is None
+        source_menu = self._source_boot_menu_settings()
+        source_timeout = (source_menu.get('timeout') if source_menu and
+                          source_menu.get('timeout_known') else None)
+        self.boot_timeout_preserve.set_label(
+            _('Preserve source ({seconds} seconds)').format(
+                seconds=source_timeout)
+            if preserve_timeout and source_timeout is not None else
+            _('Preserve source'))
         self.boot_timeout_preserve.set_active(preserve_timeout)
         self.boot_timeout_spin.set_sensitive(not preserve_timeout)
         if self.state.boot_timeout is not None:
             self.boot_timeout_spin.set_value(self.state.boot_timeout)
-        self.default_boot_combo.set_active_id(
-            self.state.default_boot or 'preserve')
+        elif source_timeout is not None:
+            self.boot_timeout_spin.set_value(source_timeout)
         self.kernel_args_entry.set_text(self.state.kernel_args or '')
         self.customization_status.set_text('')
         self.customization_status.hide()
@@ -2339,7 +3157,7 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             'authorization-unavailable': _(
                 'Session capture needs root or trusted /usr/bin/pkexec. '
                 'Non-root desktops also need a running polkit authentication '
-                'agent. Current composition remains fully available.'),
+                'agent. Building without session changes remains fully available.'),
         }
         if reasons:
             self.capture_capability_warning.set_text(
@@ -2348,7 +3166,7 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             self.capture_capability_warning.show()
         elif self.capture_probe_error:
             self.capture_capability_warning.set_text(
-                _('Capture capability probing failed. Current composition '
+                _('Capture capability probing failed. Building without session changes '
                   'remains available; refresh Source to retry.'))
             self.capture_capability_warning.show()
         else:
@@ -2362,16 +3180,16 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
                     'badge-success', 'badge-warning', 'badge-error'):
                 context.remove_class(class_name)
             if name == backend.NO_SESSION_CAPTURE:
-                badge.set_text(_('Rootless').upper())
+                badge.set_text(_('Recommended').upper())
                 context.add_class('badge-success')
             elif not available:
                 badge.set_text(_('Unavailable').upper())
                 context.add_class('badge-error')
             elif privilege_mode == 'direct':
-                badge.set_text(_('Direct root').upper())
+                badge.set_text(_('Ready').upper())
                 context.add_class('badge-success')
             else:
-                badge.set_text(_('PKEXEC'))
+                badge.set_text(_('Admin access').upper())
                 context.add_class('badge-warning')
 
         session_mode = mode in backend.SESSION_CAPTURE_MODES
@@ -2398,11 +3216,11 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         if not message:
             if not session_mode:
                 message = _(
-                    'Current composition does not inspect or capture writable '
+                    'This option does not inspect or capture writable '
                     'session changes.')
             elif self.state.session_inventory is None:
                 message = _(
-                    'No inventory is in memory. Exact and Privacy-cleaned can '
+                    'No inventory is in memory. Include all session changes and Include reusable changes only can '
                     'still be reviewed with an unknown estimate; Selected '
                     'changes requires analysis before creating a selection.')
             else:
@@ -2450,7 +3268,7 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             (_('Categories'), categories or _('None')),
             (_('Sensitive entries'), summary['sensitive_count']),
             (_('Exact defaults'), summary['exact_default_count']),
-            (_('Privacy-cleaned defaults'), summary['clean_default_count']),
+            (_('Reusable-change defaults'), summary['clean_default_count']),
         )), False, False, 0)
         privacy = Gtk.Label(
             label=_('Filenames are sensitive metadata. This inventory is not '
@@ -2609,9 +3427,17 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             '#c64600' if sensitive else None)
 
     def _on_menu_changed(self, combo):
-        if not self._syncing and combo.get_active_id():
-            if self.state.set_menu_locale(combo.get_active_id()):
-                self._intent_changed()
+        if self._syncing or not combo.get_active_id():
+            return
+        changed = self.state.set_menu_locale(combo.get_active_id())
+        entries = (
+            [dict(item) for item in self.state.boot_menu_entries]
+            if self.state.boot_menu_entries is not None else [])
+        self._set_customization_error(
+            'boot-menu', self._boot_menu_locale_error(entries) if entries else None)
+        self._sync_boot_menu_editor()
+        if changed:
+            self._intent_changed()
 
     def _on_volume_changed(self, entry):
         if not self._syncing:
@@ -2725,6 +3551,419 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         finally:
             self._applying_security_preset = False
 
+    def _boot_menu_editor_entries(self):
+        if not getattr(self, 'boot_menu_order', None):
+            if self.state.boot_menu_entries is not None:
+                return [dict(item) for item in self.state.boot_menu_entries]
+            return self._source_boot_menu_editor_entries()
+        entries = []
+        for entry_id in self.boot_menu_order:
+            row = self.boot_menu_rows[entry_id]
+            title = row['title'].get_text().strip()
+            entries.append({
+                'id': entry_id,
+                'base_mode': row['template'].get_active_id() or 'fresh',
+                'enabled': row['enabled'].get_active(),
+                'default': row['default'].get_active(),
+                'title': title or None,
+                'kernel_args': compile_boot_parameters(
+                    self._boot_menu_row_settings(row)),
+            })
+            if row.get('kernel_args_schema') is not None:
+                entries[-1]['kernel_args_schema'] = row['kernel_args_schema']
+        return entries
+
+    def _boot_menu_row_settings(self, row):
+        settings = {}
+        for key, widget in row['option_widgets'].items():
+            if isinstance(widget, Gtk.Entry):
+                settings[key] = widget.get_text().strip()
+            elif isinstance(widget, Gtk.CheckButton):
+                settings[key] = widget.get_active()
+            else:
+                settings[key] = widget.get_active_id() or 'keep'
+        return settings
+
+    def _boot_menu_option_summary(self, row):
+        values = self._boot_menu_row_settings(row)
+        details = []
+        persistence = {
+            'native': _('directory persistence'),
+            'dynfilefs': _('expandable persistence'),
+            'raw': _('fixed-size persistence'),
+            'luks': _('encrypted persistence'),
+            'squashfs': _('SquashFS session'),
+        }.get(values['persistence_mode'])
+        if persistence:
+            details.append(persistence)
+        if values['persistence_size']:
+            details.append(_('persistence size {size}').format(
+                size=values['persistence_size']))
+        if values['ram_copy'] == 'full':
+            details.append(_('entire system in RAM'))
+        elif values['ram_copy'] == 'trim':
+            details.append(_('loaded modules in RAM'))
+        if values['load_modules'] or values['skip_modules']:
+            details.append(_('module filter'))
+        if values['startup'] == 'text':
+            details.append(_('text console'))
+        elif values['startup'] == 'graphical.target':
+            details.append(_('graphical desktop'))
+        elif values['startup'] == 'rescue.target':
+            details.append(_('rescue mode'))
+        if values['graphics'] == 'nomodeset':
+            details.append(_('compatible graphics'))
+        if values['automount']:
+            details.append(_('automatic disk mounting'))
+        if values['zram'] == 'off':
+            details.append(_('zRAM disabled'))
+        elif (values['zram_compression'] != 'keep' or
+              values['zram_size']):
+            details.append(_('custom zRAM'))
+        if values['locale'] or values['timezone'] or values['keyboard']:
+            details.append(_('custom language settings'))
+        if values['quiet']:
+            details.append(_('quiet boot'))
+        if values['debug']:
+            details.append(_('diagnostic logging'))
+        if values['extra']:
+            details.append(_('additional expert options'))
+        return (', '.join(details) if details else
+                _('Uses the template defaults.'))
+
+    def _refresh_boot_menu_row(self, row):
+        mode = row['template'].get_active_id() or 'fresh'
+        row['template_detail'].set_text(BOOT_MODE_DESCRIPTIONS[mode])
+        self._refresh_boot_menu_option_dependencies(row)
+        row['option_summary'].set_text(self._boot_menu_option_summary(row))
+
+    def _refresh_boot_menu_option_dependencies(self, row):
+        widgets = row['option_widgets']
+        persistence_mode = widgets['persistence_mode'].get_active_id() or 'keep'
+        widgets['persistence_size'].set_sensitive(
+            persistence_mode not in ('native', 'squashfs'))
+        zram_enabled = (widgets['zram'].get_active_id() or 'keep') != 'off'
+        widgets['zram_compression'].set_sensitive(zram_enabled)
+        widgets['zram_size'].set_sensitive(zram_enabled)
+
+    def _boot_menu_locale_error(self, entries):
+        titles = [item.get('title') for item in entries if item.get('title')]
+        if self.state.menu_locale == 'multilang':
+            if any(any(ord(character) >= 128 for character in title) for title in titles):
+                return _(
+                    'Multilingual custom entry names must use ASCII because '
+                    'native SYSLINUX language menus use different encodings.')
+            return None
+        info = self.state.source_info
+        bootloader = (info.metadata.get('bootloader')
+                      if info is not None else None)
+        if bootloader != 'syslinux-native':
+            return None
+        codec = 'cp866' if self.state.menu_locale == 'ru_RU' else 'iso-8859-1'
+        for title in titles:
+            try:
+                title.encode(codec, 'strict')
+            except UnicodeError:
+                return _(
+                    'A custom entry name cannot be represented by the '
+                    'selected native SYSLINUX menu encoding.')
+        return None
+
+    def _sync_default_boot_choices(self):
+        custom = self.state.boot_menu_entries is not None
+        self.default_boot_combo.remove_all()
+        if custom:
+            default_entry = next(
+                (item for item in self.state.boot_menu_entries
+                 if item['enabled'] and item['default']), None)
+            if default_entry is not None:
+                title = (default_entry.get('title') or
+                         DEFAULT_BOOT_TITLES[default_entry['base_mode']])
+                self.default_boot_combo.append(
+                    'constructor',
+                    _('Set in menu constructor: {title}').format(title=title))
+                self.default_boot_combo.set_active_id('constructor')
+            self.default_boot_combo.set_sensitive(False)
+            return
+        self.default_boot_combo.set_sensitive(True)
+        source_menu = self._source_boot_menu_settings()
+        source_default = None
+        if source_menu and source_menu.get('default_known'):
+            source_default = next(
+                (item for item in source_menu['entries'] if item['default']),
+                None)
+        preserve_title = _('Preserve source')
+        if source_default is not None:
+            title = (source_default.get('title') or
+                     DEFAULT_BOOT_TITLES[source_default['base_mode']])
+            preserve_title = _('Preserve source ({title})').format(title=title)
+        self.default_boot_combo.append('preserve', preserve_title)
+        for mode in backend.DEFAULT_BOOT_MODES:
+            self.default_boot_combo.append(mode, DEFAULT_BOOT_TITLES[mode])
+        current = self.state.default_boot
+        self.default_boot_combo.set_active_id(
+            current if current in backend.DEFAULT_BOOT_MODES else 'preserve')
+
+    def _sync_boot_menu_editor(self):
+        if not hasattr(self, 'boot_menu_rows_box'):
+            return
+        previous_syncing = self._syncing
+        self._syncing = True
+        try:
+            entries = (
+                [dict(item) for item in self.state.boot_menu_entries]
+                if self.state.boot_menu_entries is not None
+                else self._source_boot_menu_editor_entries())
+            _clear(self.boot_menu_rows_box)
+            self.boot_menu_rows = {}
+            self.boot_menu_field_label_group = Gtk.SizeGroup(
+                Gtk.SizeGroupMode.HORIZONTAL)
+            self.boot_menu_order = [item['id'] for item in entries]
+            default_group = None
+            for position, item in enumerate(entries):
+                row = self._create_boot_menu_row(item, default_group)
+                if default_group is None:
+                    default_group = row['default']
+                self.boot_menu_rows[item['id']] = row
+                row['enabled'].set_active(bool(item['enabled']))
+                row['default'].set_active(bool(item['default']))
+                row['template'].set_active_id(item['base_mode'])
+                row['title'].set_text(item.get('title') or '')
+                settings = parse_boot_parameters(item.get('kernel_args') or '')
+                for key, widget in row['option_widgets'].items():
+                    value = settings[key]
+                    if isinstance(widget, Gtk.Entry):
+                        widget.set_text(value)
+                    elif isinstance(widget, Gtk.CheckButton):
+                        widget.set_active(bool(value))
+                    else:
+                        widget.set_active_id(value)
+                self._refresh_boot_menu_row(row)
+                row['up'].set_sensitive(position > 0)
+                row['down'].set_sensitive(position + 1 < len(entries))
+                row['remove'].set_no_show_all(
+                    item['id'] in backend.DEFAULT_BOOT_MODES)
+                self.boot_menu_rows_box.pack_start(
+                    row['frame'], False, False, 0)
+            self.boot_menu_rows_box.show_all()
+            for entry_id in backend.DEFAULT_BOOT_MODES:
+                row = self.boot_menu_rows.get(entry_id)
+                if row is not None:
+                    row['remove'].hide()
+            if self.state.boot_menu_entries is None:
+                self.boot_menu_status.set_text(_(
+                    'The source menu is currently preserved. Changing an '
+                    'entry, its order, or its parameters creates a custom menu.'))
+            else:
+                enabled = [item for item in entries if item['enabled']]
+                default_entry = next(
+                    (item for item in enabled if item['default']), None)
+                default_title = (
+                    default_entry.get('title') or
+                    DEFAULT_BOOT_TITLES[default_entry['base_mode']]
+                    if default_entry else _('None'))
+                self.boot_menu_status.set_text(_(
+                    '{total} entries, {shown} shown. Default: {default}.').format(
+                        total=len(entries), shown=len(enabled),
+                        default=default_title))
+            self._sync_default_boot_choices()
+        finally:
+            self._syncing = previous_syncing
+
+    def _apply_boot_menu_editor(self, resync=False):
+        if self._syncing:
+            return False
+        entries = self._boot_menu_editor_entries()
+        try:
+            changed = self.state.set_boot_menu_entries(entries)
+        except (TypeError, ValueError) as error:
+            self._set_customization_error('boot-menu', error)
+            self._sync_boot_menu_editor()
+            return False
+        locale_error = self._boot_menu_locale_error(entries)
+        self._set_customization_error('boot-menu', locale_error)
+        if resync:
+            self._sync_boot_menu_editor()
+        else:
+            previous_syncing = self._syncing
+            self._syncing = True
+            try:
+                self._sync_default_boot_choices()
+            finally:
+                self._syncing = previous_syncing
+        if changed:
+            self._intent_changed()
+        return changed
+
+    def _on_boot_menu_enabled_toggled(self, check, entry_id):
+        if self._syncing:
+            return
+        row = self.boot_menu_rows.get(entry_id)
+        if row is None:
+            return
+        if not check.get_active() and row['default'].get_active():
+            replacement = next(
+                (self.boot_menu_rows[other]['default']
+                 for other in self.boot_menu_order
+                 if other != entry_id and
+                 self.boot_menu_rows[other]['enabled'].get_active()), None)
+            if replacement is None:
+                self._syncing = True
+                check.set_active(True)
+                self._syncing = False
+                self._set_customization_error(
+                    'boot-menu', _('At least one boot menu entry must remain enabled.'))
+                return
+            replacement.set_active(True)
+        self._apply_boot_menu_editor()
+
+    def _on_boot_menu_default_toggled(self, radio, entry_id):
+        if self._syncing or not radio.get_active():
+            return
+        row = self.boot_menu_rows.get(entry_id)
+        if row is None:
+            return
+        if not row['enabled'].get_active():
+            self._syncing = True
+            row['enabled'].set_active(True)
+            self._syncing = False
+        self._apply_boot_menu_editor()
+
+    def _on_boot_menu_base_changed(self, _combo, entry_id):
+        row = self.boot_menu_rows.get(entry_id)
+        if row is not None:
+            self._refresh_boot_menu_row(row)
+        self._apply_boot_menu_editor()
+
+    def _on_boot_menu_title_changed(self, _entry, _entry_id):
+        self._apply_boot_menu_editor()
+
+    def _on_boot_menu_options_changed(self, _widget, entry_id):
+        if self._syncing:
+            return
+        row = self.boot_menu_rows.get(entry_id)
+        if row is not None:
+            self._refresh_boot_menu_row(row)
+        self._apply_boot_menu_editor()
+
+    def _on_boot_menu_move(self, _button, entry_id, delta):
+        if self._syncing or entry_id not in self.boot_menu_order:
+            return
+        entries = self._boot_menu_editor_entries()
+        index = self.boot_menu_order.index(entry_id)
+        target = index + delta
+        if target < 0 or target >= len(entries):
+            return
+        entries[index], entries[target] = entries[target], entries[index]
+        try:
+            changed = self.state.set_boot_menu_entries(entries)
+        except (TypeError, ValueError) as error:
+            self._set_customization_error('boot-menu', error)
+            return
+        self._set_customization_error(
+            'boot-menu', self._boot_menu_locale_error(entries))
+        self._sync_boot_menu_editor()
+        if changed:
+            self._intent_changed()
+
+    def _on_boot_menu_add(self, _button):
+        entries = self._boot_menu_editor_entries()
+        if len(entries) >= backend.BOOT_MENU_MAX_ENTRIES:
+            self._set_customization_error(
+                'boot-menu', _('The boot menu already has 32 entries.'))
+            return
+        try:
+            entry_id = self._next_boot_menu_entry_id(entries)
+        except ValueError as error:
+            self._set_customization_error('boot-menu', error)
+            return
+        entries.append({
+            'id': entry_id, 'base_mode': 'fresh', 'enabled': True,
+            'default': False,
+            'title': 'Custom MiniOS {}'.format(entry_id.split('-')[-1]),
+            'kernel_args': '',
+            'kernel_args_schema': (3 if self.state.menu_locale == 'multilang'
+                                   else 2),
+        })
+        try:
+            changed = self.state.set_boot_menu_entries(entries)
+        except (TypeError, ValueError) as error:
+            self._set_customization_error('boot-menu', error)
+            return
+        self._set_customization_error(
+            'boot-menu', self._boot_menu_locale_error(entries))
+        self._sync_boot_menu_editor()
+        if changed:
+            self._intent_changed()
+
+    def _on_boot_menu_duplicate(self, _button, entry_id):
+        entries = self._boot_menu_editor_entries()
+        if len(entries) >= backend.BOOT_MENU_MAX_ENTRIES:
+            self._set_customization_error(
+                'boot-menu', _('The boot menu already has 32 entries.'))
+            return
+        source_index = next(
+            (index for index, item in enumerate(entries)
+             if item['id'] == entry_id), None)
+        if source_index is None:
+            return
+        try:
+            new_id = self._next_boot_menu_entry_id(entries)
+        except ValueError as error:
+            self._set_customization_error('boot-menu', error)
+            return
+        source = dict(entries[source_index])
+        source.update({
+            'id': new_id, 'enabled': True, 'default': False,
+            'title': source.get('title') or 'Custom {}'.format(source['base_mode']),
+        })
+        entries.insert(source_index + 1, source)
+        try:
+            changed = self.state.set_boot_menu_entries(entries)
+        except (TypeError, ValueError) as error:
+            self._set_customization_error('boot-menu', error)
+            return
+        self._set_customization_error(
+            'boot-menu', self._boot_menu_locale_error(entries))
+        self._sync_boot_menu_editor()
+        if changed:
+            self._intent_changed()
+
+    def _on_boot_menu_remove(self, _button, entry_id):
+        if entry_id in backend.DEFAULT_BOOT_MODES:
+            return
+        entries = [item for item in self._boot_menu_editor_entries()
+                   if item['id'] != entry_id]
+        if not entries:
+            return
+        enabled = [item for item in entries if item['enabled']]
+        if not enabled:
+            entries[0]['enabled'] = True
+            enabled = [entries[0]]
+        if not any(item['default'] for item in enabled):
+            for item in entries:
+                item['default'] = item['id'] == enabled[0]['id']
+        try:
+            changed = self.state.set_boot_menu_entries(entries)
+        except (TypeError, ValueError) as error:
+            self._set_customization_error('boot-menu', error)
+            return
+        self._set_customization_error(
+            'boot-menu', self._boot_menu_locale_error(entries))
+        self._sync_boot_menu_editor()
+        if changed:
+            self._intent_changed()
+
+    def _on_boot_menu_reset(self, _button):
+        if self._syncing:
+            return
+        changed = self.state.set_boot_menu_entries(None)
+        self._set_customization_error('boot-menu', None)
+        self._sync_boot_menu_editor()
+        if changed:
+            self._intent_changed()
+
+
     def _on_boot_timeout_preserve_toggled(self, check):
         if self._syncing:
             return
@@ -2744,8 +3983,16 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         if self._syncing or combo.get_active_id() is None:
             return
         value = combo.get_active_id()
-        if self.state.set_default_boot(
-                None if value == 'preserve' else value):
+        try:
+            changed = self.state.set_default_boot(
+                None if value == 'preserve' else value)
+        except ValueError as error:
+            self._set_customization_error('default-boot', error)
+            self._sync_boot_menu_editor()
+            return
+        self._set_customization_error('default-boot', None)
+        if changed:
+            self._sync_boot_menu_editor()
             self._intent_changed()
 
     def _on_kernel_args_changed(self, entry):
@@ -3417,6 +4664,38 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
                 size=self._size_value(overlay.get('regular_bytes')),
                 fingerprint=overlay.get('input_tree_fingerprint'))
             if overlay else _('None'))
+        boot_menu_entries = customization.get('boot_menu_entries', ())
+        if boot_menu_entries:
+            enabled_entries = [
+                item for item in boot_menu_entries if item.get('enabled')]
+            default_entry = next(
+                (item for item in enabled_entries if item.get('default')), None)
+            visible_names = [
+                item.get('title') or
+                DEFAULT_BOOT_TITLES.get(item.get('base_mode'), item.get('id', ''))
+                for item in enabled_entries]
+            parameterized = sum(
+                1 for item in enabled_entries if item.get('kernel_args'))
+            custom_count = sum(
+                1 for item in enabled_entries
+                if item.get('id') not in backend.DEFAULT_BOOT_MODES)
+            boot_menu_value = _('{count} entries · order: {order}').format(
+                count=len(enabled_entries), order=' → '.join(visible_names))
+            if custom_count:
+                boot_menu_value += _(' · {count} custom').format(
+                    count=custom_count)
+            if parameterized:
+                boot_menu_value += _(' · {count} with entry parameters').format(
+                    count=parameterized)
+            default_value = (
+                default_entry.get('title') or
+                DEFAULT_BOOT_TITLES.get(default_entry.get('base_mode'),
+                                        default_entry.get('id', ''))
+                if default_entry else _('Unknown'))
+        else:
+            boot_menu_value = _('Preserve source')
+            default_value = DEFAULT_BOOT_TITLES.get(
+                customization.get('default_boot'), _('Preserve source'))
         self._section(self.review_content, _('Image customization'))
         self.review_content.pack_start(self._key_value_grid((
             (_('Configuration override keys'),
@@ -3426,9 +4705,8 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
                  seconds=customization.get('boot_timeout'))
              if customization.get('boot_timeout') is not None
              else _('Preserve source')),
-            (_('Default session'),
-             DEFAULT_BOOT_TITLES.get(customization.get('default_boot'),
-                                     _('Preserve source'))),
+            (_('Default session'), default_value),
+            (_('Boot menu entries'), boot_menu_value),
             (_('Kernel arguments'), kernel_value),
             (_('Boot background'), background_value),
             (_('Project filesystem layer'), overlay_value),
@@ -3485,18 +4763,18 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         self.review_content.pack_start(self._key_value_grid((
             (_('Mode'), CAPTURE_MODE_TITLES.get(
                 capture_mode, capture_mode)),
-            (_('Privilege boundary'), privilege),
+            (_('Capture authorization'), privilege),
             (_('Compression'), compression),
             (_('Selection count'), selection_count),
-            (_('Selection digest'), selection_digest),
-            (_('Inventory'), inventory_value),
+            (_('Selection SHA-256'), selection_digest),
+            (_('Session inventory'), inventory_value),
             (_('Union backend'), inventory.get('union_backend') or
              _('Unknown') if capture.get('requested') else _('Not applicable')),
-            (_('Capture estimate'), capture_estimate),
+            (_('Estimated capture size'), capture_estimate),
         )), False, False, 0)
         if capture_mode == 'exact':
             warning = Gtk.Label(
-                label=_('Exact session is union-provider-specific and may '
+                label=_('Include all session changes is union-provider-specific and may '
                         'preserve sensitive writable state. The explicit '
                         'acknowledgement is stored in the project and remains '
                         'in effect until revoked.'), xalign=0)
@@ -3505,7 +4783,7 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             self.review_content.pack_start(warning, False, False, 0)
         elif capture_mode == 'clean':
             warning = Gtk.Label(
-                label=_('Privacy-cleaned uses a strict allowlist and '
+                label=_('Include reusable changes only uses a strict allowlist and '
                         'intentionally omits broad state. It is not a '
                         'guarantee that an image is shareable.'), xalign=0)
             warning.set_line_wrap(True)
@@ -3522,23 +4800,23 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             backend.FILESYSTEM_CLASS_UNKNOWN: _('Unknown'),
         }
         rows = [
-            (_('Estimated input'), self._size_value(
+            (_('Estimated input size'), self._size_value(
                 estimate.get('input_bytes'))),
-            (_('Destination required'), self._size_value(
+            (_('Required destination space'), self._size_value(
                 estimate.get('required_destination_bytes'))),
-            (_('Destination free'), self._size_value(
+            (_('Available destination space'), self._size_value(
                 estimate.get('destination_free_bytes'))),
-            (_('Destination storage'), storage_labels.get(
+            (_('Destination storage type'), storage_labels.get(
                 estimate.get('destination_filesystem_class'), _('Unknown'))),
-            (_('Scratch required'), self._size_value(
+            (_('Required temporary space'), self._size_value(
                 estimate.get('required_scratch_bytes'))),
-            (_('Scratch free'), self._size_value(
+            (_('Available temporary space'), self._size_value(
                 estimate.get('scratch_free_bytes'))),
-            (_('Scratch storage'), storage_labels.get(
+            (_('Temporary storage type'), storage_labels.get(
                 estimate.get('scratch_filesystem_class'), _('Unknown'))),
         ]
         if estimate.get('peak_memory_bytes') is not None:
-            rows.append((_('Peak RAM workspace'), self._size_value(
+            rows.append((_('Peak RAM use'), self._size_value(
                 estimate.get('peak_memory_bytes'))))
             rows.append((_('Available memory'), self._size_value(
                 estimate.get('available_memory_bytes'))))
@@ -3772,6 +5050,7 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
                 ('config-keys', _('Configuration override keys')),
                 ('boot-timeout', _('Boot timeout')),
                 ('default-boot', _('Default session')),
+                ('boot-menu', _('Boot menu entries')),
                 ('kernel', _('Kernel arguments')),
                 ('background', _('Boot background')),
                 ('overlay', _('Project filesystem layer')),
@@ -3837,6 +5116,7 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         self.build_progress.set_fraction(0.0)
         if hasattr(self, 'build_log'):
             self.build_log.clear()
+        self._last_command_error = None
         for icon, label in self.build_milestones.values():
             icon.set_from_icon_name('radio-symbolic', Gtk.IconSize.MENU)
             label.get_style_context().remove_class('milestone-complete')
@@ -3985,6 +5265,8 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         elif event['kind'] == 'text':
             if event['level'] in ('I', 'E') and event['text']:
                 self.build_detail_label.set_text(event['text'])
+            if event['level'] == 'E' and not self._last_command_error:
+                self._last_command_error = event['text']
         return False
 
     def _on_command_finished(self, returncode, cancelled):
@@ -3997,8 +5279,8 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         if returncode != 0:
             self._finish_build_failure(
                 'build-failed', _('Build failed'),
-                _('The image command exited with status {status}.').format(
-                    status=returncode))
+                build_command_failure_detail(
+                    returncode, self._last_command_error))
             return False
 
         self._set_milestone('created')
@@ -4126,6 +5408,7 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
                 'removed safely. Review the cleanup warning.')
         self.build_detail_label.set_text(detail)
         self.build_result_title.set_text(_('Build cancelled'))
+        self._set_result_intent('cancelled')
         self.build_result_detail.set_text(
             _('No image was published. You can return to Review and try '
               'again.'))
@@ -4148,6 +5431,7 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         self.build_phase_label.set_text(title)
         self.build_detail_label.set_text(detail)
         self.build_result_title.set_text(title)
+        self._set_result_intent('error')
         self.build_result_detail.set_text(detail)
         self.result_grid.hide()
         for value in self.result_values.values():
@@ -4168,6 +5452,7 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
     def _show_success_result(self):
         result = self.verification_result
         self.build_result_title.set_text(_('Verified image published'))
+        self._set_result_intent('success')
         self.build_result_detail.set_text(
             _('The final image passed structural verification and is ready '
               'at the selected path.'))
@@ -4231,9 +5516,30 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
                     seconds=customization.get('boot_timeout'))
                 if customization.get('boot_timeout') is not None
                 else _('Preserve source'))
+            verified_menu = customization.get('boot_menu_entries', ())
+            if verified_menu:
+                enabled_menu = [item for item in verified_menu
+                                if item.get('enabled')]
+                default_entry = next(
+                    (item for item in enabled_menu if item.get('default')), None)
+                default_text = (
+                    default_entry.get('title') or
+                    DEFAULT_BOOT_TITLES.get(
+                        default_entry.get('base_mode'), default_entry.get('id', ''))
+                    if default_entry else _('Unknown'))
+                menu_text = _('{count} enabled: {entries}').format(
+                    count=len(enabled_menu),
+                    entries=' → '.join(
+                        item.get('title') or DEFAULT_BOOT_TITLES.get(
+                            item.get('base_mode'), item.get('id', ''))
+                        for item in enabled_menu))
+            else:
+                default_text = DEFAULT_BOOT_TITLES.get(
+                    customization.get('default_boot'), _('Preserve source'))
+                menu_text = _('Preserve source')
             self.customization_result_values['default-boot'].set_text(
-                DEFAULT_BOOT_TITLES.get(
-                    customization.get('default_boot'), _('Preserve source')))
+                default_text)
+            self.customization_result_values['boot-menu'].set_text(menu_text)
             self.customization_result_values['kernel'].set_text(
                 _('{count} bytes · SHA-256 {digest}').format(
                     count=kernel.get('bytes'), digest=kernel.get('sha256'))
@@ -4280,6 +5586,12 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         self.result_values['size'].set_text(
             human_size(size) if size else _('Unavailable'))
         self.result_values['sha256'].set_text(digest or _('Unavailable'))
+
+    def _set_result_intent(self, intent):
+        context = self.build_result.get_style_context()
+        for class_name in RESULT_INTENT_CLASSES:
+            context.remove_class(class_name)
+        context.add_class('result-{}'.format(intent))
 
     def _render_build_diagnostics(self, diagnostics):
         _clear(self.build_diagnostics)
@@ -4337,9 +5649,10 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         icon.set_valign(Gtk.Align.START)
         row.pack_start(icon, False, False, 0)
         text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
-        code_label = Gtk.Label(label=code, xalign=0)
+        title, display_message = diagnostic_display_text(code, message)
+        code_label = Gtk.Label(label=title, xalign=0)
         code_label.get_style_context().add_class('diagnostic-code')
-        message_label = Gtk.Label(label=message, xalign=0)
+        message_label = Gtk.Label(label=display_message, xalign=0)
         message_label.set_line_wrap(True)
         text.pack_start(code_label, False, False, 0)
         text.pack_start(message_label, False, False, 0)
@@ -4605,7 +5918,7 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             elif (self.state.capture_mode == 'exact' and not
                   self.state.sensitive_capture_acknowledged):
                 self.footer_status.set_text(
-                    _('Acknowledge Exact session sensitivity to continue.'))
+                    _('Acknowledge the sensitivity of including all session changes to continue.'))
             elif (self.state.capture_mode == 'selected' and not
                   self.state.capture_include_paths):
                 self.footer_status.set_text(
@@ -4797,9 +6110,9 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         if not self.state.dirty:
             return True
         return ask_confirmation(
-            self, _('Discard unsaved project changes?'),
-            _('The current project has changes that have not been saved.'),
-            confirm_label=_('Discard'))
+            self, _('Discard changes?'),
+            _('Unsaved changes in the current project will be lost.'),
+            confirm_label=_('Discard changes'))
 
     def _new_default_output_path(self):
         directory = os.path.expanduser('~')

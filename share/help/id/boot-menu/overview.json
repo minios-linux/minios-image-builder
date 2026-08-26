@@ -1,0 +1,235 @@
+{
+  "headings": [
+    {
+      "anchor": "konstruktor-menu-boot",
+      "level": 1,
+      "title": "Konstruktor menu boot"
+    },
+    {
+      "anchor": "menu-sumber-yang-sudah-ada",
+      "level": 2,
+      "title": "Menu sumber yang sudah ada"
+    },
+    {
+      "anchor": "cara-sebuah-entri-dirakit",
+      "level": 2,
+      "title": "Cara sebuah entri dirakit"
+    },
+    {
+      "anchor": "template-sesi",
+      "level": 2,
+      "title": "Template sesi"
+    },
+    {
+      "anchor": "jenis-persistensi",
+      "level": 2,
+      "title": "Jenis persistensi"
+    },
+    {
+      "anchor": "pengaturan-yang-saling-bergantung",
+      "level": 2,
+      "title": "Pengaturan yang saling bergantung"
+    },
+    {
+      "anchor": "penyelesaian-dan-input-ahli",
+      "level": 2,
+      "title": "Penyelesaian dan input ahli"
+    },
+    {
+      "anchor": "default-dan-nama",
+      "level": 2,
+      "title": "Default dan nama"
+    }
+  ],
+  "nodes": [
+    [
+      "heading",
+      1,
+      "konstruktor-menu-boot",
+      [
+        [
+          "text",
+          "Konstruktor menu boot"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Buat menu startup yang terlihat dari entri-entri independen. Pilih template, lalu sesuaikan entri tersebut dengan kontrol bertipe. Entri yang dinonaktifkan tetap ada di proyek tetapi tidak akan ditampilkan pada menu yang dihasilkan."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "menu-sumber-yang-sudah-ada",
+      [
+        [
+          "text",
+          "Menu sumber yang sudah ada"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Sebelum kustomisasi, konstruktor membaca entri MiniOS yang dikenali, nilai default dan timeout-nya, serta parameter yang didukung dari menu GRUB atau SYSLINUX asli yang berlaku. Mengedit entri yang diimpor hanya akan mengganti parameter yang diwakili oleh kontrol bertipe. Argumen sumber lainnya tetap berada di template boot. Dalam menu multibahasa, setiap bahasa mempertahankan argumen lokal, zona waktu, dan keyboard sumbernya kecuali Anda secara eksplisit menimpanya."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "cara-sebuah-entri-dirakit",
+      [
+        [
+          "text",
+          "Cara sebuah entri dirakit"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Template menyediakan perilaku dasar MiniOS. Argumen kernel global untuk pengguna ahli diterapkan berikutnya, diikuti oleh opsi bertipe dan parameter tambahan untuk entri ini. Untuk opsi MiniOS berpasangan kunci-nilai yang berulang, nilai terakhir yang digunakan."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "template-sesi",
+      [
+        [
+          "text",
+          "Template sesi"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Resume menggunakan perchdir=resume. New menggunakan perchdir=new. Choose menggunakan perchdir=ask."
+        ],
+        [
+          "text",
+          "\n"
+        ],
+        [
+          "text",
+          "Fresh tidak memiliki pemilih persistensi. Copy to RAM menggunakan toram."
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Anda dapat membuat beberapa entri dari template yang sama."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "jenis-persistensi",
+      [
+        [
+          "text",
+          "Jenis persistensi"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Native menyimpan perubahan di dalam direktori. Dynfilefs menggunakan kontainer yang dapat diperluas, Raw menggunakan image berukuran tetap, dan LUKS menggunakan kontainer terenkripsi. SquashFS melanjutkan sesi terkompresi yang sudah ada. Initramfs saat ini tidak dapat membuat sesi SquashFS baru."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "pengaturan-yang-saling-bergantung",
+      [
+        [
+          "text",
+          "Pengaturan yang saling bergantung"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Kontrol akan menjadi tidak tersedia saat tidak berlaku. Menonaktifkan zRAM akan menonaktifkan kontrol kompresi dan ukurannya. Persistensi Native dan SquashFS tidak menggunakan kolom ukuran kontainer."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "penyelesaian-dan-input-ahli",
+      [
+        [
+          "text",
+          "Penyelesaian dan input ahli"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Filter modul akan melengkapi dari modul yang terdeteksi di sumber yang dipilih. Kolom lokal, zona waktu, dan keyboard akan melengkapi dari data sistem yang terpasang. Gunakan parameter tambahan hanya untuk opsi yang tidak memiliki kontrol bertipe. Argumen tidak dikenal yang dimuat dari proyek lama akan tetap dipertahankan di sana."
+        ]
+      ]
+    ],
+    [
+      "heading",
+      2,
+      "default-dan-nama",
+      [
+        [
+          "text",
+          "Default dan nama"
+        ]
+      ]
+    ],
+    [
+      "block",
+      "paragraph",
+      [
+        [
+          "text",
+          "Menu yang dikustomisasi memiliki tepat satu entri default. Menonaktifkan default akan otomatis memilih entri lain yang aktif. Nama yang dikosongkan akan mempertahankan judul dari sumber atau template. Nama kustom ASCII dapat digunakan di menu multibahasa; menu satu bahasa dapat menggunakan karakter yang didukung oleh encoding menu bootloader tersebut."
+        ]
+      ]
+    ]
+  ],
+  "plain_text": "Konstruktor menu boot\nBuat menu startup yang terlihat dari entri-entri independen. Pilih template, lalu sesuaikan entri tersebut dengan kontrol bertipe. Entri yang dinonaktifkan tetap ada di proyek tetapi tidak akan ditampilkan pada menu yang dihasilkan.\nMenu sumber yang sudah ada\nSebelum kustomisasi, konstruktor membaca entri MiniOS yang dikenali, nilai default dan timeout-nya, serta parameter yang didukung dari menu GRUB atau SYSLINUX asli yang berlaku. Mengedit entri yang diimpor hanya akan mengganti parameter yang diwakili oleh kontrol bertipe. Argumen sumber lainnya tetap berada di template boot. Dalam menu multibahasa, setiap bahasa mempertahankan argumen lokal, zona waktu, dan keyboard sumbernya kecuali Anda secara eksplisit menimpanya.\nCara sebuah entri dirakit\nTemplate menyediakan perilaku dasar MiniOS. Argumen kernel global untuk pengguna ahli diterapkan berikutnya, diikuti oleh opsi bertipe dan parameter tambahan untuk entri ini. Untuk opsi MiniOS berpasangan kunci-nilai yang berulang, nilai terakhir yang digunakan.\nTemplate sesi\nResume menggunakan perchdir=resume. New menggunakan perchdir=new. Choose menggunakan perchdir=ask.\nFresh tidak memiliki pemilih persistensi. Copy to RAM menggunakan toram.\nAnda dapat membuat beberapa entri dari template yang sama.\nJenis persistensi\nNative menyimpan perubahan di dalam direktori. Dynfilefs menggunakan kontainer yang dapat diperluas, Raw menggunakan image berukuran tetap, dan LUKS menggunakan kontainer terenkripsi. SquashFS melanjutkan sesi terkompresi yang sudah ada. Initramfs saat ini tidak dapat membuat sesi SquashFS baru.\nPengaturan yang saling bergantung\nKontrol akan menjadi tidak tersedia saat tidak berlaku. Menonaktifkan zRAM akan menonaktifkan kontrol kompresi dan ukurannya. Persistensi Native dan SquashFS tidak menggunakan kolom ukuran kontainer.\nPenyelesaian dan input ahli\nFilter modul akan melengkapi dari modul yang terdeteksi di sumber yang dipilih. Kolom lokal, zona waktu, dan keyboard akan melengkapi dari data sistem yang terpasang. Gunakan parameter tambahan hanya untuk opsi yang tidak memiliki kontrol bertipe. Argumen tidak dikenal yang dimuat dari proyek lama akan tetap dipertahankan di sana.\nDefault dan nama\nMenu yang dikustomisasi memiliki tepat satu entri default. Menonaktifkan default akan otomatis memilih entri lain yang aktif. Nama yang dikosongkan akan mempertahankan judul dari sumber atau template. Nama kustom ASCII dapat digunakan di menu multibahasa; menu satu bahasa dapat menggunakan karakter yang didukung oleh encoding menu bootloader tersebut.",
+  "product_kind": "minios-markup-document",
+  "schema_version": 1
+}
