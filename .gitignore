@@ -5,20 +5,25 @@ dist/
 *.egg-info/
 .coverage
 htmlcov/
+share/.image-builder-help-*/
 
 # Debian package build files
 debian/.debhelper/
 debian/debhelper-build-stamp
 debian/files
 debian/*.substvars
+debian/*.debhelper
+debian/*.log
 debian/minios-image-builder/
 debian/minios-image-compose/
 debian/tmp/
-*.deb
-*.buildinfo
-*.changes
-*.dsc
-*.tar.*
+/*.deb
+/*.udeb
+/*.build
+/*.buildinfo
+/*.changes
+/*.dsc
+/*.tar.*
 
 # Python cache
 __pycache__/

@@ -17,7 +17,9 @@ Depends: ${misc:Depends},
          xorriso,
          squashfs-tools,
          e2fsprogs
-Recommends: minios-tools (>= 1.5.0), pkexec
+Recommends: minios-tools (>= 1.5.0),
+            polkitd | policykit-1,
+            pkexec | policykit-1
 Description: MiniOS image composition backend (minios-image-compose)
  minios-image-compose composes a bootable MiniOS ISO image from an immutable or
  identity-bound MiniOS source reference, ordered .sb modules and a live
@@ -38,7 +40,8 @@ Depends: ${misc:Depends},
          gir1.2-gtk-3.0,
          gir1.2-glib-2.0,
          gir1.2-gio-2.0,
-         pkexec,
+         polkitd | policykit-1,
+         pkexec | policykit-1,
          python3-minios-gui (>= 1.2.0),
          librsvg2-common
 Recommends: minios-tools (>= 1.5.0), policykit-1-gnome | lxpolkit, udisks2

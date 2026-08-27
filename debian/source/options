@@ -1,0 +1,33 @@
+# Exclude VCS metadata and generated build/test artifacts.
+tar-ignore=.git
+tar-ignore=.pytest_cache
+tar-ignore=__pycache__
+tar-ignore=*.pyc
+tar-ignore=*.pyo
+tar-ignore=*.mo
+tar-ignore=.coverage
+tar-ignore=htmlcov
+tar-ignore=build
+tar-ignore=dist
+tar-ignore=*.egg-info
+tar-ignore=share/.image-builder-help-*
+
+# Exclude Debian staging and generated package state.
+tar-ignore=debian/.debhelper
+tar-ignore=debian/debhelper-build-stamp
+tar-ignore=debian/files
+tar-ignore=debian/*.substvars
+tar-ignore=debian/*.debhelper
+tar-ignore=debian/*.log
+tar-ignore=debian/minios-image-builder
+tar-ignore=debian/minios-image-compose
+tar-ignore=debian/tmp
+
+# Exclude package artifacts copied into the source root.
+tar-ignore=*.deb
+tar-ignore=*.udeb
+tar-ignore=*.build
+tar-ignore=*.buildinfo
+tar-ignore=*.changes
+tar-ignore=*.dsc
+tar-ignore=*.tar.*
