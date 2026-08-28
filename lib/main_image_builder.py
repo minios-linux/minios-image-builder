@@ -980,7 +980,7 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         parent.pack_start(block, False, False, 0)
         return block
 
-    def _settings_card(self, body, title, description=None):
+    def _settings_card(self, body, title, description=None, header_widget=None):
         frame = Gtk.Frame()
         frame.get_style_context().add_class('content-card')
         inner = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
@@ -988,7 +988,14 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         frame.add(inner)
         heading = Gtk.Label(label=title, xalign=0)
         heading.get_style_context().add_class('section-heading')
-        inner.pack_start(heading, False, False, 0)
+        if header_widget is None:
+            inner.pack_start(heading, False, False, 0)
+        else:
+            header = Gtk.Box(
+                orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+            header.pack_start(heading, False, False, 0)
+            header.pack_start(header_widget, False, False, 0)
+            inner.pack_start(header, False, False, 0)
         if description:
             detail = Gtk.Label(label=description, xalign=0)
             detail.set_line_wrap(True)
@@ -2053,12 +2060,6 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
 
         self._build_customization_controls(body)
 
-        capture_card = self._settings_card(
-            body, _('Changes from the current session'),
-            _('Choose whether changes made after this MiniOS session started '
-              'should be copied into the new image. If you only want to change '
-              'modules, configuration, and image settings, keep the first '
-              'option.'))
         capture_help = HelpPopoverButton(
             _('Changes from the current session'),
             summary=_('A live MiniOS session has a writable layer containing '
@@ -2084,7 +2085,13 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
                          'but are not a guarantee that an image is safe to '
                          'share.'))),
             compact=True, tooltip=_('Explain session-change options'))
-        capture_card.pack_start(capture_help, False, False, 0)
+        capture_card = self._settings_card(
+            body, _('Changes from the current session'),
+            _('Choose whether changes made after this MiniOS session started '
+              'should be copied into the new image. If you only want to change '
+              'modules, configuration, and image settings, keep the first '
+              'option.'), header_widget=capture_help)
+        capture_card.get_style_context().add_class('capture-mode-group')
         self.capture_mode_buttons = {}
         group = None
         for mode, title, detail, badge, badge_style in CAPTURE_MODE_CHOICES:
@@ -2093,7 +2100,7 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             if group is None:
                 group = button
             self.capture_mode_buttons[mode] = button
-            body.pack_start(button, False, False, 0)
+            capture_card.pack_start(button, False, False, 0)
 
         self.capture_capability_warning = Gtk.Label(xalign=0)
         self.capture_capability_warning.set_line_wrap(True)

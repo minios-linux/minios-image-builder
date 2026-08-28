@@ -2,6 +2,8 @@ minios-image-builder (1.0.3) unstable; urgency=medium
 
   * Match Image Builder header-bar project buttons to the MiniOS Help
     style and shared themed icon handling.
+  * Group session-change guidance and capture choices in one integrated
+    settings card.
 
  -- crims0n <crims0n@minios.dev>  Fri, 28 Aug 2026 15:30:15 +0300
 
