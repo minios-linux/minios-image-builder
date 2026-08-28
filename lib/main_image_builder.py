@@ -53,7 +53,8 @@ from ui_utils import (
 
 from minios_gui import (HelpPopoverButton, TokenCompletionPopover,
                         classify_module, document_asset_path,
-                        load_localized_document, new_header_bar, resolve_icon)
+                        load_localized_document, new_header_bar, new_icon,
+                        resolve_icon)
 
 
 APPLICATION_ID = 'org.minios.imagebuilder'
@@ -815,10 +816,10 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
 
     def _header_button(self, icon_name, accessible_name, tooltip, action_name):
         button = Gtk.Button()
-        button.set_relief(Gtk.ReliefStyle.NONE)
-        button.add(Gtk.Image.new_from_icon_name(
-            icon_name, Gtk.IconSize.BUTTON))
+        button.set_image(new_icon(
+            icon_name, accessible_name=accessible_name))
         button.set_tooltip_text(tooltip)
+        button.set_focus_on_click(False)
         button.set_action_name(action_name)
         accessible = button.get_accessible()
         if accessible is not None:
