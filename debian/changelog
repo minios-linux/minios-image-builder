@@ -1,3 +1,22 @@
+minios-image-builder (1.0.4) unstable; urgency=medium
+
+  * Add a selectable temporary work directory, with storage capacity,
+    filesystem type and RAM-use guidance during review.
+  * Validate temporary storage ownership, permissions, private-directory
+    support and identity before starting the build.
+  * Keep output and temporary work files outside captured OverlayFS and AUFS
+    layers, including changes directories and bind-mount aliases.
+  * Allow further customization of images containing earlier session-capture
+    or Image Builder layers while reserving generated names for the builder.
+  * Prevent long custom boot-entry titles from resizing the default-entry
+    selector.
+  * Update all supported translations and extend storage, capture and
+    iterative-customization regression coverage.
+  * Recommend aufs-ng-capable MiniOS Tools for live-session capture.
+  * Run Python and CLI regression suites during package builds.
+
+ -- crims0n <crims0n@minios.dev>  Sun, 30 Aug 2026 00:18:37 +0300
+
 minios-image-builder (1.0.3) unstable; urgency=medium
 
   * Match Image Builder header-bar project buttons to the MiniOS Help

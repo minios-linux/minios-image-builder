@@ -1993,7 +1993,7 @@ def test_capture_inventory_drives_estimate_and_rejects_unmatched_selection(
         'selected_entry_count'] == 1
 
 
-def test_reserved_capture_artifacts_in_source_are_blocked(tmp_path):
+def test_saved_session_artifacts_in_source_allow_further_customization(tmp_path):
     root, source, mounts, sys_block, release, first = _make_source(tmp_path)
     _write(source / 'session-capture.json', b'{}')
     _fake_module(source / '99-session-changes.sb')
@@ -2006,7 +2006,49 @@ def test_reserved_capture_artifacts_in_source_are_blocked(tmp_path):
 
     plan = _plan(project, info, _config(project_dir))
 
+    assert plan.buildable
+    assert 'source_session_capture_artifact' in _warning_codes(plan)
+    assert 'reserved_session_capture_artifact' not in _error_codes(plan)
+
+    capture_project = _project(
+        info, project_dir / 'captured.iso', project_dir,
+        capture_mode='clean')
+    capture_plan = _plan(capture_project, info, _config(project_dir))
+    assert capture_plan.buildable
+    assert capture_plan.manifest['capture']['expected_module_target'] == (
+        'minios/100-session-changes.sb')
+
+
+def test_reserved_capture_name_in_added_module_is_blocked(tmp_path):
+    root, source, mounts, sys_block, release, info = _make_source(tmp_path)
+    project_dir = tmp_path / 'project'
+    (project_dir / 'inputs').mkdir(parents=True)
+    _fake_module(project_dir / 'inputs' / '99-session-changes.sb')
+    project = _project(
+        info, project_dir / 'out.iso', project_dir,
+        additional_module_paths=('inputs/99-session-changes.sb',))
+
+    plan = _plan(project, info, _config(project_dir))
+
     assert 'reserved_session_capture_artifact' in _error_codes(plan)
+
+
+def test_prior_image_builder_customization_in_source_is_allowed(tmp_path):
+    root, source, mounts, sys_block, release, first = _make_source(tmp_path)
+    _write(source / 'image-customization.json', b'{}')
+    _fake_module(source / '98-image-overlay.sb')
+    info = backend.discover_running_source(
+        roots=(('livekit', str(root)),), mounts_path=str(mounts),
+        sys_block_root=str(sys_block), runtime_release_path=str(release))
+    project_dir = tmp_path / 'project'
+    project_dir.mkdir()
+    project = _project(info, project_dir / 'out.iso', project_dir)
+
+    plan = _plan(project, info, _config(project_dir))
+
+    assert plan.buildable
+    assert 'source_image_customization_artifact' in _warning_codes(plan)
+    assert 'reserved_image_customization_artifact' not in _error_codes(plan)
 
 
 def test_revalidation_detects_same_size_additional_module_replacement(tmp_path):
@@ -2325,6 +2367,329 @@ def test_output_and_scratch_directory_symlinks_are_blocked(tmp_path):
     assert 'scratch_directory_symlink' in _error_codes(plan)
 
 
+def test_scratch_storage_must_support_private_workspace(tmp_path, monkeypatch):
+    root, source, mounts, sys_block, release, info = _make_source(tmp_path)
+    project_dir = tmp_path / 'project'
+    project_dir.mkdir()
+    project = _project(info, project_dir / 'out.iso', project_dir)
+    monkeypatch.setattr(
+        backend, '_probe_private_workspace',
+        lambda _path: 'filesystem cannot enforce mode 0700')
+
+    plan = _plan(project, info, _config(project_dir))
+
+    assert 'scratch_directory_incompatible' in _error_codes(plan)
+
+
+def test_shared_non_sticky_scratch_directory_is_rejected(
+        tmp_path, monkeypatch):
+    root, source, mounts, sys_block, release, info = _make_source(tmp_path)
+    project_dir = tmp_path / 'project'
+    scratch = tmp_path / 'shared-work'
+    project_dir.mkdir()
+    scratch.mkdir()
+    scratch.chmod(0o777)
+    project = _project(info, project_dir / 'out.iso', project_dir)
+    probe_calls = []
+    monkeypatch.setattr(
+        backend, '_probe_private_workspace',
+        lambda path: probe_calls.append(path))
+
+    plan = backend.create_build_plan(
+        project, info, current_config_path=str(_config(project_dir)),
+        disk_usage_func=_large_disk, scratch_directory=str(scratch),
+        tool_capabilities=_tool_capabilities(),
+        command_runner=AcceptSquashfsRunner())
+
+    assert 'scratch_directory_untrusted' in _error_codes(plan)
+    assert probe_calls == []
+
+
+def test_writable_acl_marks_scratch_path_untrusted(tmp_path, monkeypatch):
+    scratch = tmp_path / 'acl-work'
+    scratch.mkdir()
+    scratch.chmod(0o770)
+    monkeypatch.setattr(
+        backend.os, 'getxattr',
+        lambda *_args, **_kwargs: b'posix-acl')
+
+    error = backend._scratch_path_trust_error(str(scratch))
+
+    assert 'shared writable directory' in error
+
+
+@pytest.mark.parametrize('union_fstype', ('overlay', 'aufs'))
+def test_capture_rejects_live_union_scratch_but_custom_build_allows_it(
+        tmp_path, union_fstype):
+    root, source, mounts, sys_block, release, info = _make_source(tmp_path)
+    project_dir = tmp_path / 'project'
+    project_dir.mkdir()
+    mount_table = _write_mount_table(tmp_path, [
+        ('none', '/', union_fstype),
+    ])
+    capture = _project(
+        info, project_dir / 'captured.iso', project_dir,
+        capture_mode='clean')
+    ordinary = _project(info, project_dir / 'ordinary.iso', project_dir)
+
+    capture_plan = _plan(
+        capture, info, _config(project_dir), mounts_path=mount_table,
+        changes_roots=())
+    ordinary_plan = _plan(
+        ordinary, info, _config(project_dir), mounts_path=mount_table,
+        changes_roots=())
+
+    assert 'scratch_on_captured_live_overlay' in _error_codes(capture_plan)
+    assert 'scratch_on_captured_live_overlay' not in _error_codes(ordinary_plan)
+    assert ordinary_plan.buildable
+
+
+def test_capture_allows_scratch_on_independent_nested_overlay(tmp_path):
+    root, source, mounts, sys_block, release, info = _make_source(tmp_path)
+    project_dir = tmp_path / 'project'
+    project_dir.mkdir()
+    mount_table = _write_mount_table(tmp_path, [
+        ('/dev/sda1', '/', 'ext4'),
+        ('overlay', os.path.realpath(str(project_dir)), 'overlay'),
+    ])
+    mountinfo = _write_mountinfo(tmp_path, [
+        ('1', '0', '8:1', '/', '/', 'ext4', 'rw'),
+        ('2', '1', '0:55', '/', str(project_dir), 'overlay',
+         'rw,upperdir=/independent/upper'),
+    ])
+    project = _project(
+        info, project_dir / 'out.iso', project_dir, capture_mode='clean')
+
+    plan = _plan(
+        project, info, _config(project_dir), mounts_path=mount_table,
+        changes_roots=(), mountinfo_path=mountinfo)
+
+    assert 'scratch_on_captured_live_overlay' not in _error_codes(plan)
+    assert plan.buildable
+
+
+@pytest.mark.parametrize('union_fstype', ('overlay', 'aufs'))
+def test_capture_rejects_output_job_on_live_union(tmp_path, union_fstype):
+    root, source, mounts, sys_block, release, info = _make_source(tmp_path)
+    project_dir = tmp_path / 'project'
+    scratch = tmp_path / 'external-work'
+    project_dir.mkdir()
+    scratch.mkdir()
+    mount_table = _write_mount_table(tmp_path, [
+        ('none', '/', union_fstype),
+        ('/dev/sdb1', os.path.realpath(str(scratch)), 'ext4'),
+    ])
+    project = _project(
+        info, project_dir / 'out.iso', project_dir, capture_mode='clean')
+
+    plan = backend.create_build_plan(
+        project, info, current_config_path=str(_config(project_dir)),
+        disk_usage_func=_large_disk, scratch_directory=str(scratch),
+        tool_capabilities=_tool_capabilities(),
+        command_runner=AcceptSquashfsRunner(), mounts_path=mount_table,
+        changes_roots=())
+
+    assert 'destination_on_captured_live_overlay' in _error_codes(plan)
+    assert 'scratch_on_captured_live_overlay' not in _error_codes(plan)
+
+
+def test_capture_allows_overlayfs_sibling_but_rejects_effective_changes_root(
+        tmp_path):
+    root, source, mounts, sys_block, release, info = _make_source(tmp_path)
+    project_dir = tmp_path / 'project'
+    project_dir.mkdir()
+    changes_container = tmp_path / 'live-changes'
+    effective_changes = changes_container / 'changes'
+    workdir = changes_container / 'workdir'
+    captured_scratch = effective_changes / 'builder-work'
+    sibling_scratch = changes_container / 'builder-work'
+    for directory in (
+            effective_changes, workdir, captured_scratch, sibling_scratch):
+        directory.mkdir(parents=True, exist_ok=True)
+    project = _project(
+        info, project_dir / 'out.iso', project_dir, capture_mode='clean')
+    config = _config(project_dir)
+    options = {
+        'current_config_path': str(config),
+        'disk_usage_func': _large_disk,
+        'tool_capabilities': _tool_capabilities(),
+        'command_runner': AcceptSquashfsRunner(),
+        'changes_roots': (str(changes_container),),
+    }
+
+    captured_plan = backend.create_build_plan(
+        project, info, scratch_directory=str(captured_scratch), **options)
+    sibling_plan = backend.create_build_plan(
+        project, info, scratch_directory=str(sibling_scratch), **options)
+
+    assert 'scratch_within_captured_changes' in _error_codes(captured_plan)
+    assert 'scratch_within_captured_changes' not in _error_codes(sibling_plan)
+    assert sibling_plan.buildable
+
+
+def test_capture_rejects_bind_alias_of_effective_changes_root(tmp_path):
+    root, source, mounts, sys_block, release, info = _make_source(tmp_path)
+    project_dir = tmp_path / 'project'
+    project_dir.mkdir()
+    changes_container = tmp_path / 'live-changes'
+    effective_changes = changes_container / 'changes'
+    (changes_container / 'workdir').mkdir(parents=True)
+    effective_changes.mkdir()
+    alias = tmp_path / 'changes-alias'
+    scratch = alias / 'builder-work'
+    scratch.mkdir(parents=True)
+    mountinfo = _write_mountinfo(tmp_path, [
+        ('1', '0', '8:1', '/', '/'),
+        ('2', '1', '8:1', str(effective_changes), str(alias)),
+    ])
+    project = _project(
+        info, project_dir / 'out.iso', project_dir, capture_mode='clean')
+
+    plan = backend.create_build_plan(
+        project, info, current_config_path=str(_config(project_dir)),
+        disk_usage_func=_large_disk, scratch_directory=str(scratch),
+        tool_capabilities=_tool_capabilities(),
+        command_runner=AcceptSquashfsRunner(),
+        changes_roots=(str(changes_container),),
+        mountinfo_path=mountinfo)
+
+    assert 'scratch_within_captured_changes' in _error_codes(plan)
+
+
+def test_capture_rejects_bind_aliases_of_root_live_union(tmp_path):
+    root, source, mounts, sys_block, release, info = _make_source(tmp_path)
+    output_alias = tmp_path / 'output-alias'
+    scratch_alias = tmp_path / 'scratch-alias'
+    output_alias.mkdir()
+    scratch_alias.mkdir()
+    mount_table = _write_mount_table(tmp_path, [
+        ('none', '/', 'overlay'),
+        ('none', str(output_alias), 'overlay'),
+        ('none', str(scratch_alias), 'overlay'),
+    ])
+    mountinfo = _write_mountinfo(tmp_path, [
+        ('1', '0', '0:55', '/', '/', 'overlay', 'rw'),
+        ('2', '1', '0:55', '/home/live/output', str(output_alias),
+         'overlay', 'rw'),
+        ('3', '1', '0:55', '/home/live/scratch', str(scratch_alias),
+         'overlay', 'rw'),
+    ])
+    project = backend.ImageProject.from_source(
+        info, str(output_alias / 'out.iso'),
+        project_base=str(tmp_path), capture_mode='clean')
+
+    plan = backend.create_build_plan(
+        project, info, current_config_path=str(_config(tmp_path)),
+        disk_usage_func=_large_disk, scratch_directory=str(scratch_alias),
+        tool_capabilities=_tool_capabilities(),
+        command_runner=AcceptSquashfsRunner(), mounts_path=mount_table,
+        mountinfo_path=mountinfo, changes_roots=())
+
+    assert 'destination_on_captured_live_overlay' in _error_codes(plan)
+    assert 'scratch_on_captured_live_overlay' in _error_codes(plan)
+
+
+def test_capture_rejects_nested_overlay_with_upper_in_changes(tmp_path):
+    root, source, mounts, sys_block, release, info = _make_source(tmp_path)
+    project_dir = tmp_path / 'project'
+    scratch = tmp_path / 'nested-overlay'
+    project_dir.mkdir()
+    scratch.mkdir()
+    changes_container = tmp_path / 'live-changes'
+    effective_changes = changes_container / 'changes'
+    upper = effective_changes / 'nested-upper'
+    (changes_container / 'workdir').mkdir(parents=True)
+    upper.mkdir(parents=True)
+    mount_table = _write_mount_table(tmp_path, [
+        ('/dev/sda1', '/', 'ext4'),
+        ('overlay', str(scratch), 'overlay'),
+    ])
+    mountinfo = _write_mountinfo(tmp_path, [
+        ('1', '0', '8:1', '/', '/', 'ext4', 'rw'),
+        ('2', '1', '0:77', '/', str(scratch), 'overlay',
+         'rw,upperdir={}'.format(upper)),
+    ])
+    project = _project(
+        info, project_dir / 'out.iso', project_dir, capture_mode='clean')
+
+    plan = backend.create_build_plan(
+        project, info, current_config_path=str(_config(project_dir)),
+        disk_usage_func=_large_disk, scratch_directory=str(scratch),
+        tool_capabilities=_tool_capabilities(),
+        command_runner=AcceptSquashfsRunner(), mounts_path=mount_table,
+        mountinfo_path=mountinfo,
+        changes_roots=(str(changes_container),))
+
+    assert 'scratch_on_captured_live_overlay' in _error_codes(plan)
+
+
+def test_prepare_rejects_replaced_scratch_directory(tmp_path):
+    root, source, mounts, sys_block, release, info = _make_source(tmp_path)
+    project_dir = tmp_path / 'project'
+    scratch = tmp_path / 'scratch'
+    project_dir.mkdir()
+    scratch.mkdir()
+    project = _project(info, project_dir / 'out.iso', project_dir)
+    plan = backend.create_build_plan(
+        project, info, current_config_path=str(_config(project_dir)),
+        disk_usage_func=_large_disk, scratch_directory=str(scratch),
+        tool_capabilities=_tool_capabilities(),
+        command_runner=AcceptSquashfsRunner())
+    assert plan.buildable
+    assert plan.scratch_directory == os.path.realpath(str(scratch))
+
+    scratch.rmdir()
+    scratch.mkdir()
+
+    with pytest.raises(backend.ImageProjectError,
+                       match='temporary work directory changed'):
+        backend.prepare_build_command(plan)
+
+
+def test_scratch_inside_project_overlay_is_rejected_at_preflight(tmp_path):
+    root, source, mounts, sys_block, release, info = _make_source(tmp_path)
+    project_dir = tmp_path / 'project'
+    overlay = project_dir / 'overlay'
+    scratch = overlay / 'work'
+    scratch.mkdir(parents=True)
+    project = _project(
+        info, project_dir / 'out.iso', project_dir,
+        overlay_directory='overlay')
+
+    plan = backend.create_build_plan(
+        project, info, current_config_path=str(_config(project_dir)),
+        disk_usage_func=_large_disk, scratch_directory=str(scratch),
+        tool_capabilities=_tool_capabilities(),
+        command_runner=AcceptSquashfsRunner())
+
+    assert 'scratch_within_project_overlay' in _error_codes(plan)
+
+
+def test_bind_alias_of_project_overlay_is_rejected_as_scratch(tmp_path):
+    root, source, mounts, sys_block, release, info = _make_source(tmp_path)
+    project_dir = tmp_path / 'project'
+    overlay = project_dir / 'overlay'
+    alias = tmp_path / 'overlay-alias'
+    _write(overlay / 'value', b'payload')
+    alias.mkdir()
+    mountinfo = _write_mountinfo(tmp_path, [
+        ('1', '0', '8:1', '/', '/', 'ext4', 'rw'),
+        ('2', '1', '8:1', str(overlay), str(alias), 'ext4', 'rw'),
+    ])
+    project = _project(
+        info, project_dir / 'out.iso', project_dir,
+        overlay_directory='overlay')
+
+    plan = backend.create_build_plan(
+        project, info, current_config_path=str(_config(project_dir)),
+        disk_usage_func=_large_disk, scratch_directory=str(alias),
+        tool_capabilities=_tool_capabilities(),
+        command_runner=AcceptSquashfsRunner(),
+        mountinfo_path=mountinfo)
+
+    assert 'scratch_within_project_overlay' in _error_codes(plan)
+
+
 def test_graft_unsafe_module_basename_and_duplicate_target_are_blocked(tmp_path):
     root, source, mounts, sys_block, release, info = _make_source(tmp_path)
     project_dir = tmp_path / 'project'
@@ -2413,6 +2778,21 @@ def _write_mount_table(tmp_path, entries):
     path.write_text(''.join(
         '{} {} {} rw 0 0\n'.format(device, mountpoint, fstype)
         for device, mountpoint, fstype in entries))
+    return str(path)
+
+
+def _write_mountinfo(tmp_path, entries):
+    path = tmp_path / 'resource-mountinfo'
+    lines = []
+    for entry in entries:
+        mount_id, parent_id, device, mount_root, mountpoint = entry[:5]
+        fstype = entry[5] if len(entry) > 5 else 'ext4'
+        options = entry[6] if len(entry) > 6 else 'rw'
+        lines.append(
+            '{} {} {} {} {} rw - {} source {}\n'.format(
+                mount_id, parent_id, device, mount_root, mountpoint,
+                fstype, options))
+    path.write_text(''.join(lines))
     return str(path)
 
 

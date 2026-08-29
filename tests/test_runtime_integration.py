@@ -120,6 +120,75 @@ def test_clean_capture_diagnostic_has_localizable_display_text():
         'state, user data, identity files, logs, and caches.')
 
 
+def test_existing_session_layer_diagnostic_explains_that_building_can_continue():
+    title, message = ui.diagnostic_display_text(
+        'source_session_capture_artifact', 'backend message is not displayed')
+
+    assert title == ui._('Source already contains saved session changes')
+    assert 'continue modifying the image' in message
+    assert '*-session-changes.sb' in message
+
+
+def test_space_diagnostics_explain_the_settings_that_can_fix_them():
+    destination_title, destination_message = ui.diagnostic_display_text(
+        'destination_space_insufficient', 'raw backend byte counts')
+    scratch_title, scratch_message = ui.diagnostic_display_text(
+        'scratch_space_insufficient', 'raw backend byte counts')
+
+    assert destination_title == ui._('Not enough space for the output image')
+    assert 'output path' in destination_message
+    assert scratch_title == ui._('Not enough temporary workspace')
+    assert 'Settings page' in scratch_message
+
+
+def test_resource_warnings_have_user_facing_localized_text():
+    sensitive_title, sensitive_message = ui.diagnostic_display_text(
+        'sensitive_config_present', 'raw backend warning')
+    capture_title, capture_message = ui.diagnostic_display_text(
+        'capture_size_unknown', 'raw backend warning')
+
+    assert sensitive_title == ui._('Configuration may contain sensitive values')
+    assert 'does not display or log' in sensitive_message
+    assert capture_title == ui._('Session-change size is unknown')
+    assert 'analyze the current session changes' in capture_message
+
+
+def test_custom_boot_menu_default_label_does_not_embed_entry_title():
+    class _Combo:
+        def __init__(self):
+            self.items = []
+            self.active = None
+            self.sensitive = True
+
+        def remove_all(self):
+            self.items = []
+
+        def append(self, value, label):
+            self.items.append((value, label))
+
+        def set_active_id(self, value):
+            self.active = value
+
+        def set_sensitive(self, value):
+            self.sensitive = value
+
+    window = SimpleNamespace()
+    window.state = SimpleNamespace(boot_menu_entries=[{
+        'enabled': True,
+        'default': True,
+        'title': 'A very long custom boot menu title that must not resize the page',
+        'base_mode': 'resume',
+    }])
+    window.default_boot_combo = _Combo()
+
+    ui.ImageBuilderWindow._sync_default_boot_choices(window)
+
+    assert window.default_boot_combo.items == [
+        ('constructor', ui._('Set in menu constructor'))]
+    assert window.default_boot_combo.active == 'constructor'
+    assert window.default_boot_combo.sensitive is False
+
+
 def test_unknown_diagnostic_preserves_backend_text():
     assert ui.diagnostic_display_text('future_code', 'Future message') == (
         'future_code', 'Future message')
@@ -442,10 +511,10 @@ def test_build_runner_receives_plan_cwd_and_redacted_display(monkeypatch):
     events = []
 
     class FakeRunner(object):
-        def __init__(self, argv, line_cb, on_finished, cwd=None,
+        def __init__(self, argv, line_cb, on_finished, cwd=None, env=None,
                      display_argv=None):
             observed.update(
-                argv=tuple(argv), line_cb=line_cb, cwd=cwd,
+                argv=tuple(argv), line_cb=line_cb, cwd=cwd, env=env,
                 display_argv=tuple(display_argv))
             self.formatted_command = ' '.join(display_argv)
 
@@ -460,6 +529,7 @@ def test_build_runner_receives_plan_cwd_and_redacted_display(monkeypatch):
     log = SimpleNamespace(feed=lambda text: events.append(text))
     plan = SimpleNamespace(
         execution_cwd='/proc/self/fd/55', display_argv=display_argv,
+        scratch_directory='/mnt/fast-work',
         job_directory='/private/job',
         adapter_manifest_path='/private/job/build-manifest.json',
         partial_output_path='/private/job/output.iso')
@@ -473,6 +543,7 @@ def test_build_runner_receives_plan_cwd_and_redacted_display(monkeypatch):
         capture_exclude_paths=())
     window = SimpleNamespace(
         active_plan=plan, state=state, build_status='idle',
+        scratch_directory='/tmp/changed-after-review',
         build_phase_label=label, build_detail_label=label,
         build_log=log, runner=None,
         _build_output_redactions=(),
@@ -484,18 +555,23 @@ def test_build_runner_receives_plan_cwd_and_redacted_display(monkeypatch):
 
     ui.ImageBuilderWindow._start_command(window, raw_argv)
     observed['line_cb'](
-        'I: {} {} {} {}\n'.format(
-            secret_kernel, secret_value, background, overlay))
+        'I: {} {} {} {} {}\n'.format(
+            secret_kernel, secret_value, background, overlay,
+            plan.scratch_directory))
 
     assert observed['argv'] == raw_argv
     assert observed['cwd'] == plan.execution_cwd
+    assert observed['env']['TMPDIR'] == '/mnt/fast-work'
     assert observed['display_argv'] == display_argv
     assert observed['started']
     serialized = repr(events)
-    for private in (secret_kernel, secret_value, background, overlay):
+    for private in (
+            secret_kernel, secret_value, background, overlay,
+            plan.scratch_directory):
         assert private not in serialized
     assert '<redacted-kernel-arguments>' in serialized
     assert '<live-config-value>' in serialized
+    assert '<temporary-work-directory>' in serialized
 
 
 def test_inventory_ui_command_passes_and_redacts_cancel_path(

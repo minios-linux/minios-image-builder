@@ -21,10 +21,12 @@ Only the Python standard library is used.  This module has no GTK dependency.
 from __future__ import absolute_import
 
 import errno
+import grp
 import hashlib
 import json
 import os
 import posixpath
+import pwd
 import re
 import shutil
 import stat
@@ -108,6 +110,10 @@ FILESYSTEM_CLASS_RAM_BACKED = 'ram-backed'
 FILESYSTEM_CLASS_LIVE_OVERLAY = 'live-overlay-backed'
 FILESYSTEM_CLASS_REMOVABLE = 'removable'
 FILESYSTEM_CLASS_UNKNOWN = 'unknown'
+DEFAULT_LIVE_CHANGES_ROOTS = (
+    '/run/initramfs/memory/changes',
+    '/lib/live/mount/changes',
+)
 _PERSISTENT_FSTYPES = (
     'ext2', 'ext3', 'ext4', 'xfs', 'btrfs', 'f2fs', 'reiserfs', 'jfs',
     'vfat', 'exfat', 'ntfs', 'ntfs3', 'zfs', 'nilfs2',
@@ -417,6 +423,102 @@ def _is_real_directory(path):
     except OSError:
         return False
     return stat.S_ISDIR(file_stat.st_mode) and not stat.S_ISLNK(file_stat.st_mode)
+
+
+def _probe_private_workspace(directory):
+    """Return an error if a secure child workspace cannot be created here."""
+    parent_fd = None
+    probe_fd = None
+    probe_name = None
+    error_message = None
+    try:
+        flags = os.O_RDONLY | getattr(os, 'O_DIRECTORY', 0)
+        flags |= getattr(os, 'O_NOFOLLOW', 0)
+        parent_fd = os.open(directory, flags)
+        for _unused in range(128):
+            candidate = '.minios-image-builder-probe-{}'.format(
+                os.urandom(12).hex())
+            try:
+                os.mkdir(candidate, 0o700, dir_fd=parent_fd)
+                probe_name = candidate
+                break
+            except FileExistsError:
+                continue
+        if probe_name is None:
+            raise OSError('cannot reserve a private workspace')
+        probe_fd = os.open(probe_name, flags, dir_fd=parent_fd)
+        os.fchmod(probe_fd, 0o700)
+        file_stat = os.fstat(probe_fd)
+        if (stat.S_ISLNK(file_stat.st_mode) or
+                not stat.S_ISDIR(file_stat.st_mode) or
+                stat.S_IMODE(file_stat.st_mode) != 0o700):
+            raise OSError('filesystem cannot enforce mode 0700')
+        if (hasattr(os, 'geteuid') and
+                file_stat.st_uid != os.geteuid()):
+            raise OSError('temporary directory has an unexpected owner')
+    except (OSError, TypeError, ValueError) as error:
+        error_message = str(error)
+    if probe_fd is not None:
+        os.close(probe_fd)
+    if probe_name is not None and parent_fd is not None:
+        try:
+            os.rmdir(probe_name, dir_fd=parent_fd)
+        except OSError as error:
+            if error_message is None:
+                error_message = 'cannot remove workspace probe: {}'.format(
+                    error)
+    if parent_fd is not None:
+        os.close(parent_fd)
+    return error_message
+
+
+def _scratch_path_trust_error(directory):
+    """Reject path components that another unprivileged user can replace."""
+    current = os.path.realpath(directory)
+    expected_owners = {0}
+    if hasattr(os, 'geteuid'):
+        expected_owners.add(os.geteuid())
+    while True:
+        try:
+            file_stat = os.lstat(current)
+        except OSError as error:
+            return str(error)
+        if stat.S_ISLNK(file_stat.st_mode) or not stat.S_ISDIR(file_stat.st_mode):
+            return 'path contains a non-directory component'
+        if file_stat.st_uid not in expected_owners:
+            return 'path contains a directory owned by another user'
+        shared_write = bool(file_stat.st_mode & stat.S_IWOTH)
+        if file_stat.st_mode & stat.S_IWGRP:
+            try:
+                acl = os.getxattr(
+                    current, 'system.posix_acl_access', follow_symlinks=False)
+            except OSError as error:
+                acl = None
+                if error.errno not in (
+                        errno.ENODATA, errno.ENOTSUP,
+                        getattr(errno, 'EOPNOTSUPP', errno.ENOTSUP)):
+                    shared_write = True
+            if acl:
+                shared_write = True
+            elif not shared_write:
+                try:
+                    owner_name = pwd.getpwuid(os.geteuid()).pw_name
+                    group = grp.getgrgid(file_stat.st_gid)
+                    group_users = set(group.gr_mem)
+                    group_users.update(
+                        item.pw_name for item in pwd.getpwall()
+                        if item.pw_gid == file_stat.st_gid)
+                    group_users.discard('root')
+                    group_users.discard(owner_name)
+                    shared_write = bool(group_users)
+                except (KeyError, OSError):
+                    shared_write = True
+        if shared_write and not (file_stat.st_mode & stat.S_ISVTX):
+            return 'path contains a shared writable directory without sticky bit'
+        parent = os.path.dirname(current)
+        if parent == current:
+            return None
+        current = parent
 
 
 def _decode_output(value):
@@ -4734,6 +4836,100 @@ def _read_mount_table(mounts_path):
     return rows
 
 
+def _read_mountinfo(mountinfo_path):
+    rows = []
+    try:
+        with open(mountinfo_path, 'r') as handle:
+            for line in handle:
+                fields = line.split()
+                try:
+                    separator = fields.index('-')
+                except ValueError:
+                    continue
+                if len(fields) < 6 or separator + 2 >= len(fields):
+                    continue
+                rows.append((
+                    fields[2],
+                    _decode_mount_field(fields[3]),
+                    _decode_mount_field(fields[4]),
+                    fields[separator + 1],
+                    _decode_mount_field(','.join(fields[separator + 3:])),
+                ))
+    except (OSError, UnicodeDecodeError):
+        return []
+    return rows
+
+
+def _physical_mount_location(path, mountinfo_path):
+    target = os.path.realpath(path)
+    best = None
+    best_length = -1
+    for device, mount_root, mountpoint, _fstype, _options in _read_mountinfo(
+            mountinfo_path):
+        normalized = os.path.normpath(mountpoint)
+        prefix = os.sep if normalized == os.sep else normalized + os.sep
+        candidate = target if target.endswith(os.sep) else target + os.sep
+        if candidate != prefix and not candidate.startswith(prefix):
+            continue
+        if len(normalized) <= best_length:
+            continue
+        relative = os.path.relpath(target, normalized)
+        physical = os.path.normpath(os.path.join(mount_root, relative))
+        best = (device, physical)
+        best_length = len(normalized)
+    return best
+
+
+def _mountinfo_entry(path, mountinfo_path):
+    target = os.path.realpath(path)
+    best = None
+    best_length = -1
+    for entry in _read_mountinfo(mountinfo_path):
+        normalized = os.path.normpath(entry[2])
+        prefix = os.sep if normalized == os.sep else normalized + os.sep
+        candidate = target if target.endswith(os.sep) else target + os.sep
+        if candidate != prefix and not candidate.startswith(prefix):
+            continue
+        if len(normalized) > best_length:
+            best = entry
+            best_length = len(normalized)
+    return best
+
+
+def _uses_captured_union_storage(path, effective_changes_root,
+                                 mountinfo_path):
+    entry = _mountinfo_entry(path, mountinfo_path)
+    root_entry = _mountinfo_entry(os.sep, mountinfo_path)
+    if entry is None or root_entry is None:
+        return False
+    root_union = root_entry[3] in ('overlay', 'aufs')
+    if root_union and entry[0] == root_entry[0]:
+        return True
+    if entry[3] != 'overlay' or not effective_changes_root:
+        return False
+    for option in entry[4].split(','):
+        if not option.startswith('upperdir='):
+            continue
+        upper = option.split('=', 1)[1]
+        if (_is_within(upper, effective_changes_root) or
+                _physically_within(
+                    upper, effective_changes_root, mountinfo_path)):
+            return True
+    return False
+
+
+def _physically_within(path, directory, mountinfo_path):
+    candidate = _physical_mount_location(path, mountinfo_path)
+    root = _physical_mount_location(directory, mountinfo_path)
+    if candidate is None or root is None or candidate[0] != root[0]:
+        return False
+    try:
+        return os.path.commonpath((candidate[1], root[1])) == root[1]
+    except (AttributeError, ValueError):
+        prefix = root[1].rstrip(os.sep) + os.sep
+        return candidate[1] == root[1] or candidate[1].startswith(prefix)
+
+
 def _classify_directory_filesystem(path, mounts_path):
     """Classify the backing filesystem of ``path`` for the resource planner."""
     rows = _read_mount_table(mounts_path)
@@ -4754,20 +4950,35 @@ def _classify_directory_filesystem(path, mounts_path):
         candidate = target if target.endswith(os.sep) else target + os.sep
         if candidate == prefix or candidate.startswith(prefix):
             if len(normalized) > best_length:
-                best = (fstype, device)
+                best = (normalized, fstype, device)
                 best_length = len(normalized)
     if best is None:
         return FILESYSTEM_CLASS_UNKNOWN
-    fstype, device = best
+    mountpoint, fstype, device = best
     if fstype in RAM_BACKED_FSTYPES:
         return FILESYSTEM_CLASS_RAM_BACKED
-    if fstype == 'overlay':
+    if mountpoint == os.sep and fstype in ('overlay', 'aufs'):
         return FILESYSTEM_CLASS_LIVE_OVERLAY
     if fstype in _REMOVABLE_FSTYPES or device.startswith('/dev/sr'):
         return FILESYSTEM_CLASS_REMOVABLE
     if fstype in _PERSISTENT_FSTYPES:
         return FILESYSTEM_CLASS_PERSISTENT
     return FILESYSTEM_CLASS_UNKNOWN
+
+
+def _effective_live_changes_root(changes_roots=None):
+    """Mirror savechanges' default writable-layer selection."""
+    candidates = (DEFAULT_LIVE_CHANGES_ROOTS if changes_roots is None
+                  else tuple(changes_roots))
+    for candidate in candidates:
+        if not os.path.isdir(candidate):
+            continue
+        root = candidate
+        if (os.path.isdir(os.path.join(candidate, 'changes')) and
+                os.path.isdir(os.path.join(candidate, 'workdir'))):
+            root = os.path.join(candidate, 'changes')
+        return os.path.realpath(root)
+    return None
 
 
 def _available_memory_bytes(meminfo_path):
@@ -5093,7 +5304,7 @@ class BuildPlan(_Immutable):
 
     __slots__ = (
         'errors', 'warnings', 'estimated_input_bytes', 'argv', 'display_argv',
-        'execution_cwd', 'output_path',
+        'execution_cwd', 'output_path', 'scratch_directory',
         'partial_output_path', 'job_directory', 'adapter_manifest_path',
         'plan_id', '_manifest_json', '_manifest_payload', '_input_records',
         '_job_identity', '_job_descriptor', '_source_path',
@@ -5104,6 +5315,7 @@ class BuildPlan(_Immutable):
         '_live_config_path', '_live_config_payload', '_live_config_digest',
         '_customization_requested', '_adapter_customization_requested',
         '_overlay_directory', '_overlay_inventory', '_boot_config_payloads',
+        '_scratch_identity',
     )
 
     def __init__(self, errors, warnings, estimated_input_bytes, argv,
@@ -5118,9 +5330,10 @@ class BuildPlan(_Immutable):
                   live_config_digest=None, customization_requested=False,
                   adapter_customization_requested=False,
                   overlay_directory=None, overlay_inventory=None,
-                  boot_config_payloads=None,
-                  job_descriptor=None, source_path=None, display_argv=None,
-                  _token=None):
+                   boot_config_payloads=None,
+                   job_descriptor=None, source_path=None, display_argv=None,
+                   scratch_directory=None, scratch_identity=None,
+                   _token=None):
         if _token is not _PLAN_TOKEN:
             raise TypeError('BuildPlan objects are created by preflight')
         self.errors = tuple(errors)
@@ -5133,6 +5346,7 @@ class BuildPlan(_Immutable):
             '/proc/self/fd/{}'.format(job_descriptor)
             if job_descriptor is not None else None)
         self.output_path = output_path
+        self.scratch_directory = scratch_directory
         self.partial_output_path = partial_output_path
         self.job_directory = job_directory
         self.adapter_manifest_path = adapter_manifest_path
@@ -5164,6 +5378,8 @@ class BuildPlan(_Immutable):
         self._overlay_inventory = _freeze(overlay_inventory)
         self._boot_config_payloads = _freeze(dict(
             boot_config_payloads or {}))
+        self._scratch_identity = (
+            tuple(scratch_identity) if scratch_identity else None)
         self._lock()
 
     def __del__(self):
@@ -5315,10 +5531,11 @@ def create_build_plan(project, source_info=None,
                       tool_capabilities=None, resolver=None,
                       command_runner=None, regex_validator=None,
                       regex_runner=None,
-                      session_inventory=None, euid=None,
-                      grep='grep', roots=None, mounts_path='/proc/mounts',
-                      sys_block_root='/sys/class/block',
-                      meminfo_path='/proc/meminfo'):
+                       session_inventory=None, euid=None,
+                       grep='grep', roots=None, mounts_path='/proc/mounts',
+                       sys_block_root='/sys/class/block',
+                       meminfo_path='/proc/meminfo', changes_roots=None,
+                       mountinfo_path='/proc/self/mountinfo'):
     """Resolve, hash, validate, and allocate one secure minios-image-compose build job."""
     if not isinstance(project, ImageProject):
         raise TypeError('project must be an ImageProject')
@@ -5856,35 +6073,46 @@ def create_build_plan(project, source_info=None,
 
     source_records = _source_input_records(current_source_manifest)
     all_relative_paths = [item['relative_path'] for item in source_records]
-    reserved_capture_paths = [
+    source_capture_paths = [
         item['relative_path'] for item in source_records
         if (item['relative_path'] == 'session-capture.json' or
             re.match(r'(^|/)[0-9]+-session-changes[.]sb$',
                      item['relative_path']))]
-    reserved_capture_paths.extend(
+    additional_capture_paths = [
         item['target_path'] for item in additional
         if re.match(r'^minios/(?:modules/)?[0-9]+-session-changes[.]sb$',
-                    item['target_path']))
-    if reserved_capture_paths:
+                    item['target_path'])]
+    if source_capture_paths:
+        _add_diagnostic(
+            warnings, 'warning', 'source_session_capture_artifact',
+            'Source already contains saved session-change artifacts. They are '
+            'treated as source content and do not block further customization.')
+    if additional_capture_paths:
         _add_diagnostic(
             errors, 'error', 'reserved_session_capture_artifact',
-            'Source/additional inputs already contain reserved session '
-            'capture artifacts; remove them before building.')
-    reserved_customization_paths = [
+            'Additional modules use names reserved for generated session '
+            'capture layers; rename or remove them before building.')
+    source_customization_paths = [
         item['relative_path'] for item in source_records
         if (item['relative_path'] == 'image-customization.json' or
             re.match(r'(^|/)[0-9]+-image-overlay[.]sb$',
                      item['relative_path']))]
-    reserved_customization_paths.extend(
+    additional_customization_paths = [
         item['target_path'] for item in additional
         if re.match(
             r'^minios/(?:modules/)?[0-9]+-image-overlay[.]sb$',
-            item['target_path']))
-    if reserved_customization_paths:
+            item['target_path'])]
+    if source_customization_paths:
+        _add_diagnostic(
+            warnings, 'warning', 'source_image_customization_artifact',
+            'Source contains artifacts from an earlier Image Builder '
+            'customization. They are treated as source content and do not '
+            'block further customization.')
+    if additional_customization_paths:
         _add_diagnostic(
             errors, 'error', 'reserved_image_customization_artifact',
-            'Source/additional inputs contain reserved image customization '
-            'artifacts; remove them before building.')
+            'Additional modules use names reserved for generated image '
+            'customization layers; rename or remove them before building.')
     mandatory_paths = set(
         item.relative_path for item in selected_modules)
     mandatory_paths.update(required_boot_relative)
@@ -6075,6 +6303,13 @@ def create_build_plan(project, source_info=None,
                 _add_diagnostic(
                     errors, 'error', 'output_exists_overwrite_not_allowed',
                     'Output exists and overwrite policy is false.', output_path)
+    scratch_identity = None
+    scratch_usable = False
+    if '\n' in scratch_directory or '\r' in scratch_directory:
+        _add_diagnostic(
+            errors, 'error', 'scratch_directory_invalid',
+            'Scratch directory path must not contain line breaks.',
+            scratch_directory)
     if not os.path.isdir(scratch_directory):
         _add_diagnostic(
             errors, 'error', 'scratch_directory_missing',
@@ -6083,17 +6318,49 @@ def create_build_plan(project, source_info=None,
         _add_diagnostic(
             errors, 'error', 'scratch_directory_unwritable',
             'Scratch directory is not writable.', scratch_directory)
+    else:
+        scratch_usable = True
     if os.path.isdir(scratch_directory) and not _is_real_directory(
             scratch_directory):
         _add_diagnostic(
             errors, 'error', 'scratch_directory_symlink',
             'Scratch directory must not be a symlink.', scratch_directory)
+        scratch_usable = False
+    if scratch_usable:
+        trust_error = _scratch_path_trust_error(scratch_directory)
+        if trust_error:
+            _add_diagnostic(
+                errors, 'error', 'scratch_directory_untrusted',
+                'Scratch directory path is not protected from replacement: '
+                '{}.'.format(trust_error), scratch_directory)
+        else:
+            probe_error = _probe_private_workspace(scratch_directory)
+            if probe_error:
+                _add_diagnostic(
+                    errors, 'error', 'scratch_directory_incompatible',
+                    'Scratch directory cannot hold a secure private workspace: '
+                    '{}.'.format(probe_error), scratch_directory)
+            else:
+                try:
+                    scratch_identity = _identity(os.lstat(scratch_directory))
+                except OSError as error:
+                    _add_diagnostic(
+                        errors, 'error', 'scratch_directory_unavailable',
+                        str(error), scratch_directory)
     if _is_within(scratch_directory,
                   source_info.source_path or project.source_path):
         _add_diagnostic(
             errors, 'error', 'scratch_within_source',
             'Scratch directory must not be inside the source tree.',
             scratch_directory)
+    if (project.overlay_directory and
+            (_is_within(scratch_directory, project.overlay_directory) or
+             _physically_within(scratch_directory, project.overlay_directory,
+                                mountinfo_path))):
+        _add_diagnostic(
+            errors, 'error', 'scratch_within_project_overlay',
+            'Scratch directory must not be inside the project filesystem '
+            'layer.', scratch_directory)
 
     estimated_input_bytes = sum(item['size'] for item in included_source_records)
     estimated_input_bytes += sum(item.get('size') or 0 for item in additional)
@@ -6165,18 +6432,50 @@ def create_build_plan(project, source_info=None,
                         min(destination_free, scratch_free),
                         combined_required_bytes), output_directory)
 
-    # Resource planner (advisory): classify the work filesystems and account
-    # for RAM-backed workspaces against available memory. This never blocks a
-    # build by filesystem type; a deliberate RAM build that fits is supported,
-    # and hard capacity shortfalls are already reported by the free-space
-    # checks above. It only warns when a RAM-backed selection risks memory
-    # pressure and points at persistent alternatives.
+    # Classify work filesystems and account RAM-backed workspaces against
+    # available memory. RAM use remains advisory, but a live-overlay scratch
+    # directory is unsafe while that writable layer is being captured.
     destination_filesystem_class = (
         _classify_directory_filesystem(output_directory, mounts_path)
         if os.path.isdir(output_directory) else FILESYSTEM_CLASS_UNKNOWN)
     scratch_filesystem_class = (
         _classify_directory_filesystem(scratch_directory, mounts_path)
         if os.path.isdir(scratch_directory) else FILESYSTEM_CLASS_UNKNOWN)
+    effective_changes_root = _effective_live_changes_root(changes_roots)
+    destination_uses_captured_union = _uses_captured_union_storage(
+        output_directory, effective_changes_root, mountinfo_path)
+    scratch_uses_captured_union = _uses_captured_union_storage(
+        scratch_directory, effective_changes_root, mountinfo_path)
+    if (capture_requested and
+            (destination_filesystem_class == FILESYSTEM_CLASS_LIVE_OVERLAY or
+             destination_uses_captured_union)):
+        _add_diagnostic(
+            errors, 'error', 'destination_on_captured_live_overlay',
+            'Private output work files on the live writable layer could be '
+            'included in the saved session changes.', output_directory)
+    if (capture_requested and
+            (scratch_filesystem_class == FILESYSTEM_CLASS_LIVE_OVERLAY or
+             scratch_uses_captured_union)):
+        _add_diagnostic(
+            errors, 'error', 'scratch_on_captured_live_overlay',
+            'Temporary build files on the live writable layer could be '
+            'included in the saved session changes.', scratch_directory)
+    if (capture_requested and effective_changes_root and
+            (_is_within(scratch_directory, effective_changes_root) or
+             _physically_within(scratch_directory, effective_changes_root,
+                                mountinfo_path))):
+        _add_diagnostic(
+            errors, 'error', 'scratch_within_captured_changes',
+            'Temporary work directory must be outside the changes directory '
+            'that is being saved.', scratch_directory)
+    if (capture_requested and effective_changes_root and
+            (_is_within(output_directory, effective_changes_root) or
+             _physically_within(output_directory, effective_changes_root,
+                                mountinfo_path))):
+        _add_diagnostic(
+            errors, 'error', 'destination_within_captured_changes',
+            'Output directory must be outside the changes directory that is '
+            'being saved.', output_directory)
     available_memory_bytes = _available_memory_bytes(meminfo_path)
     ram_backed_bytes = 0
     if destination_filesystem_class == FILESYSTEM_CLASS_RAM_BACKED:
@@ -6549,6 +6848,8 @@ def create_build_plan(project, source_info=None,
         job_descriptor=job_descriptor,
         source_path=source_info.source_path,
         display_argv=display_argv,
+        scratch_directory=os.path.realpath(scratch_directory),
+        scratch_identity=scratch_identity,
         _token=_PLAN_TOKEN)
 
 
@@ -6583,6 +6884,33 @@ def _validate_job_identity(plan):
     if hasattr(os, 'geteuid') and file_stat.st_uid != os.geteuid():
         raise ImageProjectError('private job directory owner changed')
     return retained_stat
+
+
+def _validate_scratch_identity(plan):
+    if not plan.scratch_directory or plan._scratch_identity is None:
+        raise ImageProjectError(
+            'plan has no validated temporary work directory')
+    try:
+        file_stat = os.lstat(plan.scratch_directory)
+    except OSError as error:
+        raise ImageProjectError(
+            'temporary work directory is unavailable: {}'.format(error))
+    if (stat.S_ISLNK(file_stat.st_mode) or
+            not stat.S_ISDIR(file_stat.st_mode) or
+            _identity(file_stat) != plan._scratch_identity or
+            not _mode_is_writable_directory(plan.scratch_directory)):
+        raise ImageProjectError(
+            'temporary work directory changed after preflight')
+    trust_error = _scratch_path_trust_error(plan.scratch_directory)
+    if trust_error:
+        raise ImageProjectError(
+            'temporary work directory is no longer trusted: {}'.format(
+                trust_error))
+    probe_error = _probe_private_workspace(plan.scratch_directory)
+    if probe_error:
+        raise ImageProjectError(
+            'temporary work directory is no longer usable: {}'.format(
+                probe_error))
 
 
 def _duplicate_job_descriptor(plan):
@@ -6806,6 +7134,7 @@ def _materialize_live_config(plan):
 
 def prepare_build_command(plan):
     """Return argv only after the mandatory immediate input revalidation."""
+    _validate_scratch_identity(plan)
     diagnostics = revalidate_build_plan_inputs(plan)
     if diagnostics:
         raise ImageProjectError(
@@ -6825,6 +7154,7 @@ def prepare_build_command(plan):
     if plan._capture_selection_path:
         _materialize_capture_selection(plan)
     _validate_job_identity(plan)
+    _validate_scratch_identity(plan)
     return tuple(plan.argv)
 
 

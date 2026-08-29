@@ -16,6 +16,7 @@ import shutil
 import stat
 import subprocess
 import sys
+import tempfile
 
 import gi
 
@@ -120,10 +121,110 @@ MODULE_DESCRIPTION_TRANSLATIONS = {
 }
 
 DIAGNOSTIC_TRANSLATIONS = {
+    'destination_space_insufficient': (
+        _('Not enough space for the output image'),
+        _('The selected output location does not have enough free space. '
+          'Choose an output path on a filesystem with more free space.')),
+    'destination_on_captured_live_overlay': (
+        _('Output work files would be saved into the image'),
+        _('The selected output directory is on the live writable layer. This '
+          'build includes session changes, so private build files created next '
+          'to the ISO could be captured. Choose an output path on a separate '
+          'mounted Linux filesystem.')),
+    'destination_within_captured_changes': (
+        _('Output directory is inside the changes being saved'),
+        _('Choose an output path outside the MiniOS changes directory. A '
+          'separate mounted Linux filesystem is safe.')),
+    'scratch_space_insufficient': (
+        _('Not enough temporary workspace'),
+        _('The temporary work directory does not have enough free space. '
+          'Choose another temporary work directory on the Settings page, '
+          'or free space on its filesystem.')),
+    'scratch_directory_missing': (
+        _('Temporary work directory was not found'),
+        _('Choose an existing writable directory on the Settings page.')),
+    'scratch_directory_unwritable': (
+        _('Temporary work directory is not writable'),
+        _('Choose a directory where your user can create and remove files.')),
+    'scratch_directory_symlink': (
+        _('Temporary work directory cannot be a symbolic link'),
+        _('Choose the real directory instead of a symbolic link.')),
+    'scratch_directory_incompatible': (
+        _('Storage cannot protect temporary build files'),
+        _('Image Builder could not create a private directory with mode 0700 '
+          'on this storage. Choose a writable Linux filesystem such as ext4.')),
+    'scratch_directory_unavailable': (
+        _('Temporary work directory became unavailable'),
+        _('Check that the selected storage is still mounted, then choose the '
+          'directory again.')),
+    'scratch_directory_invalid': (
+        _('Temporary work directory path is invalid'),
+        _('Choose a directory whose path does not contain a line break.')),
+    'scratch_directory_untrusted': (
+        _('Temporary work directory is not protected'),
+        _('Another user could replace files in the selected path while the '
+          'image is being built. Choose a directory owned by you or root that '
+          'is not shared for writing. Standard /tmp is also supported.')),
+    'scratch_within_source': (
+        _('Temporary directory is inside the source image'),
+        _('Choose a temporary work directory outside the mounted MiniOS '
+          'source.')),
+    'scratch_within_project_overlay': (
+        _('Temporary directory is inside the project filesystem layer'),
+        _('Choose a temporary work directory outside the directory whose '
+          'files are being added to the image.')),
+    'scratch_on_captured_live_overlay': (
+        _('Temporary files would be saved into the image'),
+        _('The selected directory is on the live writable layer. This build '
+          'includes session changes, so its temporary files could be captured. '
+          'Choose a directory on a separate mounted Linux filesystem.')),
+    'scratch_within_captured_changes': (
+        _('Temporary directory is inside the changes being saved'),
+        _('Choose a temporary work directory outside the MiniOS changes '
+          'directory. A separate mounted Linux filesystem is safe.')),
+    'combined_space_insufficient': (
+        _('Output and temporary files need more space'),
+        _('The output image and temporary work directory are on the same '
+          'filesystem, which does not have enough free space for both at the '
+          'same time. Move either location to another filesystem or free '
+          'additional space.')),
+    'sensitive_config_present': (
+        _('Configuration may contain sensitive values'),
+        _('The current MiniOS configuration contains plaintext settings with '
+          'sensitive-looking names. Image Builder copies their values unchanged '
+          'into the new image but does not display or log them. Review the '
+          'configuration before sharing the image.')),
+    'capture_size_unknown': (
+        _('Session-change size is unknown'),
+        _('No complete analyzed session inventory is available for this '
+          'estimate. Image Builder does not invent a size; analyze the current '
+          'session changes on the Settings page if you need a more accurate '
+          'space estimate.')),
     'clean_capture_allowlist': (
         _('Reusable changes only'),
         _('Clean capture uses a strict allowlist. It omits general system '
           'state, user data, identity files, logs, and caches.')),
+    'source_session_capture_artifact': (
+        _('Source already contains saved session changes'),
+        _('The existing session layer is treated as part of the source, so you '
+          'can continue modifying the image. To omit that saved session, '
+          'disable the corresponding *-session-changes.sb module in the module '
+          'list. If you include changes from the current session, a new layer '
+          'is added after the existing source modules.')),
+    'reserved_session_capture_artifact': (
+        _('An added module uses a reserved session-layer name'),
+        _('Image Builder reserves *-session-changes.sb for session layers it '
+          'creates itself. Rename or remove the added module before building.')),
+    'source_image_customization_artifact': (
+        _('Source was previously customized by Image Builder'),
+        _('Existing customization data is treated as part of the source. You '
+          'can continue and apply more changes; newly generated customization '
+          'metadata replaces the previous report when required.')),
+    'reserved_image_customization_artifact': (
+        _('An added module uses a reserved customization-layer name'),
+        _('Image Builder reserves *-image-overlay.sb for project filesystem '
+          'layers it creates itself. Rename or remove the added module before '
+          'building.')),
 }
 
 RESULT_INTENT_CLASSES = (
@@ -743,6 +844,7 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         self.final_output_path = None
         self.vm_capabilities = None
         self.cleanup_warnings = []
+        self.scratch_directory = tempfile.gettempdir()
 
         self.source_loading = True
         self.source_exception = None
@@ -2043,12 +2145,45 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         self._compact_row(identity_grid, 2, _('Output image'), output_row)
         output_detail = Gtk.Label(
             label=_('Use a writable disk with enough free space. Review '
-                    'checks both destination and scratch requirements.'),
+                    'checks both destination and scratch requirements. When '
+                    'including session changes, place the ISO on a separate '
+                    'mounted Linux filesystem rather than /home/live.'),
             xalign=0)
         output_detail.set_line_wrap(True)
         output_detail.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR)
         output_detail.get_style_context().add_class('field-description')
         identity.pack_start(output_detail, False, False, 0)
+
+        scratch_row = Gtk.Box(
+            orientation=Gtk.Orientation.HORIZONTAL, spacing=7)
+        self.scratch_entry = Gtk.Entry()
+        self.scratch_entry.set_hexpand(True)
+        self.scratch_entry.set_placeholder_text(
+            _('Directory for temporary build files'))
+        self.scratch_entry.connect('changed', self._on_scratch_changed)
+        scratch_row.pack_start(self.scratch_entry, True, True, 0)
+        scratch_browse = Gtk.Button(label=_('Choose'))
+        scratch_browse.set_image(Gtk.Image.new_from_icon_name(
+            'folder-open-symbolic', Gtk.IconSize.BUTTON))
+        scratch_browse.get_style_context().add_class('minios-text-button')
+        scratch_browse.connect('clicked', self._on_choose_scratch)
+        scratch_row.pack_end(scratch_browse, False, False, 0)
+        self._compact_row(
+            identity_grid, 3, _('Temporary work directory'), scratch_row)
+        scratch_detail = Gtk.Label(
+            label=_('MiniOS uses /tmp by default; in a live session this uses '
+                    'RAM. For a large image, choose an existing writable '
+                    'directory on a mounted Linux filesystem, such as an ext4 '
+                    'partition on another disk or USB drive. It must have the '
+                    'free space shown at Review. When including session '
+                    'changes, do not choose /home/live or any directory inside '
+                    'the changes being saved. Temporary files are removed '
+                    'after the build.'),
+            xalign=0)
+        scratch_detail.set_line_wrap(True)
+        scratch_detail.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR)
+        scratch_detail.get_style_context().add_class('field-description')
+        identity.pack_start(scratch_detail, False, False, 0)
 
         config_card = self._settings_card(
             body, _('Current configuration'),
@@ -3040,6 +3175,7 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         self.menu_combo.set_active_id(self.state.menu_locale)
         self.volume_entry.set_text(self.state.volume_label)
         self.output_entry.set_text(self.state.output_path)
+        self.scratch_entry.set_text(self.scratch_directory)
         for key, widget in self.live_config_widgets.items():
             value = self.state.live_config_overrides.get(key)
             if isinstance(widget, Gtk.Entry):
@@ -3457,6 +3593,18 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             if self.state.set_output_path(entry.get_text().strip()):
                 self._intent_changed()
 
+    def _on_scratch_changed(self, entry):
+        if self._syncing:
+            return
+        text = entry.get_text()
+        path = os.path.abspath(os.path.expanduser(
+            text or tempfile.gettempdir()))
+        if path == self.scratch_directory:
+            return
+        self.scratch_directory = path
+        self._invalidate_plan()
+        self._update_chrome()
+
     def _set_customization_error(self, key, error):
         changed = self.state.set_customization_input_error(key, error)
         if error:
@@ -3685,11 +3833,8 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
                 (item for item in self.state.boot_menu_entries
                  if item['enabled'] and item['default']), None)
             if default_entry is not None:
-                title = (default_entry.get('title') or
-                         DEFAULT_BOOT_TITLES[default_entry['base_mode']])
                 self.default_boot_combo.append(
-                    'constructor',
-                    _('Set in menu constructor: {title}').format(title=title))
+                    'constructor', _('Set in menu constructor'))
                 self.default_boot_combo.set_active_id('constructor')
             self.default_boot_combo.set_sensitive(False)
             return
@@ -4471,6 +4616,21 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             self.output_entry.set_text(path)
         dialog.destroy()
 
+    def _on_choose_scratch(self, _button):
+        dialog = Gtk.FileChooserDialog(
+            title=_('Choose temporary work directory'), transient_for=self,
+            action=Gtk.FileChooserAction.SELECT_FOLDER)
+        dialog.add_buttons(
+            _('Cancel'), Gtk.ResponseType.CANCEL,
+            _('Choose'), Gtk.ResponseType.OK)
+        if os.path.isdir(self.scratch_directory):
+            dialog.set_current_folder(self.scratch_directory)
+        if dialog.run() == Gtk.ResponseType.OK:
+            path = dialog.get_filename()
+            if path:
+                self.scratch_entry.set_text(path)
+        dialog.destroy()
+
     # Review page and planning --------------------------------------------
     def _build_review_page(self):
         page, body = self._page(
@@ -4536,7 +4696,8 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             return create_project_plan(
                 project, source_info, session_inventory,
                 command_runner=runner,
-                current_config_payload=current_config_payload)
+                current_config_payload=current_config_payload,
+                scratch_directory=self.scratch_directory)
 
         def finished(plan, error, cancelled):
             self._task = None
@@ -4830,6 +4991,34 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
                 estimate.get('available_memory_bytes'))))
         self.review_content.pack_start(
             self._key_value_grid(tuple(rows)), False, False, 0)
+        scratch_class = estimate.get('scratch_filesystem_class')
+        scratch_required = self._size_value(
+            estimate.get('required_scratch_bytes'))
+        if scratch_class == backend.FILESYSTEM_CLASS_RAM_BACKED:
+            storage_guidance = _(
+                'The selected temporary directory is in RAM. The build may '
+                'use up to {size} of memory for temporary files. To avoid '
+                'this, return to Settings and choose a writable directory on '
+                'a mounted Linux filesystem.').format(size=scratch_required)
+        elif scratch_class == backend.FILESYSTEM_CLASS_PERSISTENT:
+            storage_guidance = _(
+                'The selected temporary directory is on persistent storage. '
+                'Temporary build files will not use tmpfs capacity.')
+        elif scratch_class == backend.FILESYSTEM_CLASS_LIVE_OVERLAY:
+            storage_guidance = _(
+                'The selected temporary directory is on the live writable '
+                'layer. It can consume RAM or changes storage; choose a '
+                'separate mounted Linux filesystem to avoid that.')
+        else:
+            storage_guidance = _(
+                'Image Builder could not identify this storage type. Keep it '
+                'mounted until the build finishes and make sure it has at '
+                'least {size} free.').format(size=scratch_required)
+        storage_label = Gtk.Label(label=storage_guidance, xalign=0)
+        storage_label.set_line_wrap(True)
+        storage_label.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR)
+        storage_label.get_style_context().add_class('field-description')
+        self.review_content.pack_start(storage_label, False, False, 0)
 
         if plan.errors:
             self._section(self.review_content, _('Blocking issues'))
@@ -5221,6 +5410,9 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
              '<private-build-manifest>'),
             (getattr(plan, 'partial_output_path', None),
              '<private-partial-output>'),
+            ((getattr(plan, 'scratch_directory', None)
+              if getattr(plan, 'scratch_directory', None) != os.sep else None),
+             '<temporary-work-directory>'),
         ]
         private_values.extend(
             (value, '<live-config-value>')
@@ -5237,10 +5429,13 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
                 redactions.append((value, replacement))
         self._build_output_redactions = tuple(sorted(
             redactions, key=lambda item: len(item[0]), reverse=True))
+        build_env = os.environ.copy()
+        build_env['TMPDIR'] = plan.scratch_directory
         self.runner = CommandRunner(
             list(argv), line_cb=self._on_command_line,
             on_finished=self._on_command_finished,
-            cwd=plan.execution_cwd, display_argv=plan.display_argv)
+            cwd=plan.execution_cwd, env=build_env,
+            display_argv=plan.display_argv)
         self.build_log.feed('$ {}\n\n'.format(
             self.runner.formatted_command))
         self.runner.start()

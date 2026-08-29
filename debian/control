@@ -17,7 +17,7 @@ Depends: ${misc:Depends},
          xorriso,
          squashfs-tools,
          e2fsprogs
-Recommends: minios-tools (>= 1.5.0),
+Recommends: minios-tools (>= 1.6.3),
             polkitd | policykit-1,
             pkexec | policykit-1
 Description: MiniOS image composition backend (minios-image-compose)
@@ -44,7 +44,7 @@ Depends: ${misc:Depends},
          pkexec | policykit-1,
          python3-minios-gui (>= 1.2.0),
          librsvg2-common
-Recommends: minios-tools (>= 1.5.0), policykit-1-gnome | lxpolkit, udisks2
+Recommends: minios-tools (>= 1.6.3), policykit-1-gnome | lxpolkit, udisks2
 Description: customize the running MiniOS as a verified bootable image
  MiniOS Image Builder is a GTK project workspace for remastering MiniOS from
  the running session, a mounted ISO image, or an optical disc. It composes .sb

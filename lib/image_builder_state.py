@@ -1143,14 +1143,17 @@ def prepare_plan_execution(plan):
 
 
 def create_project_plan(project, source_info, session_inventory=None,
-                        command_runner=None, current_config_payload=None):
-    """Forward the in-memory inventory explicitly into backend planning."""
+                        command_runner=None, current_config_payload=None,
+                        scratch_directory=None):
+    """Forward runtime-only planning inputs explicitly into the backend."""
     options = {
         'source_info': source_info,
         'session_inventory': session_inventory,
     }
     if current_config_payload is not None:
         options['current_config_payload'] = current_config_payload
+    if scratch_directory is not None:
+        options['scratch_directory'] = scratch_directory
     if command_runner is not None:
         options['command_runner'] = command_runner
     return image_project.create_build_plan(project, **options)

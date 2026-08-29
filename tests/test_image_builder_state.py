@@ -950,6 +950,19 @@ def test_planning_forwards_authorized_live_config(monkeypatch):
     assert observed['current_config_payload'] == b'private\n'
 
 
+def test_planning_forwards_selected_scratch_directory(monkeypatch):
+    observed = {}
+
+    def create(project, **options):
+        observed.update(options)
+        return 'plan'
+
+    monkeypatch.setattr(controller.image_project, 'create_build_plan', create)
+    assert controller.create_project_plan(
+        'project', 'source', scratch_directory='/mnt/work') == 'plan'
+    assert observed['scratch_directory'] == '/mnt/work'
+
+
 def test_private_live_config_uses_fixed_privileged_reader(monkeypatch):
     def denied(*_args, **_kwargs):
         raise PermissionError('private')
