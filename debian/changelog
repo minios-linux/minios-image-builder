@@ -14,8 +14,9 @@ minios-image-builder (1.0.4) unstable; urgency=medium
     iterative-customization regression coverage.
   * Recommend aufs-ng-capable MiniOS Tools for live-session capture.
   * Run Python and CLI regression suites during package builds.
+  * Exercise image and SquashFS integration tests in clean package builds.
 
- -- crims0n <crims0n@minios.dev>  Sun, 30 Aug 2026 00:18:37 +0300
+ -- crims0n <crims0n@minios.dev>  Sun, 30 Aug 2026 01:26:53 +0300
 
 minios-image-builder (1.0.3) unstable; urgency=medium
 
