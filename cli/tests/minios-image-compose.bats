@@ -110,9 +110,9 @@ prepare_real_iso_fixture() {
     write_file "$module_root/core/core.txt" core
     write_file "$module_root/kernel/kernel.txt" kernel
     "$REAL_MKSQUASHFS" "$module_root/core" "$SOURCE/00-core-amd64.sb" \
-        -noappend -all-root -quiet
+        -noappend -all-root >/dev/null
     "$REAL_MKSQUASHFS" "$module_root/kernel" "$SOURCE/01-kernel-amd64.sb" \
-        -noappend -all-root -quiet
+        -noappend -all-root >/dev/null
 
     python3 -c '
 import os, sys

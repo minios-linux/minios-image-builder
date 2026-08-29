@@ -15,8 +15,9 @@ minios-image-builder (1.0.4) unstable; urgency=medium
   * Recommend aufs-ng-capable MiniOS Tools for live-session capture.
   * Run Python and CLI regression suites during package builds.
   * Exercise image and SquashFS integration tests in clean package builds.
+  * Keep real SquashFS test fixtures compatible with the Bionic toolset.
 
- -- crims0n <crims0n@minios.dev>  Sun, 30 Aug 2026 01:26:53 +0300
+ -- crims0n <crims0n@minios.dev>  Sun, 30 Aug 2026 01:34:33 +0300
 
 minios-image-builder (1.0.3) unstable; urgency=medium
 

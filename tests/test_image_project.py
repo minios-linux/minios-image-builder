@@ -2724,7 +2724,7 @@ def test_real_unsquashfs_validation_with_mksquashfs_fixture(tmp_path):
     _write(source / 'file.txt', b'payload')
     module = tmp_path / 'actual.sb'
     result = subprocess.run(
-        [mksquashfs, str(source), str(module), '-noappend', '-quiet',
+        [mksquashfs, str(source), str(module), '-noappend',
          '-processors', '1'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if result.returncode != 0:
         pytest.skip('mksquashfs is not usable in this environment')
@@ -3638,7 +3638,7 @@ def test_real_xorriso_extracts_and_attests_capture_layer(tmp_path):
     capture_module = tmp_path / 'capture.sb'
     compressed = subprocess.run(
         [mksquashfs, str(capture_root), str(capture_module), '-noappend',
-         '-quiet', '-processors', '1'], stdout=subprocess.PIPE,
+         '-processors', '1'], stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     if compressed.returncode != 0:
         pytest.skip('mksquashfs cannot create capture fixture')
@@ -3707,7 +3707,7 @@ def test_real_xorriso_extracts_and_attests_image_customization(tmp_path):
     overlay_module = tmp_path / 'real-overlay.sb'
     compressed = subprocess.run(
         [mksquashfs, str(overlay), str(overlay_module), '-noappend',
-         '-quiet', '-processors', '1'], stdout=subprocess.PIPE,
+         '-processors', '1'], stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     if compressed.returncode != 0:
         pytest.skip('mksquashfs cannot create customization fixture')
