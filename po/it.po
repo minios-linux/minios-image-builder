@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: minios-image-builder 1.0.0\n"
 "Report-Msgid-Bugs-To: support@minios.dev\n"
-"POT-Creation-Date: 2026-08-28 21:34+0300\n"
-"PO-Revision-Date: 2026-08-28 18:35+0000\n"
+"POT-Creation-Date: 2026-09-01 01:27+0300\n"
+"PO-Revision-Date: 2026-08-31 21:49+0000\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "Language: it\n"
@@ -852,7 +852,7 @@ msgstr "Modulo personalizzato"
 #: lib/main_image_builder.py:831 lib/main_image_builder.py:899
 #: share/applications/minios-image-builder.desktop:4
 msgid "MiniOS Image Builder"
-msgstr "MiniOS Image Builder"
+msgstr "Generatore di immagini MiniOS"
 
 #: lib/main_image_builder.py:903
 msgid "New project"
@@ -2947,7 +2947,7 @@ msgid ""
 msgstr ""
 "{error}\n"
 "\n"
-"Scegli un progetto JSON creato da MiniOS Image Builder. Il file non è stato modificato."
+"Scegli un progetto JSON creato da MiniOS Generatore di immagini. Il file non è stato modificato."
 
 #: lib/main_image_builder.py:6228
 msgid "Save image project"
@@ -3014,6 +3014,3 @@ msgstr "Crea un'immagine MiniOS verificata con personalizzazione di sistema, avv
 #: share/applications/minios-image-builder.desktop:22
 msgid "iso;image;compose;savechanges;capture;session;customize;boot;overlay;remaster;live;"
 msgstr "iso;immagine;compila;salvachanges;cattura;sessione;personalizza;boot;overlay;remaster;live;"
-
-#~ msgid "Use a writable disk with enough free space. Review checks both destination and scratch requirements."
-#~ msgstr "Utilizza un disco scrivibile con spazio libero sufficiente. Il controllo verifica sia la destinazione che i requisiti temporanei."

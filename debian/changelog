@@ -1,3 +1,9 @@
+minios-image-builder (1.0.5) unstable; urgency=medium
+
+  * Refresh translations, desktop metadata and localized manual pages
+
+ -- crims0n <crims0n@minios.dev>  Tue, 01 Sep 2026 02:17:41 +0300
+
 minios-image-builder (1.0.4) unstable; urgency=medium
 
   * Add a selectable temporary work directory, with storage capacity,

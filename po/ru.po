@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: minios-image-builder 1.0.0\n"
 "Report-Msgid-Bugs-To: support@minios.dev\n"
-"POT-Creation-Date: 2026-08-28 21:34+0300\n"
-"PO-Revision-Date: 2026-08-28 18:35+0000\n"
+"POT-Creation-Date: 2026-09-01 01:27+0300\n"
+"PO-Revision-Date: 2026-08-30 20:04+0000\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -2947,7 +2947,7 @@ msgid ""
 msgstr ""
 "{error}\n"
 "\n"
-"Выберите JSON-проект, созданный MiniOS Image Builder. Файл не был изменён."
+"Выберите JSON-проект, созданный Конструктором образов MiniOS. Файл не был изменён."
 
 #: lib/main_image_builder.py:6228
 msgid "Save image project"
@@ -3014,6 +3014,3 @@ msgstr "Создайте проверенный образ MiniOS с возмо�
 #: share/applications/minios-image-builder.desktop:22
 msgid "iso;image;compose;savechanges;capture;session;customize;boot;overlay;remaster;live;"
 msgstr "iso;образ;сборка;сохранить изменения;захват;сессия;настройка;загрузка;оверлей;ремастер;live;"
-
-#~ msgid "Use a writable disk with enough free space. Review checks both destination and scratch requirements."
-#~ msgstr "Используйте записываемый диск с достаточным свободным местом. Проверка учитывает требования как к месту назначения, так и к временной папке."

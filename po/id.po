@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: minios-image-builder 1.0.0\n"
 "Report-Msgid-Bugs-To: support@minios.dev\n"
-"POT-Creation-Date: 2026-08-28 21:34+0300\n"
-"PO-Revision-Date: 2026-08-28 18:35+0000\n"
+"POT-Creation-Date: 2026-09-01 01:27+0300\n"
+"PO-Revision-Date: 2026-08-31 21:49+0000\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "Language: id\n"
@@ -851,7 +851,7 @@ msgstr "Modul Kustom"
 #: lib/main_image_builder.py:831 lib/main_image_builder.py:899
 #: share/applications/minios-image-builder.desktop:4
 msgid "MiniOS Image Builder"
-msgstr "MiniOS Image Builder"
+msgstr "Pembuat Citra MiniOS"
 
 #: lib/main_image_builder.py:903
 msgid "New project"
@@ -2946,7 +2946,7 @@ msgid ""
 msgstr ""
 "{error}\n"
 "\n"
-"Pilih proyek JSON yang dibuat oleh MiniOS Image Builder. File tidak diubah."
+"Pilih proyek JSON yang dibuat oleh Pembuat Citra MiniOS. File tidak diubah."
 
 #: lib/main_image_builder.py:6228
 msgid "Save image project"
@@ -3013,6 +3013,3 @@ msgstr "Buat image MiniOS terverifikasi dengan kustomisasi sistem, boot, layer, 
 #: share/applications/minios-image-builder.desktop:22
 msgid "iso;image;compose;savechanges;capture;session;customize;boot;overlay;remaster;live;"
 msgstr "iso;image;compose;savechanges;capture;session;customize;boot;overlay;remaster;live;"
-
-#~ msgid "Use a writable disk with enough free space. Review checks both destination and scratch requirements."
-#~ msgstr "Gunakan disk yang dapat ditulis dengan ruang kosong yang cukup. Peninjauan akan memeriksa kebutuhan ruang di tujuan dan scratch."
