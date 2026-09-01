@@ -22,6 +22,7 @@ setup() {
     SESSION_SELECTION="$TEST_ROOT/session selection.json"
     OVERLAY_MKS_STUB="$TEST_ROOT/capture bin/mksquashfs"
 
+    rm -rf -- "$TEST_ROOT"
     mkdir -p \
         "$SOURCE/boot/syslinux" \
         "$SOURCE/boot/grub/i386-pc" \
