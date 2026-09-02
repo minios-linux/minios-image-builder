@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: minios-image-builder 1.0.0\n"
 "Report-Msgid-Bugs-To: support@minios.dev\n"
-"POT-Creation-Date: 2026-09-01 01:27+0300\n"
-"PO-Revision-Date: 2026-08-30 20:04+0000\n"
+"POT-Creation-Date: 2026-09-02 14:13+0300\n"
+"PO-Revision-Date: 2026-09-02 10:43+0000\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "Language: ru\n"
@@ -3014,3 +3014,11 @@ msgstr "Создайте проверенный образ MiniOS с возмо�
 #: share/applications/minios-image-builder.desktop:22
 msgid "iso;image;compose;savechanges;capture;session;customize;boot;overlay;remaster;live;"
 msgstr "iso;образ;сборка;сохранить изменения;захват;сессия;настройка;загрузка;оверлей;ремастер;live;"
+
+#: share/polkit-1/actions/org.minios.imagebuilder.read-live-config.policy:9
+msgid "Read the current MiniOS configuration for Image Builder"
+msgstr "Прочитать текущую конфигурацию MiniOS для Image Builder"
+
+#: share/polkit-1/actions/org.minios.imagebuilder.read-live-config.policy:18
+msgid "Authentication is required to read the current MiniOS configuration"
+msgstr "Для чтения текущей конфигурации MiniOS требуется аутентификация"

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: minios-image-builder 1.0.0\n"
 "Report-Msgid-Bugs-To: support@minios.dev\n"
-"POT-Creation-Date: 2026-09-01 01:27+0300\n"
-"PO-Revision-Date: 2026-08-31 21:49+0000\n"
+"POT-Creation-Date: 2026-09-02 14:13+0300\n"
+"PO-Revision-Date: 2026-09-02 10:43+0000\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "Language: id\n"
@@ -3013,3 +3013,11 @@ msgstr "Buat image MiniOS terverifikasi dengan kustomisasi sistem, boot, layer, 
 #: share/applications/minios-image-builder.desktop:22
 msgid "iso;image;compose;savechanges;capture;session;customize;boot;overlay;remaster;live;"
 msgstr "iso;image;compose;savechanges;capture;session;customize;boot;overlay;remaster;live;"
+
+#: share/polkit-1/actions/org.minios.imagebuilder.read-live-config.policy:9
+msgid "Read the current MiniOS configuration for Image Builder"
+msgstr "Baca konfigurasi MiniOS saat ini untuk Image Builder"
+
+#: share/polkit-1/actions/org.minios.imagebuilder.read-live-config.policy:18
+msgid "Authentication is required to read the current MiniOS configuration"
+msgstr "Autentikasi diperlukan untuk membaca konfigurasi MiniOS saat ini"
