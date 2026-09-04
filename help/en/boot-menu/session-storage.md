@@ -11,7 +11,7 @@ choice.
 ## Storage type
 
 - **Automatic** keeps the template or saved-session mode.
-- **Native** stores changes in a directory on a Linux filesystem.
+- **Native** stores changes directly in a directory on a filesystem with Unix permissions, such as ext4, XFS, or Btrfs.
 - **Dynfilefs** uses an expandable container.
 - **Raw** uses a fixed-size image.
 - **LUKS** uses an encrypted container.

@@ -111,7 +111,7 @@
                 ],
                 [
                   "text",
-                  " mantém o modo do modelo ou da sessão salva."
+                  " mantém o modo de template ou sessão salva."
                 ]
               ]
             ]
@@ -141,7 +141,7 @@
                 ],
                 [
                   "text",
-                  " armazena alterações em um diretório em um sistema de arquivos Linux."
+                  " armazena as alterações diretamente em um diretório no sistema de arquivos com permissões Unix, como ext4, XFS ou Btrfs."
                 ]
               ]
             ]
@@ -171,7 +171,7 @@
                 ],
                 [
                   "text",
-                  " usa um contêiner expansível."
+                  " utiliza um contêiner expansível."
                 ]
               ]
             ]
@@ -201,7 +201,7 @@
                 ],
                 [
                   "text",
-                  " usa uma imagem de tamanho fixo."
+                  " utiliza uma imagem de tamanho fixo."
                 ]
               ]
             ]
@@ -231,7 +231,7 @@
                 ],
                 [
                   "text",
-                  " usa um contêiner criptografado."
+                  " utiliza um contêiner criptografado."
                 ]
               ]
             ]
@@ -426,7 +426,7 @@
       ]
     ]
   ],
-  "plain_text": "Sessão e armazenamento\nEscolha como esta entrada localiza e armazena alterações persistentes.\nSeleção de sessão\nO modelo de entrada controla se o MiniOS retoma a sessão mais recente, cria uma nova ou pergunta na inicialização. O tipo de armazenamento não substitui essa escolha do modelo.\nTipo de armazenamento\nAutomático mantém o modo do modelo ou da sessão salva.\nNativo armazena alterações em um diretório em um sistema de arquivos Linux.\nDynfilefs usa um contêiner expansível.\nRaw usa uma imagem de tamanho fixo.\nLUKS usa um contêiner criptografado.\nSquashFS retoma uma sessão comprimida existente.\nO initramfs atual pode retomar, mas não pode criar sessões SquashFS.\nCapacidade\nTamanho do contêiner se aplica apenas a sessões baseadas em contêiner, então está desabilitado para Nativo e SquashFS. Espaço livre a reservar mantém espaço no dispositivo de persistência para que as alterações salvas não o preencham completamente.\nAs opções de boot correspondentes são perchmode=, perchsize= e perchreserve=.\nCopiar para RAM\ntoram=full copia todo o sistema para a memória. toram=trim copia apenas o conjunto de módulos filtrados. Isso pode permitir a remoção do dispositivo de boot, mas requer RAM suficiente para os dados copiados.",
+  "plain_text": "Sessão e armazenamento\nEscolha como esta entrada localiza e armazena alterações persistentes.\nSeleção de sessão\nO modelo de entrada controla se o MiniOS retoma a sessão mais recente, cria uma nova ou pergunta na inicialização. O tipo de armazenamento não substitui essa escolha do modelo.\nTipo de armazenamento\nAutomático mantém o modo de template ou sessão salva.\nNativo armazena as alterações diretamente em um diretório no sistema de arquivos com permissões Unix, como ext4, XFS ou Btrfs.\nDynfilefs utiliza um contêiner expansível.\nRaw utiliza uma imagem de tamanho fixo.\nLUKS utiliza um contêiner criptografado.\nSquashFS retoma uma sessão comprimida existente.\nO initramfs atual pode retomar, mas não pode criar sessões SquashFS.\nCapacidade\nTamanho do contêiner se aplica apenas a sessões baseadas em contêiner, então está desabilitado para Nativo e SquashFS. Espaço livre a reservar mantém espaço no dispositivo de persistência para que as alterações salvas não o preencham completamente.\nAs opções de boot correspondentes são perchmode=, perchsize= e perchreserve=.\nCopiar para RAM\ntoram=full copia todo o sistema para a memória. toram=trim copia apenas o conjunto de módulos filtrados. Isso pode permitir a remoção do dispositivo de boot, mas requer RAM suficiente para os dados copiados.",
   "product_kind": "minios-markup-document",
   "schema_version": 1
 }

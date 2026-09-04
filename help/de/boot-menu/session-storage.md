@@ -8,14 +8,14 @@ Die Eintragsvorlage steuert, ob MiniOS die letzte Sitzung fortsetzt, eine neue e
 
 ## Speichertyp
 
-- **Automatisch** behält den Modus der Vorlage oder gespeicherten Sitzung bei.
-- **Nativ** speichert Änderungen in einem Verzeichnis auf einem Linux-Dateisystem.
+- **Automatisch** behält den Vorlagen- oder Gespeicherte-Sitzung-Modus bei.
+- **Nativ** speichert Änderungen direkt in einem Verzeichnis auf einem Dateisystem mit Unix-Berechtigungen, wie ext4, XFS oder Btrfs.
 - **Dynfilefs** verwendet einen erweiterbaren Container.
-- **Raw** nutzt ein Abbild mit fester Größe.
-- **LUKS** verwendet einen verschlüsselten Container.
+- **Raw** verwendet ein Abbild mit fester Größe.
+- **LUKS** nutzt einen verschlüsselten Container.
 - **SquashFS** setzt eine bestehende komprimierte Sitzung fort.
 
-Das aktuelle initramfs kann SquashFS-Sitzungen fortsetzen, aber keine neuen erstellen.
+Das aktuelle initramfs kann eine SquashFS-Sitzung fortsetzen, aber nicht erstellen.
 
 ## Kapazität
 

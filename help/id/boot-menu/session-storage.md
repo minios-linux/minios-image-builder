@@ -6,12 +6,12 @@ Pilih cara entri ini menemukan dan menyimpan perubahan yang bersifat permanen.
 
 Template entri mengontrol apakah MiniOS melanjutkan sesi terbaru, membuat sesi baru, atau menanyakan saat startup. Jenis penyimpanan tidak menggantikan pilihan template tersebut.
 
-## Jenis penyimpanan
+## Tipe penyimpanan
 
 - **Otomatis** mempertahankan mode template atau sesi yang disimpan.
-- **Native** menyimpan perubahan di direktori pada filesystem Linux.
+- **Native** menyimpan perubahan langsung di direktori pada filesystem dengan izin Unix, seperti ext4, XFS, atau Btrfs.
 - **Dynfilefs** menggunakan kontainer yang dapat diperluas.
-- **Raw** menggunakan image dengan ukuran tetap.
+- **Raw** menggunakan image berukuran tetap.
 - **LUKS** menggunakan kontainer terenkripsi.
 - **SquashFS** melanjutkan sesi terkompresi yang sudah ada.
 

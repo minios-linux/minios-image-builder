@@ -22,6 +22,9 @@ import time
 import zlib
 
 
+MAX_JSON_INPUT_BYTES = 16 * 1024 * 1024
+
+
 class AdapterError(Exception):
     pass
 
@@ -126,15 +129,21 @@ def load_json(path):
     try:
         if descriptor is None or not stat.S_ISREG(metadata.st_mode):
             fail("JSON input is not a non-symlink regular file")
-        raw = b""
+        if metadata.st_size > MAX_JSON_INPUT_BYTES:
+            fail("JSON input is unexpectedly large")
+        raw = bytearray()
         while True:
-            block = os.read(descriptor, 1024 * 1024)
+            block = os.read(
+                descriptor,
+                min(1024 * 1024, MAX_JSON_INPUT_BYTES + 1 - len(raw)))
             if not block:
                 break
-            raw += block
+            raw.extend(block)
+            if len(raw) > MAX_JSON_INPUT_BYTES:
+                fail("JSON input is unexpectedly large")
         if stable_snapshot(os.fstat(descriptor)) != stable_snapshot(metadata):
             fail("JSON input changed while being read")
-        return json.loads(raw.decode("utf-8", "strict"),
+        return json.loads(bytes(raw).decode("utf-8", "strict"),
                           object_pairs_hook=strict_json_object,
                           parse_constant=reject_json_constant)
     except (UnicodeError, ValueError) as error:
@@ -196,20 +205,42 @@ def rename_noreplace(source_fd, source, target_fd, target):
     return "link"
 
 
-def prepare_output(parent_path, target, overwrite):
-    canonical, parent_fd, parent_metadata = canonical_directory(parent_path)
-    target_bytes = os.fsencode(target)
+def output_state(parent_fd, target, overwrite):
     try:
-        try:
-            target_metadata = os.stat(target_bytes, dir_fd=parent_fd, follow_symlinks=False)
-            if stat.S_ISDIR(target_metadata.st_mode):
-                fail("output target is a directory")
-            if overwrite != "true":
-                fail("output already exists and --overwrite was not supplied")
-            target_state = "present:{}:{}:{}".format(
-                target_metadata.st_dev, target_metadata.st_ino, stat.S_IFMT(target_metadata.st_mode))
-        except FileNotFoundError:
-            target_state = "absent"
+        target_metadata = os.stat(
+            os.fsencode(target), dir_fd=parent_fd, follow_symlinks=False)
+        if stat.S_ISDIR(target_metadata.st_mode):
+            fail("output target is a directory")
+        if overwrite != "true":
+            fail("output already exists and --overwrite was not supplied")
+        return "present:{}:{}:{}".format(
+            target_metadata.st_dev, target_metadata.st_ino,
+            stat.S_IFMT(target_metadata.st_mode))
+    except FileNotFoundError:
+        return "absent"
+
+
+def inspect_output(parent_path, target, overwrite):
+    canonical, parent_fd, parent_metadata = canonical_directory(parent_path)
+    try:
+        print(os.fsdecode(canonical))
+        print(parent_metadata.st_dev)
+        print(parent_metadata.st_ino)
+        print(output_state(parent_fd, target, overwrite))
+    finally:
+        os.close(parent_fd)
+
+
+def prepare_output(parent_path, target, overwrite, expected_parent_dev,
+                   expected_parent_ino, expected_target_state):
+    canonical, parent_fd, parent_metadata = canonical_directory(parent_path)
+    try:
+        if ((parent_metadata.st_dev, parent_metadata.st_ino) !=
+                (int(expected_parent_dev), int(expected_parent_ino))):
+            fail("output parent identity changed before reservation")
+        target_state = output_state(parent_fd, target, overwrite)
+        if target_state != expected_target_state:
+            fail("output target identity changed before reservation")
         work_name = None
         for _ in range(128):
             candidate = b".minios-image-compose-output." + os.urandom(16).hex().encode("ascii")
@@ -2070,7 +2101,7 @@ def verify_requested_parent(path, expected_dev, expected_ino):
 
 def publish_iso(arguments):
     (parent_fd_text, work_fd_text, parent_path, parent_dev, parent_ino, work_name,
-     work_dev, work_ino, target, target_state, overwrite, expected_hash) = arguments
+     work_dev, work_ino, target, target_state, overwrite) = arguments
     signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT, signal.SIGTERM})
     parent_fd = os.dup(int(parent_fd_text))
     work_fd = os.dup(int(work_fd_text))
@@ -2082,9 +2113,9 @@ def publish_iso(arguments):
         image = os.stat(b"image.iso", dir_fd=work_fd, follow_symlinks=False)
         image_fd = os.open(b"image.iso", os.O_RDONLY | os.O_NOFOLLOW, dir_fd=work_fd)
         try:
-            if (not stat.S_ISREG(image.st_mode) or image.st_size <= 0 or
-                    hash_fd(image_fd, image) != expected_hash):
-                fail("private ISO identity or digest changed before publication")
+            if not stat.S_ISREG(image.st_mode) or image.st_size <= 0:
+                fail("private ISO identity changed before publication")
+            hash_fd(image_fd, image)
         finally:
             os.close(image_fd)
         try:
@@ -2171,7 +2202,9 @@ def main(arguments):
         validate_json_object(values[0])
     elif command == "snapshot-file" and len(values) == 2:
         snapshot_file(*values)
-    elif command == "prepare-output" and len(values) == 3:
+    elif command == "inspect-output" and len(values) == 3:
+        inspect_output(*values)
+    elif command == "prepare-output" and len(values) == 6:
         prepare_output(*values)
     elif command == "check-fds" and len(values) == 7:
         check_output_fds(*values)
@@ -2215,7 +2248,7 @@ def main(arguments):
         generate_report(*values)
     elif command == "validate-extracted" and len(values) == 8:
         validate_extracted(*values)
-    elif command == "publish" and len(values) == 12:
+    elif command == "publish" and len(values) == 11:
         publish_iso(values)
     elif command == "cleanup" and len(values) == 7:
         cleanup_output(*values)

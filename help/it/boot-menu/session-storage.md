@@ -6,16 +6,16 @@ Scegli come questa voce individua e memorizza le modifiche persistenti.
 
 Il modello della voce controlla se MiniOS riprende l'ultima sessione, ne crea una nuova o chiede all'avvio. Il tipo di archiviazione non sostituisce questa scelta del modello.
 
-## Tipo di archiviazione
+## Tipo di storage
 
-- **Automatico** mantiene la modalità del modello o della sessione salvata.
-- **Nativo** salva le modifiche in una directory su un filesystem Linux.
+- **Automatico** mantiene la modalità template o sessione salvata.
+- **Nativo** salva le modifiche direttamente in una directory su un filesystem con permessi Unix, come ext4, XFS o Btrfs.
 - **Dynfilefs** utilizza un contenitore espandibile.
 - **Raw** utilizza un'immagine a dimensione fissa.
 - **LUKS** utilizza un contenitore cifrato.
 - **SquashFS** riprende una sessione compressa esistente.
 
-L'attuale initramfs può riprendere ma non creare sessioni SquashFS.
+L'initramfs attuale può riprendere ma non creare sessioni SquashFS.
 
 ## Capacità
 

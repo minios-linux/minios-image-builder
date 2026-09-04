@@ -6,13 +6,13 @@ The bounded product represented here remixes a selected MiniOS
 source.  It never source-builds MiniOS and never modifies source media.
 
 Builds use an explicit ``minios-image-compose`` source/config contract and a private,
-mode-0700 job directory beside the destination.  Structural verification is
-bound to the exact BuildPlan and publication repeats verification.  Python 3.6
-does not expose Linux ``renameat2(RENAME_NOREPLACE)``: new outputs therefore use
-an atomic hard-link publication, while explicitly approved replacement of an
-existing output is identity-checked immediately before ``os.replace``.  A
-process with the same uid (or root) can still race path operations; retaining a
-private job directory and checking inode identities narrows that unavoidable
+mode-0700 job directory under the selected temporary workspace. Structural
+verification is bound to the exact BuildPlan and publication repeats
+verification. Same-filesystem outputs are published directly from the verified
+private artifact; cross-filesystem outputs are copied only at publication time
+to an identity-checked hidden file beside the destination and then published
+atomically. A process with the same uid (or root) can still race path
+operations; retained descriptors and inode checks narrow that unavoidable
 limit.
 
 Only the Python standard library is used.  This module has no GTK dependency.
@@ -4183,8 +4183,11 @@ def _read_json_document(path, maximum_bytes=MAX_PROJECT_BYTES):
     try:
         if os.path.getsize(path) > maximum_bytes:
             raise ProjectFormatError('JSON document is too large')
-        with open(path, 'r', encoding='utf-8') as handle:
-            return json.load(handle)
+        with open(path, 'rb') as handle:
+            payload = handle.read(maximum_bytes + 1)
+        if len(payload) > maximum_bytes:
+            raise ProjectFormatError('JSON document is too large')
+        return _strict_json_object(payload, 'project')
     except ProjectFormatError:
         raise
     except (OSError, ValueError) as error:
@@ -5022,15 +5025,14 @@ def resolve_device_mountpoint(device, mounts_path='/proc/mounts'):
     return None
 
 
-def find_loop_backing_device(backing_file, sys_block_root='/sys/class/block'):
-    """Return the ``/dev/loopN`` whose backing file is ``backing_file``.
+def find_loop_backing_devices(backing_file, sys_block_root='/sys/class/block'):
+    """Return all ``/dev/loopN`` devices whose backing file is ``backing_file``.
 
     Loop devices are matched by their kernel-reported backing file so the
-    frontend never parses ``udisksctl loop-setup`` output. Returns None when no
-    loop device currently backs the file.
+    frontend never parses ``udisksctl loop-setup`` output.
     """
     if not backing_file:
-        return None
+        return ()
     try:
         target = os.path.realpath(backing_file)
     except OSError:
@@ -5038,7 +5040,8 @@ def find_loop_backing_device(backing_file, sys_block_root='/sys/class/block'):
     try:
         names = sorted(os.listdir(sys_block_root))
     except OSError:
-        return None
+        return ()
+    result = []
     for name in names:
         if not name.startswith('loop'):
             continue
@@ -5056,8 +5059,14 @@ def find_loop_backing_device(backing_file, sys_block_root='/sys/class/block'):
         except OSError:
             resolved = value
         if resolved == target or value == backing_file:
-            return os.path.join('/dev', name)
-    return None
+            result.append(os.path.join('/dev', name))
+    return tuple(result)
+
+
+def find_loop_backing_device(backing_file, sys_block_root='/sys/class/block'):
+    """Return the first loop device backing ``backing_file``, or None."""
+    devices = find_loop_backing_devices(backing_file, sys_block_root)
+    return devices[0] if devices else None
 
 
 def _scan_sensitive_config_keys(path):
@@ -5120,9 +5129,9 @@ def _existing_regular_identity(path):
     }
 
 
-def _allocate_job_directory(output_directory):
+def _allocate_job_directory(work_directory):
     job_directory = tempfile.mkdtemp(
-        prefix='.minios-image-builder-', dir=output_directory)
+        prefix='.minios-image-builder-', dir=work_directory)
     descriptor = None
     try:
         os.chmod(job_directory, 0o700)
@@ -5308,7 +5317,8 @@ class BuildPlan(_Immutable):
         'partial_output_path', 'job_directory', 'adapter_manifest_path',
         'plan_id', '_manifest_json', '_manifest_payload', '_input_records',
         '_job_identity', '_job_descriptor', '_source_path',
-        '_output_expectation', '_nonce', '_tool_capabilities',
+        '_output_expectation', '_output_directory_identity',
+        '_output_directory_descriptor', '_nonce', '_tool_capabilities',
         '_capture_selection_path', '_capture_selection_payload',
         '_capture_selection_digest', '_session_inventory',
         '_expected_base_module_fingerprint', '_capture_requested',
@@ -5333,7 +5343,8 @@ class BuildPlan(_Immutable):
                    boot_config_payloads=None,
                    job_descriptor=None, source_path=None, display_argv=None,
                    scratch_directory=None, scratch_identity=None,
-                   _token=None):
+                   output_directory_identity=None,
+                   output_directory_descriptor=None, _token=None):
         if _token is not _PLAN_TOKEN:
             raise TypeError('BuildPlan objects are created by preflight')
         self.errors = tuple(errors)
@@ -5359,6 +5370,10 @@ class BuildPlan(_Immutable):
         self._job_descriptor = job_descriptor
         self._source_path = source_path
         self._output_expectation = _freeze(output_expectation)
+        self._output_directory_identity = (
+            tuple(output_directory_identity)
+            if output_directory_identity else None)
+        self._output_directory_descriptor = output_directory_descriptor
         self._nonce = object()
         self._tool_capabilities = _freeze(tool_capabilities)
         self._capture_selection_path = capture_selection_path
@@ -5383,12 +5398,13 @@ class BuildPlan(_Immutable):
         self._lock()
 
     def __del__(self):
-        descriptor = getattr(self, '_job_descriptor', None)
-        if descriptor is not None:
-            try:
-                os.close(descriptor)
-            except (AttributeError, OSError):
-                pass
+        for attribute in ('_job_descriptor', '_output_directory_descriptor'):
+            descriptor = getattr(self, attribute, None)
+            if descriptor is not None:
+                try:
+                    os.close(descriptor)
+                except (AttributeError, OSError):
+                    pass
 
     @property
     def buildable(self):
@@ -6376,6 +6392,10 @@ def create_build_plan(project, source_info=None,
             1024 * 1024, overlay_bytes // 10)
     if capture_estimated_bytes is not None:
         estimated_input_bytes += capture_estimated_bytes
+    # The complete private build, including the unpublished ISO, lives under
+    # scratch. The 2x input bound covers one image-sized artifact plus private
+    # staging. Destination space is needed only for final publication; on a
+    # different filesystem publication briefly holds both copies.
     required_destination_bytes = (
         estimated_input_bytes +
         max(MIN_DESTINATION_HEADROOM, estimated_input_bytes // 2))
@@ -6422,8 +6442,10 @@ def create_build_plan(project, source_info=None,
             _add_diagnostic(
                 errors, 'error', 'space_filesystem_probe_failed', str(error))
         if shared_filesystem:
-            combined_required_bytes = (
-                required_destination_bytes + required_scratch_bytes)
+            # The unpublished ISO already lives in scratch. Same-filesystem
+            # publication reuses that inode, so no second output-sized copy is
+            # needed at publication time.
+            combined_required_bytes = required_scratch_bytes
             if min(destination_free, scratch_free) < combined_required_bytes:
                 _add_diagnostic(
                     errors, 'error', 'combined_space_insufficient',
@@ -6446,13 +6468,24 @@ def create_build_plan(project, source_info=None,
         output_directory, effective_changes_root, mountinfo_path)
     scratch_uses_captured_union = _uses_captured_union_storage(
         scratch_directory, effective_changes_root, mountinfo_path)
-    if (capture_requested and
-            (destination_filesystem_class == FILESYSTEM_CLASS_LIVE_OVERLAY or
-             destination_uses_captured_union)):
+    destination_is_captured_storage = (
+        destination_filesystem_class == FILESYSTEM_CLASS_LIVE_OVERLAY or
+        destination_uses_captured_union or
+        (effective_changes_root and
+         (_is_within(output_directory, effective_changes_root) or
+          _physically_within(output_directory, effective_changes_root,
+                             mountinfo_path))))
+    # A new final output is safe on the live writable layer because no build
+    # files are created there until capture has completed. An already existing
+    # target is different: exact capture could embed its old contents before it
+    # is replaced, so require a fresh name or removal of that stale artifact.
+    if (capture_requested and output_expectation['exists'] and
+            destination_is_captured_storage):
         _add_diagnostic(
-            errors, 'error', 'destination_on_captured_live_overlay',
-            'Private output work files on the live writable layer could be '
-            'included in the saved session changes.', output_directory)
+            errors, 'error', 'existing_destination_on_captured_live_overlay',
+            'An existing output file on the captured live writable layer could '
+            'be included in the saved session before it is replaced.',
+            output_path)
     if (capture_requested and
             (scratch_filesystem_class == FILESYSTEM_CLASS_LIVE_OVERLAY or
              scratch_uses_captured_union)):
@@ -6468,19 +6501,26 @@ def create_build_plan(project, source_info=None,
             errors, 'error', 'scratch_within_captured_changes',
             'Temporary work directory must be outside the changes directory '
             'that is being saved.', scratch_directory)
-    if (capture_requested and effective_changes_root and
-            (_is_within(output_directory, effective_changes_root) or
-             _physically_within(output_directory, effective_changes_root,
-                                mountinfo_path))):
-        _add_diagnostic(
-            errors, 'error', 'destination_within_captured_changes',
-            'Output directory must be outside the changes directory that is '
-            'being saved.', output_directory)
+    live_writable_backing_filesystem_class = (
+        _classify_directory_filesystem(effective_changes_root, mounts_path)
+        if effective_changes_root and os.path.isdir(effective_changes_root)
+        else FILESYSTEM_CLASS_UNKNOWN)
+    destination_ram_backed = (
+        destination_filesystem_class == FILESYSTEM_CLASS_RAM_BACKED or
+        (destination_is_captured_storage and
+         live_writable_backing_filesystem_class ==
+         FILESYSTEM_CLASS_RAM_BACKED))
+    scratch_ram_backed = (
+        scratch_filesystem_class == FILESYSTEM_CLASS_RAM_BACKED or
+        ((scratch_filesystem_class == FILESYSTEM_CLASS_LIVE_OVERLAY or
+          scratch_uses_captured_union) and
+         live_writable_backing_filesystem_class ==
+         FILESYSTEM_CLASS_RAM_BACKED))
     available_memory_bytes = _available_memory_bytes(meminfo_path)
     ram_backed_bytes = 0
-    if destination_filesystem_class == FILESYSTEM_CLASS_RAM_BACKED:
+    if destination_ram_backed:
         ram_backed_bytes += required_destination_bytes
-    if scratch_filesystem_class == FILESYSTEM_CLASS_RAM_BACKED:
+    if scratch_ram_backed:
         if shared_filesystem:
             ram_backed_bytes = max(ram_backed_bytes, combined_required_bytes)
         else:
@@ -6702,6 +6742,10 @@ def create_build_plan(project, source_info=None,
             'combined_required_bytes': combined_required_bytes,
             'destination_filesystem_class': destination_filesystem_class,
             'scratch_filesystem_class': scratch_filesystem_class,
+            'live_writable_backing_filesystem_class': (
+                live_writable_backing_filesystem_class),
+            'destination_ram_backed': bool(destination_ram_backed),
+            'scratch_ram_backed': bool(scratch_ram_backed),
             'available_memory_bytes': available_memory_bytes,
             'peak_memory_bytes': peak_memory_bytes,
         },
@@ -6725,11 +6769,36 @@ def create_build_plan(project, source_info=None,
         return _failed_plan(
             errors, warnings, estimated_input_bytes, output_path, base_manifest)
 
+    output_directory_descriptor = None
+    output_directory_identity = None
+    try:
+        output_directory_descriptor = os.open(
+            output_directory, _directory_open_flags())
+        output_directory_stat = os.fstat(output_directory_descriptor)
+        current_output_directory_stat = os.lstat(output_directory)
+        if (stat.S_ISLNK(current_output_directory_stat.st_mode) or
+                not stat.S_ISDIR(current_output_directory_stat.st_mode) or
+                not stat.S_ISDIR(output_directory_stat.st_mode) or
+                _identity(current_output_directory_stat) !=
+                _identity(output_directory_stat)):
+            raise ImageProjectError(
+                'output directory changed while it was being retained')
+        output_directory_identity = _identity(output_directory_stat)
+    except (OSError, ImageProjectError) as error:
+        if output_directory_descriptor is not None:
+            os.close(output_directory_descriptor)
+        _add_diagnostic(
+            errors, 'error', 'output_directory_unavailable', str(error),
+            output_directory)
+        return _failed_plan(
+            errors, warnings, estimated_input_bytes, output_path, base_manifest)
+
     job_directory = None
     job_descriptor = None
+    validated_scratch_directory = os.path.realpath(scratch_directory)
     try:
         job_directory, job_stat, job_descriptor = _allocate_job_directory(
-            output_directory)
+            validated_scratch_directory)
         if _is_within(job_directory, source_info.source_path):
             raise ImageProjectError('job directory resolved inside source')
         partial_basename = 'image.partial.iso'
@@ -6755,6 +6824,9 @@ def create_build_plan(project, source_info=None,
         if job_descriptor is not None:
             os.close(job_descriptor)
             job_descriptor = None
+        if output_directory_descriptor is not None:
+            os.close(output_directory_descriptor)
+            output_directory_descriptor = None
         if job_directory:
             try:
                 os.rmdir(job_directory)
@@ -6762,7 +6834,7 @@ def create_build_plan(project, source_info=None,
                 pass
         _add_diagnostic(
             errors, 'error', 'secure_job_allocation_failed', str(error),
-            output_directory)
+            validated_scratch_directory)
         return _failed_plan(
             errors, warnings, estimated_input_bytes, output_path, base_manifest)
 
@@ -6826,6 +6898,25 @@ def create_build_plan(project, source_info=None,
     base_manifest['errors'] = []
     base_manifest['warnings'] = [_public_diagnostic(item) for item in warnings]
     base_manifest['plan_id'] = _json_digest(base_manifest)
+    if len(_canonical_json_bytes(base_manifest)) > MAX_BUILD_MANIFEST_BYTES:
+        _add_diagnostic(
+            errors, 'error', 'build_manifest_too_large',
+            'The build manifest exceeds the supported {} byte limit.'.format(
+                MAX_BUILD_MANIFEST_BYTES))
+        os.close(job_descriptor)
+        os.close(output_directory_descriptor)
+        try:
+            os.rmdir(job_directory)
+        except OSError:
+            pass
+        base_manifest['output'].update({
+            'job_directory': None,
+            'partial_path': None,
+            'adapter_manifest_path': None,
+        })
+        return _failed_plan(
+            errors, warnings, estimated_input_bytes, output_path,
+            base_manifest)
     return BuildPlan(
         errors, warnings, estimated_input_bytes, argv, output_path,
         partial_path, job_directory, adapter_manifest_path, base_manifest,
@@ -6848,8 +6939,10 @@ def create_build_plan(project, source_info=None,
         job_descriptor=job_descriptor,
         source_path=source_info.source_path,
         display_argv=display_argv,
-        scratch_directory=os.path.realpath(scratch_directory),
+        scratch_directory=validated_scratch_directory,
         scratch_identity=scratch_identity,
+        output_directory_identity=output_directory_identity,
+        output_directory_descriptor=output_directory_descriptor,
         _token=_PLAN_TOKEN)
 
 
@@ -6884,6 +6977,51 @@ def _validate_job_identity(plan):
     if hasattr(os, 'geteuid') and file_stat.st_uid != os.geteuid():
         raise ImageProjectError('private job directory owner changed')
     return retained_stat
+
+
+def _validate_output_directory_identity(plan):
+    descriptor = getattr(plan, '_output_directory_descriptor', None)
+    expected = getattr(plan, '_output_directory_identity', None)
+    if descriptor is None or expected is None:
+        raise ImageProjectError(
+            'plan has no retained output directory identity')
+    try:
+        retained = os.fstat(descriptor)
+    except OSError as error:
+        raise ImageProjectError(
+            'retained output directory is unavailable: {}'.format(error))
+    output_directory = os.path.dirname(plan.output_path) or os.curdir
+    try:
+        current = os.lstat(output_directory)
+    except OSError as error:
+        raise ImageProjectError(
+            'output directory path is unavailable: {}'.format(error))
+    if (not stat.S_ISDIR(retained.st_mode) or
+            stat.S_ISLNK(current.st_mode) or
+            not stat.S_ISDIR(current.st_mode) or
+            _identity(retained) != tuple(expected) or
+            _identity(current) != tuple(expected)):
+        raise ImageProjectError('output directory changed after preflight')
+    return retained
+
+
+def _duplicate_output_directory_descriptor(plan):
+    _validate_output_directory_identity(plan)
+    try:
+        descriptor = os.dup(plan._output_directory_descriptor)
+    except OSError as error:
+        raise ImageProjectError(
+            'cannot retain output directory: {}'.format(error))
+    try:
+        retained = os.fstat(descriptor)
+        if (not stat.S_ISDIR(retained.st_mode) or
+                _identity(retained) != plan._output_directory_identity):
+            raise ImageProjectError(
+                'retained output directory identity changed')
+        return descriptor
+    except Exception:
+        os.close(descriptor)
+        raise
 
 
 def _validate_scratch_identity(plan):
@@ -7135,6 +7273,7 @@ def _materialize_live_config(plan):
 def prepare_build_command(plan):
     """Return argv only after the mandatory immediate input revalidation."""
     _validate_scratch_identity(plan)
+    _validate_output_directory_identity(plan)
     diagnostics = revalidate_build_plan_inputs(plan)
     if diagnostics:
         raise ImageProjectError(
@@ -7155,6 +7294,7 @@ def prepare_build_command(plan):
         _materialize_capture_selection(plan)
     _validate_job_identity(plan)
     _validate_scratch_identity(plan)
+    _validate_output_directory_identity(plan)
     return tuple(plan.argv)
 
 
@@ -8133,13 +8273,13 @@ def verify_iso(plan, runner=None, xorriso=None, unsquashfs=None):
 
     xorriso = xorriso or _tool_path(
         _thaw(plan._tool_capabilities), 'xorriso') or 'xorriso'
-    tree_command = [xorriso, '-indev', path, '-find', '/']
-    type_command = [xorriso, '-indev', path, '-find', '/', '-type', 'f',
+    tree_command = [xorriso, '-no_rc', '-indev', path, '-find', '/']
+    type_command = [xorriso, '-no_rc', '-indev', path, '-find', '/', '-type', 'f',
                     '-exec', 'report_lba', '--']
-    link_command = [xorriso, '-indev', path, '-find', '/', '-type', 'l']
-    boot_command = [xorriso, '-indev', path,
+    link_command = [xorriso, '-no_rc', '-indev', path, '-find', '/', '-type', 'l']
+    boot_command = [xorriso, '-no_rc', '-indev', path,
                     '-report_el_torito', 'plain']
-    pvd_command = [xorriso, '-indev', path, '-pvd_info']
+    pvd_command = [xorriso, '-no_rc', '-indev', path, '-pvd_info']
     commands.extend((tree_command, type_command, link_command,
                      boot_command, pvd_command))
     outputs = []
@@ -8184,6 +8324,14 @@ def verify_iso(plan, runner=None, xorriso=None, unsquashfs=None):
         r'^/minios/(?:.*/)?[0-9]+-image-overlay[.]sb$')
     overlay_layer_paths = sorted(
         item for item in path_set if overlay_layer_pattern.match(item))
+    source_iso_paths = {
+        '/minios/' + item['relative_path'].lstrip('/')
+        for item in plan.manifest['input_digests']['source_files']
+    }
+    inherited_capture_layer_paths = sorted(
+        item for item in source_iso_paths if capture_layer_pattern.match(item))
+    inherited_overlay_layer_paths = sorted(
+        item for item in source_iso_paths if overlay_layer_pattern.match(item))
 
     required_targets = []
     required_targets.extend(expected['module_targets'])
@@ -8193,6 +8341,10 @@ def verify_iso(plan, runner=None, xorriso=None, unsquashfs=None):
     required_targets.extend(expected['kernel_targets'])
     required_targets.extend(expected['initramfs_targets'])
     required_targets.extend(expected['menu_targets'])
+    if capture_report_path in source_iso_paths:
+        required_targets.append(capture_report_path)
+    if customization_report_path in source_iso_paths:
+        required_targets.append(customization_report_path)
     if expected_capture['requested']:
         required_targets.append(expected_capture['report_target'])
         required_targets.append(expected_capture['module_target'])
@@ -8227,7 +8379,8 @@ def verify_iso(plan, runner=None, xorriso=None, unsquashfs=None):
                 'error', 'image_customization_report_missing',
                 'Requested image customization report is missing.',
                 customization_report_path))
-    elif customization_report_path in path_set:
+    elif (customization_report_path in path_set and
+          customization_report_path not in source_iso_paths):
         diagnostics.append(Diagnostic(
             'error', 'unexpected_image_customization_report',
             'ISO unexpectedly contains an image customization report.',
@@ -8236,10 +8389,12 @@ def verify_iso(plan, runner=None, xorriso=None, unsquashfs=None):
     if expected_customization['overlay_requested']:
         expected_overlay_path = '/' + expected_customization[
             'overlay_target'].lstrip('/')
-        if overlay_layer_paths != [expected_overlay_path]:
+        if overlay_layer_paths != sorted(
+                inherited_overlay_layer_paths + [expected_overlay_path]):
             diagnostics.append(Diagnostic(
                 'error', 'image_overlay_module_set_mismatch',
-                'ISO must contain exactly the planned dynamic image overlay.'))
+                'ISO image overlay modules differ from the inherited and '
+                'planned module set.'))
         overlay_order = expected_customization['overlay_order']
         capture_path_for_order = (
             '/' + expected_capture['module_target'].lstrip('/')
@@ -8257,7 +8412,7 @@ def verify_iso(plan, runner=None, xorriso=None, unsquashfs=None):
                     'error', 'image_overlay_not_after_static_modules',
                     'A static module has an order at or above the planned '
                     'image overlay.', candidate))
-    elif overlay_layer_paths:
+    elif overlay_layer_paths != inherited_overlay_layer_paths:
         diagnostics.append(Diagnostic(
             'error', 'unexpected_image_overlay_module',
             'ISO unexpectedly contains an image overlay module.'))
@@ -8270,10 +8425,12 @@ def verify_iso(plan, runner=None, xorriso=None, unsquashfs=None):
                 'error', 'session_capture_report_missing',
                 'Requested session capture report is missing.',
                 capture_report_path))
-        if capture_layer_paths != [capture_iso_path]:
+        if capture_layer_paths != sorted(
+                inherited_capture_layer_paths + [capture_iso_path]):
             diagnostics.append(Diagnostic(
                 'error', 'session_capture_module_set_mismatch',
-                'ISO must contain exactly the planned dynamic session layer.'))
+                'ISO session layers differ from the inherited and planned '
+                'module set.'))
         expected_order = expected_capture['module_order']
         for candidate in path_set:
             if (candidate == capture_iso_path or
@@ -8290,12 +8447,13 @@ def verify_iso(plan, runner=None, xorriso=None, unsquashfs=None):
                     'A module has an order at or above the planned final '
                     'session layer.', candidate))
     else:
-        if capture_report_path in path_set:
+        if (capture_report_path in path_set and
+                capture_report_path not in source_iso_paths):
             diagnostics.append(Diagnostic(
                 'error', 'unexpected_session_capture_report',
                 'No-capture ISO unexpectedly contains a session report.',
                 capture_report_path))
-        if capture_layer_paths:
+        if capture_layer_paths != inherited_capture_layer_paths:
             diagnostics.append(Diagnostic(
                 'error', 'unexpected_session_capture_module',
                 'No-capture ISO unexpectedly contains a session layer.'))
@@ -8354,8 +8512,9 @@ def verify_iso(plan, runner=None, xorriso=None, unsquashfs=None):
             customization_targets_ready and
             (not expected_customization['adapter_report_requested'] or
              customization_report_path in path_set) and
-            (not expected_customization['overlay_requested'] or
-             overlay_layer_paths == [expected_overlay_path])):
+             (not expected_customization['overlay_requested'] or
+              overlay_layer_paths == sorted(
+                  inherited_overlay_layer_paths + [expected_overlay_path]))):
         unsquashfs_path = unsquashfs or _tool_path(
             _thaw(plan._tool_capabilities), 'unsquashfs') or 'unsquashfs'
         customization_summary = _verify_image_customization(
@@ -8364,7 +8523,8 @@ def verify_iso(plan, runner=None, xorriso=None, unsquashfs=None):
 
     if (expected_capture['requested'] and tree_rc == 0 and type_rc == 0 and
             capture_report_path in path_set and
-            capture_layer_paths == [capture_iso_path] and
+            capture_layer_paths == sorted(
+                inherited_capture_layer_paths + [capture_iso_path]) and
             file_sizes.get(capture_report_path, 0) > 0 and
             file_sizes.get(capture_iso_path, 0) > 0):
         unsquashfs = unsquashfs or _tool_path(
@@ -8460,27 +8620,275 @@ def verify_iso(plan, runner=None, xorriso=None, unsquashfs=None):
         customization_summary=customization_summary)
 
 
-def _output_matches_expectation(plan):
+def _existing_regular_identity_at(directory_descriptor, basename):
+    observed = _entry_metadata(directory_descriptor, basename)
+    if (observed is None or stat.S_ISLNK(observed.st_mode) or
+            not stat.S_ISREG(observed.st_mode)):
+        raise ImageProjectError(
+            'Destination must be a non-symlink regular file')
+    flags = os.O_RDONLY
+    if hasattr(os, 'O_NOFOLLOW'):
+        flags |= os.O_NOFOLLOW
+    if hasattr(os, 'O_CLOEXEC'):
+        flags |= os.O_CLOEXEC
+    descriptor = os.open(basename, flags, dir_fd=directory_descriptor)
+    try:
+        opened = os.fstat(descriptor)
+        if (_identity(opened) != _identity(observed) or
+                not stat.S_ISREG(opened.st_mode)):
+            raise ImageProjectError(
+                'Destination changed while it was being opened')
+        digest = _hash_descriptor(descriptor)
+        final = os.fstat(descriptor)
+        current = _entry_metadata(directory_descriptor, basename)
+        if (current is None or
+                _metadata_snapshot(final) != _metadata_snapshot(opened) or
+                _metadata_snapshot(current) != _metadata_snapshot(opened)):
+            raise ImageProjectError(
+                'Destination changed while it was being inspected')
+        return {
+            'device': int(opened.st_dev),
+            'inode': int(opened.st_ino),
+            'size': int(opened.st_size),
+            'mtime_ns': _stat_mtime_ns(opened),
+            'sha256': digest,
+        }
+    finally:
+        os.close(descriptor)
+
+
+def _output_matches_expectation(plan, output_directory_descriptor=None):
+    close_descriptor = output_directory_descriptor is None
+    descriptor = (output_directory_descriptor
+                  if output_directory_descriptor is not None
+                  else _duplicate_output_directory_descriptor(plan))
+    try:
+        _validate_output_directory_identity(plan)
+        basename = os.path.basename(plan.output_path)
+        expectation = _thaw(plan._output_expectation)
+        observed = _entry_metadata(descriptor, basename)
+        if not expectation['exists']:
+            if observed is not None:
+                raise OutputPublishError(
+                    'Destination appeared after preflight; refusing to overwrite it')
+            _validate_output_directory_identity(plan)
+            return
+        if observed is None:
+            raise OutputPublishError('Expected destination disappeared')
+        try:
+            current = _existing_regular_identity_at(descriptor, basename)
+        except (OSError, ImageProjectError, SourceInspectionError) as error:
+            raise OutputPublishError(str(error))
+        if current != expectation['identity']:
+            raise OutputPublishError('Destination changed after preflight')
+        _validate_output_directory_identity(plan)
+    finally:
+        if close_descriptor:
+            os.close(descriptor)
+
+
+def _output_metadata_matches_expectation(plan, output_directory_descriptor):
+    """Reject obvious destination changes without rereading an existing ISO."""
+    _validate_output_directory_identity(plan)
+    basename = os.path.basename(plan.output_path)
     expectation = _thaw(plan._output_expectation)
-    exists = os.path.lexists(plan.output_path)
+    observed = _entry_metadata(output_directory_descriptor, basename)
     if not expectation['exists']:
-        if exists:
+        if observed is not None:
             raise OutputPublishError(
                 'Destination appeared after preflight; refusing to overwrite it')
         return
-    if not exists:
+    if observed is None:
         raise OutputPublishError('Expected destination disappeared')
-    try:
-        current = _existing_regular_identity(plan.output_path)
-    except (OSError, ImageProjectError, SourceInspectionError) as error:
-        raise OutputPublishError(str(error))
-    if current != expectation['identity']:
+    expected = expectation['identity']
+    if (stat.S_ISLNK(observed.st_mode) or
+            not stat.S_ISREG(observed.st_mode) or
+            int(observed.st_dev) != expected['device'] or
+            int(observed.st_ino) != expected['inode'] or
+            int(observed.st_size) != expected['size'] or
+            _stat_mtime_ns(observed) != expected['mtime_ns']):
         raise OutputPublishError('Destination changed after preflight')
+
+
+def _allocate_publication_directory(output_directory_descriptor):
+    name = None
+    descriptor = None
+    try:
+        for unused_attempt in range(128):
+            candidate = '.minios-image-builder-publish-{}'.format(
+                os.urandom(16).hex())
+            try:
+                os.mkdir(candidate, 0o700,
+                         dir_fd=output_directory_descriptor)
+                name = candidate
+                break
+            except FileExistsError:
+                continue
+        if name is None:
+            raise OutputPublishError(
+                'cannot allocate private publication directory')
+        descriptor = os.open(
+            name, _directory_open_flags(), dir_fd=output_directory_descriptor)
+        os.fchmod(descriptor, 0o700)
+        opened = os.fstat(descriptor)
+        observed = _entry_metadata(output_directory_descriptor, name)
+        if (observed is None or stat.S_ISLNK(observed.st_mode) or
+                not stat.S_ISDIR(opened.st_mode) or
+                stat.S_IMODE(opened.st_mode) != 0o700 or
+                _identity(observed) != _identity(opened) or
+                (hasattr(os, 'geteuid') and opened.st_uid != os.geteuid())):
+            raise OutputPublishError(
+                'private publication directory is unsafe')
+        return name, descriptor, _identity(opened)
+    except Exception:
+        if descriptor is not None:
+            os.close(descriptor)
+        if name is not None:
+            try:
+                observed = _entry_metadata(output_directory_descriptor, name)
+                if observed is not None and stat.S_ISDIR(observed.st_mode):
+                    os.rmdir(name, dir_fd=output_directory_descriptor)
+            except (OSError, ImageProjectError):
+                pass
+        raise
+
+
+def _cleanup_publication_directory(output_directory_descriptor, directory_name,
+                                   directory_descriptor, expected_identity,
+                                   staging_name):
+    try:
+        observed = _entry_metadata(directory_descriptor, staging_name)
+        if (observed is not None and not stat.S_ISLNK(observed.st_mode) and
+                stat.S_ISREG(observed.st_mode) and
+                (not hasattr(os, 'geteuid') or
+                 observed.st_uid == os.geteuid())):
+            os.unlink(staging_name, dir_fd=directory_descriptor)
+        os.fsync(directory_descriptor)
+        parent_entry = _entry_metadata(
+            output_directory_descriptor, directory_name)
+        if (parent_entry is not None and
+                not stat.S_ISLNK(parent_entry.st_mode) and
+                stat.S_ISDIR(parent_entry.st_mode) and
+                _identity(parent_entry) == tuple(expected_identity)):
+            os.rmdir(directory_name, dir_fd=output_directory_descriptor)
+            os.fsync(output_directory_descriptor)
+    except (OSError, ImageProjectError):
+        pass
+
+
+def _copy_verified_artifact_for_publication(
+        plan, source_descriptor, source_stat, expected_sha256,
+        output_directory_descriptor):
+    """Copy a verified artifact into private destination staging and publish."""
+    _validate_output_directory_identity(plan)
+    publication_name = None
+    publication_descriptor = None
+    publication_identity = None
+    staging_descriptor = None
+    staging_name = 'image.iso'
+    try:
+        (publication_name, publication_descriptor,
+         publication_identity) = _allocate_publication_directory(
+             output_directory_descriptor)
+        flags = os.O_RDWR | os.O_CREAT | os.O_EXCL
+        if hasattr(os, 'O_NOFOLLOW'):
+            flags |= os.O_NOFOLLOW
+        if hasattr(os, 'O_CLOEXEC'):
+            flags |= os.O_CLOEXEC
+        staging_descriptor = os.open(
+            staging_name, flags, 0o600, dir_fd=publication_descriptor)
+        os.fchmod(staging_descriptor, 0o600)
+        created = os.fstat(staging_descriptor)
+        if (not stat.S_ISREG(created.st_mode) or
+                stat.S_IMODE(created.st_mode) != 0o600 or
+                (hasattr(os, 'geteuid') and
+                 created.st_uid != os.geteuid())):
+            raise OutputPublishError('publication staging file is unsafe')
+
+        digest = hashlib.sha256()
+        offset = 0
+        while offset < source_stat.st_size:
+            block = os.pread(
+                source_descriptor,
+                min(HASH_CHUNK_SIZE, source_stat.st_size - offset), offset)
+            if not block:
+                raise OutputPublishError(
+                    'verified partial output ended while being copied')
+            written_offset = 0
+            while written_offset < len(block):
+                written = os.write(
+                    staging_descriptor, block[written_offset:])
+                if written <= 0:
+                    raise OSError(errno.EIO, 'short publication write')
+                written_offset += written
+            digest.update(block)
+            offset += len(block)
+        os.fsync(staging_descriptor)
+        copied_stat = os.fstat(staging_descriptor)
+        named_stat = _entry_metadata(publication_descriptor, staging_name)
+        if (named_stat is None or
+                _identity(named_stat) != _identity(copied_stat) or
+                _identity(copied_stat) != _identity(created) or
+                copied_stat.st_size != source_stat.st_size or
+                stat.S_IMODE(copied_stat.st_mode) != 0o600 or
+                digest.hexdigest() != expected_sha256):
+            raise OutputPublishError(
+                'cross-filesystem publication copy failed verification')
+
+        # Keep the unpublished image private throughout the copy and hash
+        # verification. Apply its final mode only after the bytes are complete.
+        os.fchmod(staging_descriptor, stat.S_IMODE(source_stat.st_mode))
+        os.fsync(staging_descriptor)
+        ready_stat = os.fstat(staging_descriptor)
+        named_stat = _entry_metadata(publication_descriptor, staging_name)
+        if (named_stat is None or
+                _identity(named_stat) != _identity(ready_stat) or
+                _identity(ready_stat) != _identity(created) or
+                ready_stat.st_size != source_stat.st_size):
+            raise OutputPublishError(
+                'publication staging file changed before publication')
+
+        _output_matches_expectation(plan, output_directory_descriptor)
+        target_basename = os.path.basename(plan.output_path)
+        expectation = _thaw(plan._output_expectation)
+        if expectation['exists']:
+            if not plan.manifest['output']['overwrite_allowed']:
+                raise OutputPublishError(
+                    'overwrite policy does not permit replace')
+            os.replace(
+                staging_name, target_basename,
+                src_dir_fd=publication_descriptor,
+                dst_dir_fd=output_directory_descriptor)
+        else:
+            os.link(
+                staging_name, target_basename,
+                src_dir_fd=publication_descriptor,
+                dst_dir_fd=output_directory_descriptor,
+                follow_symlinks=False)
+            os.unlink(staging_name, dir_fd=publication_descriptor)
+        os.fsync(output_directory_descriptor)
+        final_stat = _entry_metadata(
+            output_directory_descriptor, target_basename)
+        if (final_stat is None or stat.S_ISLNK(final_stat.st_mode) or
+                not stat.S_ISREG(final_stat.st_mode) or
+                _identity(final_stat) != _identity(ready_stat)):
+            raise OutputPublishError(
+                'published copied output identity is unexpected')
+        _validate_output_directory_identity(plan)
+        return plan.output_path
+    finally:
+        if staging_descriptor is not None:
+            os.close(staging_descriptor)
+        if publication_descriptor is not None:
+            _cleanup_publication_directory(
+                output_directory_descriptor, publication_name,
+                publication_descriptor, publication_identity, staging_name)
+            os.close(publication_descriptor)
 
 
 def publish_verified_output(plan, verification_result, runner=None,
                             xorriso=None, unsquashfs=None):
-    """Repeat verification and atomically publish the exact plan artifact."""
+    """Publish the retained artifact produced by structural verification."""
     if not isinstance(plan, BuildPlan) or not plan.buildable:
         raise OutputPublishError('a buildable BuildPlan is required')
     if not isinstance(verification_result, VerificationResult):
@@ -8494,77 +8902,123 @@ def publish_verified_output(plan, verification_result, runner=None,
     if (verification_result.artifact_device is None or
             verification_result.artifact_inode is None or
             verification_result._artifact_descriptor is None):
-        raise OutputPublishError('verification has no retained artifact identity')
+        raise OutputPublishError(
+            'verification has no retained artifact identity')
     try:
         _validate_job_identity(plan)
+        _validate_scratch_identity(plan)
+        _validate_output_directory_identity(plan)
         retained = os.fstat(verification_result._artifact_descriptor)
-        before = os.lstat(plan.partial_output_path)
     except (OSError, ImageProjectError) as error:
         raise OutputPublishError(str(error))
-    if (stat.S_ISLNK(before.st_mode) or not stat.S_ISREG(before.st_mode) or
-            _identity(retained) != (verification_result.artifact_device,
-                                    verification_result.artifact_inode) or
-            _metadata_snapshot(before) != _metadata_snapshot(retained)):
-        raise OutputPublishError(
-            'partial artifact identity changed after verification')
 
-    repeated = verify_iso(
-        plan, runner=runner, xorriso=xorriso, unsquashfs=unsquashfs)
-    if (not repeated.structurally_verified or
-            repeated.sha256 != verification_result.sha256 or
-            repeated.adapter_manifest_sha256 !=
-            verification_result.adapter_manifest_sha256 or
-            _thaw(repeated.capture_summary) !=
-            _thaw(verification_result.capture_summary) or
-            _thaw(repeated.customization_summary) !=
-            _thaw(verification_result.customization_summary) or
-            repeated.artifact_device != verification_result.artifact_device or
-            repeated.artifact_inode != verification_result.artifact_inode):
-        raise OutputPublishError('repeated structural verification did not match')
-    _output_matches_expectation(plan)
+    if (_identity(retained) != (verification_result.artifact_device,
+                                verification_result.artifact_inode) or
+            retained.st_size != verification_result.size):
+        raise OutputPublishError(
+            'verified partial output changed before publication')
+    try:
+        manifest_payload, unused_manifest_stat = _read_private_job_file(
+            plan, plan.adapter_manifest_path, MAX_BUILD_MANIFEST_BYTES,
+            'adapter manifest')
+    except (OSError, ImageProjectError) as error:
+        raise OutputPublishError(str(error))
+    if (manifest_payload != plan.manifest_payload or
+            hashlib.sha256(manifest_payload).hexdigest() !=
+            verification_result.adapter_manifest_sha256):
+        raise OutputPublishError(
+            'adapter manifest changed after structural verification')
 
-    if repeated._artifact_descriptor is None:
-        raise OutputPublishError(
-            'repeated verification has no retained artifact identity')
+    artifact_descriptor = None
+    job_descriptor = None
+    output_directory_descriptor = None
     try:
-        descriptor = os.dup(repeated._artifact_descriptor)
-    except OSError as error:
-        raise OutputPublishError(
-            'cannot retain verified partial output: {}'.format(error))
-    try:
-        held_stat = os.fstat(descriptor)
-        latest = os.lstat(plan.partial_output_path)
-        if (_identity(held_stat) != (repeated.artifact_device,
-                                     repeated.artifact_inode) or
-                _metadata_snapshot(latest) != _metadata_snapshot(held_stat) or
-                _hash_descriptor(descriptor) != repeated.sha256):
-            raise OutputPublishError('partial output changed before publication')
-        os.fsync(descriptor)
-        latest = os.lstat(plan.partial_output_path)
-        if _metadata_snapshot(latest) != _metadata_snapshot(held_stat):
+        artifact_descriptor = os.dup(
+            verification_result._artifact_descriptor)
+        job_descriptor = _duplicate_job_descriptor(plan)
+        output_directory_descriptor = _duplicate_output_directory_descriptor(plan)
+        held_stat = os.fstat(artifact_descriptor)
+        source_basename = _private_job_basename(
+            plan, plan.partial_output_path)
+        named_source = _entry_metadata(job_descriptor, source_basename)
+        if (named_source is None or stat.S_ISLNK(named_source.st_mode) or
+                not stat.S_ISREG(named_source.st_mode) or
+                _identity(held_stat) != (verification_result.artifact_device,
+                                         verification_result.artifact_inode) or
+                _metadata_snapshot(named_source) !=
+                _metadata_snapshot(held_stat)):
+            raise OutputPublishError(
+                'partial output changed before publication')
+        os.fsync(artifact_descriptor)
+        named_source = _entry_metadata(job_descriptor, source_basename)
+        if (named_source is None or
+                _metadata_snapshot(named_source) !=
+                _metadata_snapshot(held_stat)):
             raise OutputPublishError('partial output path was replaced')
+
+        _output_metadata_matches_expectation(
+            plan, output_directory_descriptor)
+        output_stat = os.fstat(output_directory_descriptor)
+        if held_stat.st_dev != output_stat.st_dev:
+            return _copy_verified_artifact_for_publication(
+                plan, artifact_descriptor, held_stat,
+                verification_result.sha256,
+                output_directory_descriptor)
+
+        if (_hash_descriptor(artifact_descriptor) !=
+                verification_result.sha256):
+            raise OutputPublishError(
+                'partial output changed before publication')
+
+        target_basename = os.path.basename(plan.output_path)
         expectation = _thaw(plan._output_expectation)
-        if expectation['exists']:
-            if not plan.manifest['output']['overwrite_allowed']:
-                raise OutputPublishError('overwrite policy does not permit replace')
-            _output_matches_expectation(plan)
-            os.replace(plan.partial_output_path, plan.output_path)
-        else:
-            # Atomic no-overwrite publication on the same filesystem.
-            os.link(plan.partial_output_path, plan.output_path,
+        try:
+            if expectation['exists']:
+                if not plan.manifest['output']['overwrite_allowed']:
+                    raise OutputPublishError(
+                        'overwrite policy does not permit replace')
+                _output_matches_expectation(plan, output_directory_descriptor)
+                os.replace(
+                    source_basename, target_basename,
+                    src_dir_fd=job_descriptor,
+                    dst_dir_fd=output_directory_descriptor)
+            else:
+                os.link(
+                    source_basename, target_basename,
+                    src_dir_fd=job_descriptor,
+                    dst_dir_fd=output_directory_descriptor,
                     follow_symlinks=False)
-            os.unlink(plan.partial_output_path)
-        _fsync_directory(os.path.dirname(plan.output_path) or os.curdir)
-        published = os.lstat(plan.output_path)
-        if (stat.S_ISLNK(published.st_mode) or
+                os.unlink(source_basename, dir_fd=job_descriptor)
+        except OSError as error:
+            if error.errno != errno.EXDEV:
+                raise
+            return _copy_verified_artifact_for_publication(
+                plan, artifact_descriptor, held_stat,
+                verification_result.sha256,
+                output_directory_descriptor)
+        os.fsync(job_descriptor)
+        os.fsync(output_directory_descriptor)
+        published = _entry_metadata(
+            output_directory_descriptor, target_basename)
+        if (published is None or stat.S_ISLNK(published.st_mode) or
                 not stat.S_ISREG(published.st_mode) or
                 _identity(published) != _identity(held_stat)):
-            raise OutputPublishError('published output identity is unexpected')
-    except OSError as error:
-        raise OutputPublishError('atomic publication failed: {}'.format(error))
+            raise OutputPublishError(
+                'published output identity is unexpected')
+        _validate_output_directory_identity(plan)
+        return plan.output_path
+    except OutputPublishError:
+        raise
+    except (OSError, ImageProjectError) as error:
+        raise OutputPublishError(
+            'atomic publication failed: {}'.format(error))
     finally:
-        os.close(descriptor)
-    return plan.output_path
+        if artifact_descriptor is not None:
+            os.close(artifact_descriptor)
+        if job_descriptor is not None:
+            os.close(job_descriptor)
+        if output_directory_descriptor is not None:
+            os.close(output_directory_descriptor)
 
 
 def detect_vm_capabilities(which=None):
@@ -8778,6 +9232,7 @@ __all__ = [
     'discover_running_source', 'discover_mounted_source',
     'list_optical_devices', 'MOUNTED_SOURCE_BACKENDS',
     'resolve_device_mountpoint', 'find_loop_backing_device',
+    'find_loop_backing_devices',
     'grep_ere_validate', 'inspect_source_boot_menu', 'inspect_source_modules',
     'inspect_overlay_directory', 'load_image_project',
     'load_session_inventory', 'module_exclusion_regex', 'overlay_fingerprint',

@@ -11,9 +11,9 @@
       "title": "Selezione della sessione"
     },
     {
-      "anchor": "tipo-di-archiviazione",
+      "anchor": "tipo-di-storage",
       "level": 2,
-      "title": "Tipo di archiviazione"
+      "title": "Tipo di storage"
     },
     {
       "anchor": "capacità",
@@ -72,11 +72,11 @@
     [
       "heading",
       2,
-      "tipo-di-archiviazione",
+      "tipo-di-storage",
       [
         [
           "text",
-          "Tipo di archiviazione"
+          "Tipo di storage"
         ]
       ]
     ],
@@ -111,7 +111,7 @@
                 ],
                 [
                   "text",
-                  " mantiene la modalità del modello o della sessione salvata."
+                  " mantiene la modalità template o sessione salvata."
                 ]
               ]
             ]
@@ -141,7 +141,7 @@
                 ],
                 [
                   "text",
-                  " salva le modifiche in una directory su un filesystem Linux."
+                  " salva le modifiche direttamente in una directory su un filesystem con permessi Unix, come ext4, XFS o Btrfs."
                 ]
               ]
             ]
@@ -275,7 +275,7 @@
       [
         [
           "text",
-          "L'attuale initramfs può riprendere ma non creare sessioni SquashFS."
+          "L'initramfs attuale può riprendere ma non creare sessioni SquashFS."
         ]
       ]
     ],
@@ -426,7 +426,7 @@
       ]
     ]
   ],
-  "plain_text": "Sessione e archiviazione\nScegli come questa voce individua e memorizza le modifiche persistenti.\nSelezione della sessione\nIl modello della voce controlla se MiniOS riprende l'ultima sessione, ne crea una nuova o chiede all'avvio. Il tipo di archiviazione non sostituisce questa scelta del modello.\nTipo di archiviazione\nAutomatico mantiene la modalità del modello o della sessione salvata.\nNativo salva le modifiche in una directory su un filesystem Linux.\nDynfilefs utilizza un contenitore espandibile.\nRaw utilizza un'immagine a dimensione fissa.\nLUKS utilizza un contenitore cifrato.\nSquashFS riprende una sessione compressa esistente.\nL'attuale initramfs può riprendere ma non creare sessioni SquashFS.\nCapacità\nDimensione del contenitore si applica solo alle sessioni basate su contenitore, quindi è disabilitata per Nativo e SquashFS. Spazio libero da mantenere riserva spazio sul dispositivo di persistenza in modo che le modifiche salvate non lo riempiano completamente.\nLe opzioni di avvio corrispondenti sono perchmode=, perchsize= e perchreserve=.\nCopia in RAM\ntoram=full copia l'intero sistema in memoria. toram=trim copia solo il set di moduli filtrato. Questo può consentire la rimozione del dispositivo di avvio, ma richiede abbastanza RAM per i dati copiati.",
+  "plain_text": "Sessione e archiviazione\nScegli come questa voce individua e memorizza le modifiche persistenti.\nSelezione della sessione\nIl modello della voce controlla se MiniOS riprende l'ultima sessione, ne crea una nuova o chiede all'avvio. Il tipo di archiviazione non sostituisce questa scelta del modello.\nTipo di storage\nAutomatico mantiene la modalità template o sessione salvata.\nNativo salva le modifiche direttamente in una directory su un filesystem con permessi Unix, come ext4, XFS o Btrfs.\nDynfilefs utilizza un contenitore espandibile.\nRaw utilizza un'immagine a dimensione fissa.\nLUKS utilizza un contenitore cifrato.\nSquashFS riprende una sessione compressa esistente.\nL'initramfs attuale può riprendere ma non creare sessioni SquashFS.\nCapacità\nDimensione del contenitore si applica solo alle sessioni basate su contenitore, quindi è disabilitata per Nativo e SquashFS. Spazio libero da mantenere riserva spazio sul dispositivo di persistenza in modo che le modifiche salvate non lo riempiano completamente.\nLe opzioni di avvio corrispondenti sono perchmode=, perchsize= e perchreserve=.\nCopia in RAM\ntoram=full copia l'intero sistema in memoria. toram=trim copia solo il set di moduli filtrato. Questo può consentire la rimozione del dispositivo di avvio, ma richiede abbastanza RAM per i dati copiati.",
   "product_kind": "minios-markup-document",
   "schema_version": 1
 }

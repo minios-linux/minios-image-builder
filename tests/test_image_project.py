@@ -7,6 +7,7 @@ import shutil
 import stat
 import struct
 import subprocess
+import tempfile
 import zlib
 from types import SimpleNamespace
 
@@ -177,6 +178,16 @@ def _project(info, output, project_base, **kwargs):
         info, str(output), project_base=str(project_base), **kwargs)
 
 
+def test_project_loader_rejects_duplicate_json_fields(tmp_path):
+    project_path = tmp_path / 'duplicate.mib.json'
+    project_path.write_text(
+        '{"output_path":"first.iso","output_path":"second.iso"}',
+        encoding='utf-8')
+
+    with pytest.raises(backend.ProjectFormatError, match='duplicate JSON field'):
+        backend.load_image_project(str(project_path))
+
+
 def _plan(project, info, config, runner=None, **kwargs):
     return backend.create_build_plan(
         project, info, current_config_path=str(config),
@@ -225,6 +236,14 @@ def _expected_iso_paths(plan):
     paths.update(customization['background_targets'])
     if customization['overlay_requested']:
         paths.add(customization['overlay_target'])
+    source_relative_paths = {
+        item['relative_path']
+        for item in plan.manifest['input_digests']['source_files']
+    }
+    for inherited_report in (
+            'session-capture.json', 'image-customization.json'):
+        if inherited_report in source_relative_paths:
+            paths.add('minios/' + inherited_report)
     return tuple(sorted('/' + path.lstrip('/') for path in paths))
 
 
@@ -523,7 +542,8 @@ def test_authorized_config_payload_is_staged_without_reopening_path(tmp_path):
         payload).hexdigest()
     backend.prepare_build_command(plan)
     staged = os.path.join(plan.job_directory, 'live-config.conf')
-    assert open(staged, 'rb').read() == payload
+    with open(staged, 'rb') as handle:
+        assert handle.read() == payload
     assert stat.S_IMODE(os.stat(staged).st_mode) == 0o600
 
 
@@ -1400,7 +1420,8 @@ def test_build_plan_uses_secure_job_and_explicit_companion_contract(tmp_path):
     plan = _plan(project, info, config)
 
     assert plan.buildable
-    assert os.path.dirname(plan.job_directory) == str(output_dir)
+    assert os.path.dirname(plan.job_directory) == str(project_dir)
+    assert os.path.dirname(plan.job_directory) != str(output_dir)
     assert stat.S_IMODE(os.lstat(plan.job_directory).st_mode) == 0o700
     assert plan.partial_output_path.startswith(plan.job_directory + os.sep)
     assert not os.path.exists(plan.partial_output_path)
@@ -1412,6 +1433,9 @@ def test_build_plan_uses_secure_job_and_explicit_companion_contract(tmp_path):
     assert argv[argv.index('--manifest') + 1] == 'compose-manifest.json'
     assert plan.execution_cwd.startswith('/proc/self/fd/')
     assert backend._identity(os.stat(plan.execution_cwd)) == plan._job_identity
+    assert plan._output_directory_identity == backend._identity(os.stat(output_dir))
+    assert backend._identity(os.fstat(plan._output_directory_descriptor)) == (
+        plan._output_directory_identity)
     assert argv[argv.index('--volume-label') + 1] == 'MINIOS LAB'
     assert argv[-1] == str(additional)
     assert '--exclude' in argv
@@ -1421,6 +1445,20 @@ def test_build_plan_uses_secure_job_and_explicit_companion_contract(tmp_path):
     assert backend.revalidate_build_plan_inputs(plan) == ()
     backend.atomic_write_json(plan.adapter_manifest_path, plan.manifest)
     assert backend.prepare_build_command(plan) == plan.argv
+
+
+def test_build_plan_rejects_oversized_generated_manifest(tmp_path, monkeypatch):
+    root, source, mounts, sys_block, release, info = _make_source(tmp_path)
+    project_dir = tmp_path / 'project'
+    project_dir.mkdir()
+    project = _project(info, project_dir / 'out.iso', project_dir)
+    monkeypatch.setattr(backend, 'MAX_BUILD_MANIFEST_BYTES', 1024)
+
+    plan = _plan(project, info, _config(project_dir))
+
+    assert not plan.buildable
+    assert 'build_manifest_too_large' in _error_codes(plan)
+    assert not list(project_dir.glob('.minios-image-builder-*'))
 
 
 def test_customization_plan_materializes_private_config_and_combines_order(
@@ -2469,7 +2507,8 @@ def test_capture_allows_scratch_on_independent_nested_overlay(tmp_path):
 
 
 @pytest.mark.parametrize('union_fstype', ('overlay', 'aufs'))
-def test_capture_rejects_output_job_on_live_union(tmp_path, union_fstype):
+def test_capture_allows_new_output_on_live_union_with_external_scratch(
+        tmp_path, union_fstype):
     root, source, mounts, sys_block, release, info = _make_source(tmp_path)
     project_dir = tmp_path / 'project'
     scratch = tmp_path / 'external-work'
@@ -2477,10 +2516,11 @@ def test_capture_rejects_output_job_on_live_union(tmp_path, union_fstype):
     scratch.mkdir()
     mount_table = _write_mount_table(tmp_path, [
         ('none', '/', union_fstype),
-        ('/dev/sdb1', os.path.realpath(str(scratch)), 'ext4'),
+        ('tmpfs', os.path.realpath(str(scratch)), 'tmpfs'),
     ])
     project = _project(
-        info, project_dir / 'out.iso', project_dir, capture_mode='clean')
+        info, project_dir / 'out.iso', project_dir, capture_mode='exact',
+        sensitive_capture_acknowledged=True)
 
     plan = backend.create_build_plan(
         project, info, current_config_path=str(_config(project_dir)),
@@ -2489,8 +2529,38 @@ def test_capture_rejects_output_job_on_live_union(tmp_path, union_fstype):
         command_runner=AcceptSquashfsRunner(), mounts_path=mount_table,
         changes_roots=())
 
-    assert 'destination_on_captured_live_overlay' in _error_codes(plan)
+    assert plan.buildable
     assert 'scratch_on_captured_live_overlay' not in _error_codes(plan)
+    assert os.path.dirname(plan.job_directory) == os.path.realpath(str(scratch))
+    assert not list(project_dir.glob('.minios-image-builder-*'))
+
+
+@pytest.mark.parametrize('union_fstype', ('overlay', 'aufs'))
+def test_capture_rejects_preexisting_output_on_live_union(
+        tmp_path, union_fstype):
+    root, source, mounts, sys_block, release, info = _make_source(tmp_path)
+    project_dir = tmp_path / 'project'
+    scratch = tmp_path / 'external-work'
+    project_dir.mkdir()
+    scratch.mkdir()
+    output = _write(project_dir / 'out.iso', b'old-output')
+    mount_table = _write_mount_table(tmp_path, [
+        ('none', '/', union_fstype),
+        ('/dev/sdb1', os.path.realpath(str(scratch)), 'ext4'),
+    ])
+    project = _project(
+        info, output, project_dir, capture_mode='exact',
+        overwrite_output=True, sensitive_capture_acknowledged=True)
+
+    plan = backend.create_build_plan(
+        project, info, current_config_path=str(_config(project_dir)),
+        disk_usage_func=_large_disk, scratch_directory=str(scratch),
+        tool_capabilities=_tool_capabilities(),
+        command_runner=AcceptSquashfsRunner(), mounts_path=mount_table,
+        changes_roots=())
+
+    assert 'existing_destination_on_captured_live_overlay' in _error_codes(plan)
+    assert not list(project_dir.glob('.minios-image-builder-*'))
 
 
 def test_capture_allows_overlayfs_sibling_but_rejects_effective_changes_root(
@@ -2585,7 +2655,7 @@ def test_capture_rejects_bind_aliases_of_root_live_union(tmp_path):
         command_runner=AcceptSquashfsRunner(), mounts_path=mount_table,
         mountinfo_path=mountinfo, changes_roots=())
 
-    assert 'destination_on_captured_live_overlay' in _error_codes(plan)
+    assert 'existing_destination_on_captured_live_overlay' not in _error_codes(plan)
     assert 'scratch_on_captured_live_overlay' in _error_codes(plan)
 
 
@@ -2638,11 +2708,35 @@ def test_prepare_rejects_replaced_scratch_directory(tmp_path):
     assert plan.buildable
     assert plan.scratch_directory == os.path.realpath(str(scratch))
 
-    scratch.rmdir()
+    moved_scratch = tmp_path / 'scratch-original'
+    scratch.rename(moved_scratch)
     scratch.mkdir()
 
     with pytest.raises(backend.ImageProjectError,
                        match='temporary work directory changed'):
+        backend.prepare_build_command(plan)
+
+
+def test_prepare_rejects_replaced_output_directory(tmp_path):
+    root, source, mounts, sys_block, release, info = _make_source(tmp_path)
+    project_dir = tmp_path / 'project'
+    output_dir = project_dir / 'release'
+    scratch = tmp_path / 'scratch'
+    output_dir.mkdir(parents=True)
+    scratch.mkdir()
+    project = _project(info, output_dir / 'out.iso', project_dir)
+    plan = backend.create_build_plan(
+        project, info, current_config_path=str(_config(project_dir)),
+        disk_usage_func=_large_disk, scratch_directory=str(scratch),
+        tool_capabilities=_tool_capabilities(),
+        command_runner=AcceptSquashfsRunner())
+    assert plan.buildable
+
+    output_dir.rename(project_dir / 'release-original')
+    output_dir.mkdir()
+
+    with pytest.raises(backend.ImageProjectError,
+                       match='output directory changed'):
         backend.prepare_build_command(plan)
 
 
@@ -2755,6 +2849,45 @@ def test_kernel_module_declared_version_must_match_boot_pair(tmp_path):
     project = _project(info, project_dir / 'out.iso', project_dir)
     plan = _plan(project, info, _config(project_dir))
     assert 'kernel_module_version_mismatch' in _error_codes(plan)
+
+
+def test_live_overlay_output_counts_ram_backed_changes_storage(tmp_path):
+    root, source, mounts, sys_block, release, info = _make_source(tmp_path)
+    project_dir = tmp_path / 'project'
+    scratch = tmp_path / 'scratch'
+    changes_container = tmp_path / 'live-changes'
+    effective_changes = changes_container / 'changes'
+    workdir = changes_container / 'workdir'
+    project_dir.mkdir()
+    scratch.mkdir()
+    effective_changes.mkdir(parents=True)
+    workdir.mkdir()
+    mount_table = _write_mount_table(tmp_path, [
+        ('overlay', '/', 'overlay'),
+        ('tmpfs', os.path.realpath(str(changes_container)), 'tmpfs'),
+        ('/dev/sdb1', os.path.realpath(str(scratch)), 'ext4'),
+    ])
+    meminfo = _write_meminfo(tmp_path, 64 * 1024)
+    project = _project(
+        info, project_dir / 'out.iso', project_dir, capture_mode='clean')
+
+    plan = backend.create_build_plan(
+        project, info, current_config_path=str(_config(project_dir)),
+        disk_usage_func=_large_disk, scratch_directory=str(scratch),
+        tool_capabilities=_tool_capabilities(),
+        command_runner=AcceptSquashfsRunner(), mounts_path=mount_table,
+        meminfo_path=meminfo, changes_roots=(str(changes_container),))
+
+    estimate = plan.manifest['estimate']
+    assert plan.buildable
+    assert estimate['destination_filesystem_class'] == (
+        backend.FILESYSTEM_CLASS_LIVE_OVERLAY)
+    assert estimate['live_writable_backing_filesystem_class'] == (
+        backend.FILESYSTEM_CLASS_RAM_BACKED)
+    assert estimate['destination_ram_backed'] is True
+    assert estimate['scratch_ram_backed'] is False
+    assert estimate['peak_memory_bytes'] > estimate['required_destination_bytes']
+    assert 'ram_workspace_memory_pressure' in _warning_codes(plan)
 
 
 def test_destination_and_scratch_space_are_checked_conservatively(tmp_path):
@@ -2939,6 +3072,20 @@ def test_find_loop_backing_device_matches_backing_file(tmp_path):
         is None
 
 
+def test_find_loop_backing_devices_returns_every_match(tmp_path):
+    iso = tmp_path / 'source.iso'
+    iso.write_bytes(b'iso')
+    sys_block = tmp_path / 'sys-block'
+    for name in ('loop3', 'loop7'):
+        backing = sys_block / name / 'loop' / 'backing_file'
+        backing.parent.mkdir(parents=True)
+        backing.write_text(str(iso), encoding='utf-8')
+
+    assert backend.find_loop_backing_devices(
+        str(iso), sys_block_root=str(sys_block)) == (
+            '/dev/loop3', '/dev/loop7')
+
+
 def test_find_loop_backing_device_ignores_deleted_suffix(tmp_path):
     iso = tmp_path / 'image.iso'
     iso.write_bytes(b'iso-bytes')
@@ -2969,9 +3116,11 @@ def test_structural_verification_is_bound_to_plan_and_exact_expected_paths(
         plan.manifest_payload).hexdigest()
     assert result.capture_summary['requested'] is False
     assert runner.calls[0] == [
-        '/tools/xorriso', '-indev', plan.partial_output_path, '-find', '/',
+        '/tools/xorriso', '-no_rc', '-indev', plan.partial_output_path,
+        '-find', '/',
     ]
     assert '-print' not in runner.calls[0]
+    assert all('-no_rc' in call for call in runner.calls[:5])
     assert len(runner.calls) == 6
 
 
@@ -3301,6 +3450,62 @@ def test_custom_verification_forbids_capture_report_and_layer(tmp_path):
     assert 'unexpected_image_overlay_module' in _error_codes(result)
 
 
+def test_verification_preserves_inherited_builder_artifacts(tmp_path):
+    names = ('00-core-amd64.sb', '01-kernel-amd64.sb',
+             '05-image-overlay.sb', '06-session-changes.sb')
+    root, source, mounts, sys_block, release, unused_info = _make_source(
+        tmp_path, module_names=names)
+    _write(source / 'image-customization.json', b'{"inherited":true}\n')
+    _write(source / 'session-capture.json', b'{"inherited":true}\n')
+    info = backend.discover_running_source(
+        roots=(('livekit', str(root)),), mounts_path=str(mounts),
+        sys_block_root=str(sys_block), runtime_release_path=str(release))
+    project_dir = tmp_path / 'project'
+    project_dir.mkdir()
+    project = _project(info, project_dir / 'out.iso', project_dir)
+    plan = _plan(project, info, _config(project_dir))
+    _prepare_artifact(plan)
+
+    result = backend.verify_iso(plan, runner=FakeXorriso(plan))
+
+    codes = _error_codes(result)
+    assert result.structurally_verified, codes
+    assert 'unexpected_session_capture_report' not in codes
+    assert 'unexpected_session_capture_module' not in codes
+    assert 'unexpected_image_customization_report' not in codes
+    assert 'unexpected_image_overlay_module' not in codes
+
+    for inherited_report in (
+            '/minios/session-capture.json',
+            '/minios/image-customization.json'):
+        missing = backend.verify_iso(
+            plan, runner=FakeXorriso(plan, omit=(inherited_report,)))
+        assert 'expected_iso_path_missing' in _error_codes(missing)
+
+
+def test_new_dynamic_layers_are_verified_with_inherited_layers(tmp_path):
+    names = ('00-core-amd64.sb', '01-kernel-amd64.sb',
+             '05-image-overlay.sb', '06-session-changes.sb')
+    root, source, mounts, sys_block, release, info = _make_source(
+        tmp_path, module_names=names)
+    project_dir = tmp_path / 'project'
+    overlay = project_dir / 'overlay'
+    project_dir.mkdir()
+    _write(overlay / 'etc' / 'new.conf', b'enabled=true\n')
+    project = _project(
+        info, project_dir / 'out.iso', project_dir,
+        overlay_directory=str(overlay), capture_mode='clean')
+    plan = _plan(project, info, _config(project_dir))
+    _prepare_artifact(plan)
+
+    result = backend.verify_iso(plan, runner=FakeXorriso(plan))
+
+    codes = _error_codes(result)
+    assert result.structurally_verified, codes
+    assert 'session_capture_module_set_mismatch' not in codes
+    assert 'image_overlay_module_set_mismatch' not in codes
+
+
 def test_verification_requires_modules_config_kernel_initramfs_and_forbids_deselected(
         tmp_path):
     names = ('00-core-amd64.sb', '01-kernel-amd64.sb',
@@ -3464,7 +3669,7 @@ def test_verify_rejects_symlink_partial_and_replaced_job_directory(tmp_path):
     assert 'job_identity_changed' in _error_codes(result)
 
 
-def test_publish_repeats_verification_and_rejects_inode_replacement(tmp_path):
+def test_publish_reuses_verification_and_rejects_inode_replacement(tmp_path):
     root, source, mounts, sys_block, release, info = _make_source(tmp_path)
     project_dir = tmp_path / 'project'
     project_dir.mkdir()
@@ -3480,7 +3685,7 @@ def test_publish_repeats_verification_and_rejects_inode_replacement(tmp_path):
 
     assert published == str(project_dir / 'out.iso')
     assert os.path.isfile(published)
-    assert len(runner.calls) == original_calls + 6
+    assert len(runner.calls) == original_calls
 
     second_project = _project(
         info, project_dir / 'second.iso', project_dir)
@@ -3506,7 +3711,197 @@ def test_publish_repeats_verification_and_rejects_inode_replacement(tmp_path):
             third, third_verified, runner=third_runner)
 
 
-def test_publish_repeats_capture_attestation_before_atomic_output(tmp_path):
+def test_publish_rejects_replaced_output_directory(tmp_path):
+    root, source, mounts, sys_block, release, info = _make_source(tmp_path)
+    project_dir = tmp_path / 'project'
+    output_dir = project_dir / 'release'
+    scratch = tmp_path / 'scratch'
+    output_dir.mkdir(parents=True)
+    scratch.mkdir()
+    project = _project(info, output_dir / 'out.iso', project_dir)
+    plan = backend.create_build_plan(
+        project, info, current_config_path=str(_config(project_dir)),
+        disk_usage_func=_large_disk, scratch_directory=str(scratch),
+        tool_capabilities=_tool_capabilities(),
+        command_runner=AcceptSquashfsRunner())
+    _prepare_artifact(plan, b'identity-bound-output')
+    runner = FakeXorriso(plan)
+    verified = backend.verify_iso(plan, runner=runner)
+
+    moved_output_dir = project_dir / 'release-before-review'
+    output_dir.rename(moved_output_dir)
+    output_dir.mkdir()
+
+    with pytest.raises(backend.OutputPublishError,
+                       match='output directory changed'):
+        backend.publish_verified_output(plan, verified, runner=runner)
+    assert not (output_dir / 'out.iso').exists()
+    assert not (moved_output_dir / 'out.iso').exists()
+
+
+def test_cross_filesystem_publication_staging_stays_private_until_complete(
+        tmp_path, monkeypatch):
+    if not os.path.isdir('/dev/shm'):
+        pytest.skip('/dev/shm is unavailable')
+    root, source, mounts, sys_block, release, info = _make_source(tmp_path)
+    project_dir = tmp_path / 'project'
+    project_dir.mkdir()
+    scratch = tempfile.mkdtemp(
+        prefix='minios-image-builder-mode-test-', dir='/dev/shm')
+    try:
+        if os.stat(scratch).st_dev == os.stat(str(project_dir)).st_dev:
+            pytest.skip('/dev/shm shares the test filesystem')
+        project = _project(info, project_dir / 'out.iso', project_dir)
+        plan = backend.create_build_plan(
+            project, info, current_config_path=str(_config(project_dir)),
+            disk_usage_func=_large_disk, scratch_directory=scratch,
+            tool_capabilities=_tool_capabilities(),
+            command_runner=AcceptSquashfsRunner())
+        _prepare_artifact(plan, b'private-until-complete')
+        source_mode = stat.S_IMODE(os.stat(plan.partial_output_path).st_mode)
+        runner = FakeXorriso(plan)
+        verified = backend.verify_iso(plan, runner=runner)
+        real_write = backend.os.write
+        observations = []
+
+        def inspect_publication_write(descriptor, data):
+            file_stat = os.fstat(descriptor)
+            publication_dirs = list(
+                project_dir.glob('.minios-image-builder-publish-*'))
+            if publication_dirs and stat.S_ISREG(file_stat.st_mode):
+                publication_stat = publication_dirs[0].stat()
+                observations.append((
+                    stat.S_IMODE(file_stat.st_mode),
+                    stat.S_IMODE(publication_stat.st_mode)))
+            return real_write(descriptor, data)
+
+        monkeypatch.setattr(backend.os, 'write', inspect_publication_write)
+        published = backend.publish_verified_output(
+            plan, verified, runner=runner)
+
+        assert observations
+        assert all(file_mode == 0o600 for file_mode, _dir_mode in observations)
+        assert all(dir_mode == 0o700 for _file_mode, dir_mode in observations)
+        assert stat.S_IMODE(os.stat(published).st_mode) == source_mode
+        assert not list(project_dir.glob('.minios-image-builder-publish-*'))
+    finally:
+        shutil.rmtree(scratch, ignore_errors=True)
+
+
+def test_cross_filesystem_overwrite_publishes_from_retained_private_directory(
+        tmp_path, monkeypatch):
+    if not os.path.isdir('/dev/shm'):
+        pytest.skip('/dev/shm is unavailable')
+    root, source, mounts, sys_block, release, info = _make_source(tmp_path)
+    project_dir = tmp_path / 'project'
+    project_dir.mkdir()
+    output = _write(project_dir / 'out.iso', b'old-output')
+    scratch = tempfile.mkdtemp(
+        prefix='minios-image-builder-overwrite-', dir='/dev/shm')
+    try:
+        if os.stat(scratch).st_dev == os.stat(str(project_dir)).st_dev:
+            pytest.skip('/dev/shm shares the test filesystem')
+        project = _project(
+            info, output, project_dir, overwrite_output=True)
+        plan = backend.create_build_plan(
+            project, info, current_config_path=str(_config(project_dir)),
+            disk_usage_func=_large_disk, scratch_directory=scratch,
+            tool_capabilities=_tool_capabilities(),
+            command_runner=AcceptSquashfsRunner())
+        _prepare_artifact(plan, b'new-output')
+        source_mode = stat.S_IMODE(os.stat(plan.partial_output_path).st_mode)
+        runner = FakeXorriso(plan)
+        verified = backend.verify_iso(plan, runner=runner)
+        real_replace = backend.os.replace
+        publication_calls = []
+
+        def inspect_replace(source_name, target_name, *args, **kwargs):
+            if (target_name == 'out.iso' and
+                    kwargs.get('src_dir_fd') is not None and
+                    kwargs.get('dst_dir_fd') is not None):
+                source_directory = os.fstat(kwargs['src_dir_fd'])
+                source_file = os.stat(
+                    source_name, dir_fd=kwargs['src_dir_fd'],
+                    follow_symlinks=False)
+                publication_calls.append((
+                    source_name, stat.S_IMODE(source_directory.st_mode),
+                    stat.S_IMODE(source_file.st_mode)))
+            return real_replace(source_name, target_name, *args, **kwargs)
+
+        monkeypatch.setattr(backend.os, 'replace', inspect_replace)
+        published = backend.publish_verified_output(
+            plan, verified, runner=runner)
+
+        assert publication_calls == [('image.iso', 0o700, source_mode)]
+        with open(published, 'rb') as handle:
+            assert handle.read() == b'new-output'
+    finally:
+        shutil.rmtree(scratch, ignore_errors=True)
+
+
+def test_publish_copies_only_at_final_step_when_filesystems_differ(tmp_path):
+    if not os.path.isdir('/dev/shm'):
+        pytest.skip('/dev/shm is unavailable')
+    root, source, mounts, sys_block, release, info = _make_source(tmp_path)
+    project_dir = tmp_path / 'project'
+    project_dir.mkdir()
+    scratch = tempfile.mkdtemp(
+        prefix='minios-image-builder-test-', dir='/dev/shm')
+    try:
+        if os.stat(scratch).st_dev == os.stat(str(project_dir)).st_dev:
+            pytest.skip('/dev/shm shares the test filesystem')
+        project = _project(info, project_dir / 'out.iso', project_dir)
+        plan = backend.create_build_plan(
+            project, info, current_config_path=str(_config(project_dir)),
+            disk_usage_func=_large_disk, scratch_directory=scratch,
+            tool_capabilities=_tool_capabilities(),
+            command_runner=AcceptSquashfsRunner())
+        _prepare_artifact(plan, b'cross-filesystem-iso')
+        runner = FakeXorriso(plan)
+        verified = backend.verify_iso(plan, runner=runner)
+
+        published = backend.publish_verified_output(
+            plan, verified, runner=runner)
+
+        assert published == plan.output_path
+        with open(published, 'rb') as handle:
+            assert handle.read() == b'cross-filesystem-iso'
+        assert os.path.exists(plan.partial_output_path)
+        assert not list(project_dir.glob('.minios-image-builder-publish-*'))
+        assert os.path.dirname(plan.job_directory) == os.path.realpath(scratch)
+    finally:
+        shutil.rmtree(scratch, ignore_errors=True)
+
+
+def test_publish_falls_back_to_copy_when_link_reports_exdev(
+        tmp_path, monkeypatch):
+    root, source, mounts, sys_block, release, info = _make_source(tmp_path)
+    project_dir = tmp_path / 'project'
+    project_dir.mkdir()
+    project = _project(info, project_dir / 'out.iso', project_dir)
+    plan = _plan(project, info, _config(project_dir))
+    _prepare_artifact(plan, b'exdev-fallback')
+    runner = FakeXorriso(plan)
+    verified = backend.verify_iso(plan, runner=runner)
+    real_link = backend.os.link
+
+    def fail_direct_publication(source_name, target_name, *args, **kwargs):
+        if (source_name == os.path.basename(plan.partial_output_path) and
+                target_name == os.path.basename(plan.output_path)):
+            raise OSError(errno.EXDEV, 'cross-device link')
+        return real_link(source_name, target_name, *args, **kwargs)
+
+    monkeypatch.setattr(backend.os, 'link', fail_direct_publication)
+
+    published = backend.publish_verified_output(plan, verified, runner=runner)
+
+    assert published == plan.output_path
+    with open(published, 'rb') as handle:
+        assert handle.read() == b'exdev-fallback'
+    assert os.path.exists(plan.partial_output_path)
+
+
+def test_publish_reuses_capture_attestation_before_atomic_output(tmp_path):
     root, source, mounts, sys_block, release, info = _make_source(tmp_path)
     project_dir = tmp_path / 'project'
     project_dir.mkdir()
@@ -3524,7 +3919,7 @@ def test_publish_repeats_capture_attestation_before_atomic_output(tmp_path):
         unsquashfs='/tools/unsquashfs')
 
     assert published == str(project_dir / 'captured.iso')
-    assert len(runner.calls) == original_calls + 8
+    assert len(runner.calls) == original_calls
     assert not list(
         project_dir.glob('.minios-image-builder-*/capture-verify-*'))
 

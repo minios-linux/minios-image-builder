@@ -11,9 +11,9 @@
       "title": "Pemilihan sesi"
     },
     {
-      "anchor": "jenis-penyimpanan",
+      "anchor": "tipe-penyimpanan",
       "level": 2,
-      "title": "Jenis penyimpanan"
+      "title": "Tipe penyimpanan"
     },
     {
       "anchor": "kapasitas",
@@ -72,11 +72,11 @@
     [
       "heading",
       2,
-      "jenis-penyimpanan",
+      "tipe-penyimpanan",
       [
         [
           "text",
-          "Jenis penyimpanan"
+          "Tipe penyimpanan"
         ]
       ]
     ],
@@ -141,7 +141,7 @@
                 ],
                 [
                   "text",
-                  " menyimpan perubahan di direktori pada filesystem Linux."
+                  " menyimpan perubahan langsung di direktori pada filesystem dengan izin Unix, seperti ext4, XFS, atau Btrfs."
                 ]
               ]
             ]
@@ -201,7 +201,7 @@
                 ],
                 [
                   "text",
-                  " menggunakan image dengan ukuran tetap."
+                  " menggunakan image berukuran tetap."
                 ]
               ]
             ]
@@ -426,7 +426,7 @@
       ]
     ]
   ],
-  "plain_text": "Sesi dan penyimpanan\nPilih cara entri ini menemukan dan menyimpan perubahan yang bersifat permanen.\nPemilihan sesi\nTemplate entri mengontrol apakah MiniOS melanjutkan sesi terbaru, membuat sesi baru, atau menanyakan saat startup. Jenis penyimpanan tidak menggantikan pilihan template tersebut.\nJenis penyimpanan\nOtomatis mempertahankan mode template atau sesi yang disimpan.\nNative menyimpan perubahan di direktori pada filesystem Linux.\nDynfilefs menggunakan kontainer yang dapat diperluas.\nRaw menggunakan image dengan ukuran tetap.\nLUKS menggunakan kontainer terenkripsi.\nSquashFS melanjutkan sesi terkompresi yang sudah ada.\nInitramfs saat ini dapat melanjutkan tetapi tidak dapat membuat sesi SquashFS.\nKapasitas\nUkuran kontainer hanya berlaku untuk sesi yang didukung kontainer, sehingga dinonaktifkan untuk Native dan SquashFS. Ruang kosong yang dipertahankan menyisakan ruang pada perangkat persistensi agar perubahan yang disimpan tidak memenuhi seluruhnya.\nOpsi boot yang sesuai adalah perchmode=, perchsize=, dan perchreserve=.\nSalin ke RAM\ntoram=full menyalin seluruh sistem ke memori. toram=trim hanya menyalin kumpulan modul yang difilter. Ini memungkinkan perangkat boot dilepas, tetapi membutuhkan RAM yang cukup untuk data yang disalin.",
+  "plain_text": "Sesi dan penyimpanan\nPilih cara entri ini menemukan dan menyimpan perubahan yang bersifat permanen.\nPemilihan sesi\nTemplate entri mengontrol apakah MiniOS melanjutkan sesi terbaru, membuat sesi baru, atau menanyakan saat startup. Jenis penyimpanan tidak menggantikan pilihan template tersebut.\nTipe penyimpanan\nOtomatis mempertahankan mode template atau sesi yang disimpan.\nNative menyimpan perubahan langsung di direktori pada filesystem dengan izin Unix, seperti ext4, XFS, atau Btrfs.\nDynfilefs menggunakan kontainer yang dapat diperluas.\nRaw menggunakan image berukuran tetap.\nLUKS menggunakan kontainer terenkripsi.\nSquashFS melanjutkan sesi terkompresi yang sudah ada.\nInitramfs saat ini dapat melanjutkan tetapi tidak dapat membuat sesi SquashFS.\nKapasitas\nUkuran kontainer hanya berlaku untuk sesi yang didukung kontainer, sehingga dinonaktifkan untuk Native dan SquashFS. Ruang kosong yang dipertahankan menyisakan ruang pada perangkat persistensi agar perubahan yang disimpan tidak memenuhi seluruhnya.\nOpsi boot yang sesuai adalah perchmode=, perchsize=, dan perchreserve=.\nSalin ke RAM\ntoram=full menyalin seluruh sistem ke memori. toram=trim hanya menyalin kumpulan modul yang difilter. Ini memungkinkan perangkat boot dilepas, tetapi membutuhkan RAM yang cukup untuk data yang disalin.",
   "product_kind": "minios-markup-document",
   "schema_version": 1
 }

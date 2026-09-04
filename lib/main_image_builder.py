@@ -125,16 +125,16 @@ DIAGNOSTIC_TRANSLATIONS = {
         _('Not enough space for the output image'),
         _('The selected output location does not have enough free space. '
           'Choose an output path on a filesystem with more free space.')),
-    'destination_on_captured_live_overlay': (
-        _('Output work files would be saved into the image'),
-        _('The selected output directory is on the live writable layer. This '
-          'build includes session changes, so private build files created next '
-          'to the ISO could be captured. Choose an output path on a separate '
-          'mounted Linux filesystem.')),
-    'destination_within_captured_changes': (
-        _('Output directory is inside the changes being saved'),
-        _('Choose an output path outside the MiniOS changes directory. A '
-          'separate mounted Linux filesystem is safe.')),
+    'output_directory_unavailable': (
+        _('Output directory changed or became unavailable'),
+        _('The selected output directory could not be retained safely. Return '
+          'to Settings and choose the output location again.')),
+    'existing_destination_on_captured_live_overlay': (
+        _('Existing output would be included before replacement'),
+        _('The selected output file already exists on the live writable layer. '
+          'It could be included in the session changes before Image Builder '
+          'replaces it. Choose a new filename, or move or remove the existing '
+          'file first. A new image may be saved in this location.')),
     'scratch_space_insufficient': (
         _('Not enough temporary workspace'),
         _('The temporary work directory does not have enough free space. '
@@ -152,7 +152,8 @@ DIAGNOSTIC_TRANSLATIONS = {
     'scratch_directory_incompatible': (
         _('Storage cannot protect temporary build files'),
         _('Image Builder could not create a private directory with mode 0700 '
-          'on this storage. Choose a writable Linux filesystem such as ext4.')),
+          'on this storage. Choose a filesystem with Unix permissions, such as '
+          'ext4, XFS, or Btrfs.')),
     'scratch_directory_unavailable': (
         _('Temporary work directory became unavailable'),
         _('Check that the selected storage is still mounted, then choose the '
@@ -177,11 +178,13 @@ DIAGNOSTIC_TRANSLATIONS = {
         _('Temporary files would be saved into the image'),
         _('The selected directory is on the live writable layer. This build '
           'includes session changes, so its temporary files could be captured. '
-          'Choose a directory on a separate mounted Linux filesystem.')),
+          'Use /tmp when it is tmpfs, or choose disk-backed storage with Unix '
+          'permissions such as ext4, XFS, or Btrfs.')),
     'scratch_within_captured_changes': (
         _('Temporary directory is inside the changes being saved'),
         _('Choose a temporary work directory outside the MiniOS changes '
-          'directory. A separate mounted Linux filesystem is safe.')),
+          'directory, for example /tmp when it is tmpfs or disk-backed ext4, '
+          'XFS, or Btrfs storage.')),
     'combined_space_insufficient': (
         _('Output and temporary files need more space'),
         _('The output image and temporary work directory are on the same '
@@ -1531,12 +1534,20 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         if mode == 'iso':
             if not iso_path or not os.path.isfile(iso_path):
                 raise RuntimeError(_('Choose a readable MiniOS ISO file.'))
-            runner([udisks, 'loop-setup', '-r', '-f', iso_path,
-                    '--no-user-interaction'])
-            loop_device = backend.find_loop_backing_device(iso_path)
-            if not loop_device:
+            loops_before = set(backend.find_loop_backing_devices(iso_path))
+            returncode, _out, _err = runner([
+                udisks, 'loop-setup', '-r', '-f', iso_path,
+                '--no-user-interaction'])
+            loops_after = set(backend.find_loop_backing_devices(iso_path))
+            created_loops = sorted(loops_after - loops_before)
+            if returncode != 0 or len(created_loops) != 1:
+                for created_loop in created_loops:
+                    runner([
+                        udisks, 'loop-delete', '-b', created_loop,
+                        '--no-user-interaction'])
                 raise RuntimeError(
                     _('Could not set up a read-only loop device for the ISO.'))
+            loop_device = created_loops[0]
             block_device = loop_device
         else:
             if not device:
@@ -2144,10 +2155,10 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         output_row.pack_end(browse, False, False, 0)
         self._compact_row(identity_grid, 2, _('Output image'), output_row)
         output_detail = Gtk.Label(
-            label=_('Use a writable disk with enough free space. Review '
-                    'checks both destination and scratch requirements. When '
-                    'including session changes, place the ISO on a separate '
-                    'mounted Linux filesystem rather than /home/live.'),
+            label=_('Choose any writable location with enough free space for '
+                    'the final ISO. Build work stays in the temporary work '
+                    'directory, so a new image may also be saved on the live '
+                    'writable layer when session changes are included.'),
             xalign=0)
         output_detail.set_line_wrap(True)
         output_detail.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR)
@@ -2171,13 +2182,13 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         self._compact_row(
             identity_grid, 3, _('Temporary work directory'), scratch_row)
         scratch_detail = Gtk.Label(
-            label=_('MiniOS uses /tmp by default; in a live session this uses '
-                    'RAM. For a large image, choose an existing writable '
-                    'directory on a mounted Linux filesystem, such as an ext4 '
-                    'partition on another disk or USB drive. It must have the '
-                    'free space shown at Review. When including session '
-                    'changes, do not choose /home/live or any directory inside '
-                    'the changes being saved. Temporary files are removed '
+            label=_('MiniOS uses /tmp by default; in a live session this '
+                    'usually uses RAM. For a large image, choose an existing '
+                    'writable directory on disk-backed storage with Unix '
+                    'permissions, such as ext4, XFS, or Btrfs. It must have '
+                    'the free space shown at Review. When session changes are '
+                    'included, the temporary directory must be outside the live '
+                    'writable layer being captured. Temporary files are removed '
                     'after the build.'),
             xalign=0)
         scratch_detail.set_line_wrap(True)
@@ -2807,7 +2818,7 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         add_field(session_grid, 0, 0, _('Changes storage'), new_combo(
             'persistence_mode', (
                 ('keep', _('Automatic')),
-                ('native', _('Directory on a Linux filesystem')),
+                ('native', _('Directory on ext4, XFS, Btrfs, etc.')),
                 ('dynfilefs', _('Expandable container')),
                 ('raw', _('Fixed-size image')),
                 ('luks', _('Encrypted container')),
@@ -4998,8 +5009,9 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             storage_guidance = _(
                 'The selected temporary directory is in RAM. The build may '
                 'use up to {size} of memory for temporary files. To avoid '
-                'this, return to Settings and choose a writable directory on '
-                'a mounted Linux filesystem.').format(size=scratch_required)
+                'this, return to Settings and choose a directory on '
+                'disk-backed storage with Unix permissions, such as ext4, '
+                'XFS, or Btrfs.').format(size=scratch_required)
         elif scratch_class == backend.FILESYSTEM_CLASS_PERSISTENT:
             storage_guidance = _(
                 'The selected temporary directory is on persistent storage. '
@@ -5007,8 +5019,10 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         elif scratch_class == backend.FILESYSTEM_CLASS_LIVE_OVERLAY:
             storage_guidance = _(
                 'The selected temporary directory is on the live writable '
-                'layer. It can consume RAM or changes storage; choose a '
-                'separate mounted Linux filesystem to avoid that.')
+                'layer. It can consume RAM or changes storage. To keep build '
+                'files outside that layer, use /tmp when it is tmpfs, or '
+                'disk-backed storage with Unix permissions such as ext4, XFS, '
+                'or Btrfs.')
         else:
             storage_guidance = _(
                 'Image Builder could not identify this storage type. Keep it '
@@ -5552,8 +5566,7 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             return False
         self.build_status = 'publishing'
         self._operation = 'publish'
-        self.build_detail_label.set_text(
-            _('Repeating structural verification and publishing atomically.'))
+        self.build_detail_label.set_text(_('Structurally verified'))
         self._update_chrome()
         plan = self.active_plan
         verification = self.verification_result

@@ -8,10 +8,10 @@ Le modèle d'entrée contrôle si MiniOS reprend la dernière session, en crée 
 
 ## Type de stockage
 
-- **Automatique** conserve le mode du modèle ou de la session sauvegardée.
-- **Natif** stocke les modifications dans un répertoire sur un système de fichiers Linux.
+- **Automatique** conserve le mode modèle ou session enregistrée.
+- **Natif** enregistre les modifications directement dans un répertoire sur un système de fichiers avec des permissions Unix, comme ext4, XFS ou Btrfs.
 - **Dynfilefs** utilise un conteneur extensible.
-- **Brut** utilise une image de taille fixe.
+- **Raw** utilise une image de taille fixe.
 - **LUKS** utilise un conteneur chiffré.
 - **SquashFS** reprend une session compressée existante.
 

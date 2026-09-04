@@ -1330,17 +1330,18 @@ def collision_paths(collisions):
 
 
 def _release_plan_job_descriptor(plan):
-    descriptor = getattr(plan, '_job_descriptor', None)
-    if descriptor is None:
-        return
-    try:
-        os.close(descriptor)
-    except OSError:
-        pass
-    try:
-        object.__setattr__(plan, '_job_descriptor', None)
-    except (AttributeError, TypeError):
-        pass
+    for attribute in ('_job_descriptor', '_output_directory_descriptor'):
+        descriptor = getattr(plan, attribute, None)
+        if descriptor is None:
+            continue
+        try:
+            os.close(descriptor)
+        except OSError:
+            pass
+        try:
+            object.__setattr__(plan, attribute, None)
+        except (AttributeError, TypeError):
+            pass
 
 
 def cleanup_plan_job(plan):
@@ -1352,15 +1353,14 @@ def cleanup_plan_job(plan):
     if plan is None or not getattr(plan, 'job_directory', None):
         return CleanupResult(True, None)
     job_directory = os.path.abspath(plan.job_directory)
-    output_path = getattr(plan, 'output_path', None)
-    if not output_path:
-        return CleanupResult(False, 'plan output path is unavailable')
-    output_directory = os.path.abspath(
-        os.path.dirname(output_path) or os.curdir)
-    if (os.path.dirname(job_directory) != output_directory or
+    scratch_directory = getattr(plan, 'scratch_directory', None)
+    if not scratch_directory:
+        return CleanupResult(False, 'plan temporary work path is unavailable')
+    scratch_directory = os.path.abspath(scratch_directory)
+    if (os.path.dirname(job_directory) != scratch_directory or
             not os.path.basename(job_directory).startswith(_JOB_PREFIX)):
         return CleanupResult(
-            False, 'job directory is outside the expected output directory')
+            False, 'job directory is outside the expected temporary workspace')
     expected_identity = getattr(plan, '_job_identity', None)
     descriptor = getattr(plan, '_job_descriptor', None)
     if (not isinstance(expected_identity, tuple) or

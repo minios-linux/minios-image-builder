@@ -8,11 +8,11 @@ O modelo de entrada controla se o MiniOS retoma a sessão mais recente, cria uma
 
 ## Tipo de armazenamento
 
-- **Automático** mantém o modo do modelo ou da sessão salva.
-- **Nativo** armazena alterações em um diretório em um sistema de arquivos Linux.
-- **Dynfilefs** usa um contêiner expansível.
-- **Raw** usa uma imagem de tamanho fixo.
-- **LUKS** usa um contêiner criptografado.
+- **Automático** mantém o modo de template ou sessão salva.
+- **Nativo** armazena as alterações diretamente em um diretório no sistema de arquivos com permissões Unix, como ext4, XFS ou Btrfs.
+- **Dynfilefs** utiliza um contêiner expansível.
+- **Raw** utiliza uma imagem de tamanho fixo.
+- **LUKS** utiliza um contêiner criptografado.
 - **SquashFS** retoma uma sessão comprimida existente.
 
 O initramfs atual pode retomar, mas não pode criar sessões SquashFS.

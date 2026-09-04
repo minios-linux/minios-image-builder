@@ -141,7 +141,7 @@
                 ],
                 [
                   "text",
-                  " almacena los cambios en un directorio en un sistema de archivos Linux."
+                  " almacena los cambios directamente en un directorio del sistema de archivos con permisos Unix, como ext4, XFS o Btrfs."
                 ]
               ]
             ]
@@ -201,7 +201,7 @@
                 ],
                 [
                   "text",
-                  " usa una imagen de tamaño fijo."
+                  " utiliza una imagen de tamaño fijo."
                 ]
               ]
             ]
@@ -426,7 +426,7 @@
       ]
     ]
   ],
-  "plain_text": "Sesión y almacenamiento\nElige cómo esta entrada encuentra y almacena los cambios persistentes.\nSelección de sesión\nLa plantilla de entrada controla si MiniOS reanuda la última sesión, crea una nueva o pregunta al iniciar. El tipo de almacenamiento no reemplaza esa elección de plantilla.\nTipo de almacenamiento\nAutomático mantiene el modo de plantilla o sesión guardada.\nNativo almacena los cambios en un directorio en un sistema de archivos Linux.\nDynfilefs utiliza un contenedor expandible.\nRaw usa una imagen de tamaño fijo.\nLUKS utiliza un contenedor cifrado.\nSquashFS reanuda una sesión comprimida existente.\nEl initramfs actual puede reanudar pero no crear sesiones SquashFS.\nCapacidad\nTamaño del contenedor solo aplica para sesiones respaldadas por contenedor, por lo que está deshabilitado para Nativo y SquashFS. Espacio libre a reservar guarda espacio en el dispositivo de persistencia para que los cambios guardados no lo llenen completamente.\nLas opciones de arranque correspondientes son perchmode=, perchsize= y perchreserve=.\nCopiar a RAM\ntoram=full copia todo el sistema a la memoria. toram=trim copia solo el conjunto de módulos filtrados. Esto puede permitir quitar el dispositivo de arranque, pero requiere suficiente RAM para los datos copiados.",
+  "plain_text": "Sesión y almacenamiento\nElige cómo esta entrada encuentra y almacena los cambios persistentes.\nSelección de sesión\nLa plantilla de entrada controla si MiniOS reanuda la última sesión, crea una nueva o pregunta al iniciar. El tipo de almacenamiento no reemplaza esa elección de plantilla.\nTipo de almacenamiento\nAutomático mantiene el modo de plantilla o sesión guardada.\nNativo almacena los cambios directamente en un directorio del sistema de archivos con permisos Unix, como ext4, XFS o Btrfs.\nDynfilefs utiliza un contenedor expandible.\nRaw utiliza una imagen de tamaño fijo.\nLUKS utiliza un contenedor cifrado.\nSquashFS reanuda una sesión comprimida existente.\nEl initramfs actual puede reanudar pero no crear sesiones SquashFS.\nCapacidad\nTamaño del contenedor solo aplica para sesiones respaldadas por contenedor, por lo que está deshabilitado para Nativo y SquashFS. Espacio libre a reservar guarda espacio en el dispositivo de persistencia para que los cambios guardados no lo llenen completamente.\nLas opciones de arranque correspondientes son perchmode=, perchsize= y perchreserve=.\nCopiar a RAM\ntoram=full copia todo el sistema a la memoria. toram=trim copia solo el conjunto de módulos filtrados. Esto puede permitir quitar el dispositivo de arranque, pero requiere suficiente RAM para los datos copiados.",
   "product_kind": "minios-markup-document",
   "schema_version": 1
 }

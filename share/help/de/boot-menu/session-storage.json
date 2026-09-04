@@ -111,7 +111,7 @@
                 ],
                 [
                   "text",
-                  " behält den Modus der Vorlage oder gespeicherten Sitzung bei."
+                  " behält den Vorlagen- oder Gespeicherte-Sitzung-Modus bei."
                 ]
               ]
             ]
@@ -141,7 +141,7 @@
                 ],
                 [
                   "text",
-                  " speichert Änderungen in einem Verzeichnis auf einem Linux-Dateisystem."
+                  " speichert Änderungen direkt in einem Verzeichnis auf einem Dateisystem mit Unix-Berechtigungen, wie ext4, XFS oder Btrfs."
                 ]
               ]
             ]
@@ -201,7 +201,7 @@
                 ],
                 [
                   "text",
-                  " nutzt ein Abbild mit fester Größe."
+                  " verwendet ein Abbild mit fester Größe."
                 ]
               ]
             ]
@@ -231,7 +231,7 @@
                 ],
                 [
                   "text",
-                  " verwendet einen verschlüsselten Container."
+                  " nutzt einen verschlüsselten Container."
                 ]
               ]
             ]
@@ -275,7 +275,7 @@
       [
         [
           "text",
-          "Das aktuelle initramfs kann SquashFS-Sitzungen fortsetzen, aber keine neuen erstellen."
+          "Das aktuelle initramfs kann eine SquashFS-Sitzung fortsetzen, aber nicht erstellen."
         ]
       ]
     ],
@@ -426,7 +426,7 @@
       ]
     ]
   ],
-  "plain_text": "Sitzung und Speicherung\nWählen Sie aus, wie dieser Eintrag dauerhafte Änderungen findet und speichert.\nSitzungswahl\nDie Eintragsvorlage steuert, ob MiniOS die letzte Sitzung fortsetzt, eine neue erstellt oder beim Start fragt. Der Speichertyp ersetzt diese Vorlagenauswahl nicht.\nSpeichertyp\nAutomatisch behält den Modus der Vorlage oder gespeicherten Sitzung bei.\nNativ speichert Änderungen in einem Verzeichnis auf einem Linux-Dateisystem.\nDynfilefs verwendet einen erweiterbaren Container.\nRaw nutzt ein Abbild mit fester Größe.\nLUKS verwendet einen verschlüsselten Container.\nSquashFS setzt eine bestehende komprimierte Sitzung fort.\nDas aktuelle initramfs kann SquashFS-Sitzungen fortsetzen, aber keine neuen erstellen.\nKapazität\nContainergröße gilt nur für containerbasierte Sitzungen und ist daher für Nativ und SquashFS deaktiviert. Freier Speicher zum Behalten reserviert Platz auf dem Persistenzgerät, damit gespeicherte Änderungen es nicht vollständig füllen.\nDie entsprechenden Boot-Optionen sind perchmode=, perchsize= und perchreserve=.\nIn den RAM kopieren\ntoram=full kopiert das gesamte System in den Speicher. toram=trim kopiert nur die gefilterte Modulauswahl. Dies kann das Entfernen des Boot-Geräts ermöglichen, erfordert jedoch genügend RAM für die kopierten Daten.",
+  "plain_text": "Sitzung und Speicherung\nWählen Sie aus, wie dieser Eintrag dauerhafte Änderungen findet und speichert.\nSitzungswahl\nDie Eintragsvorlage steuert, ob MiniOS die letzte Sitzung fortsetzt, eine neue erstellt oder beim Start fragt. Der Speichertyp ersetzt diese Vorlagenauswahl nicht.\nSpeichertyp\nAutomatisch behält den Vorlagen- oder Gespeicherte-Sitzung-Modus bei.\nNativ speichert Änderungen direkt in einem Verzeichnis auf einem Dateisystem mit Unix-Berechtigungen, wie ext4, XFS oder Btrfs.\nDynfilefs verwendet einen erweiterbaren Container.\nRaw verwendet ein Abbild mit fester Größe.\nLUKS nutzt einen verschlüsselten Container.\nSquashFS setzt eine bestehende komprimierte Sitzung fort.\nDas aktuelle initramfs kann eine SquashFS-Sitzung fortsetzen, aber nicht erstellen.\nKapazität\nContainergröße gilt nur für containerbasierte Sitzungen und ist daher für Nativ und SquashFS deaktiviert. Freier Speicher zum Behalten reserviert Platz auf dem Persistenzgerät, damit gespeicherte Änderungen es nicht vollständig füllen.\nDie entsprechenden Boot-Optionen sind perchmode=, perchsize= und perchreserve=.\nIn den RAM kopieren\ntoram=full kopiert das gesamte System in den Speicher. toram=trim kopiert nur die gefilterte Modulauswahl. Dies kann das Entfernen des Boot-Geräts ermöglichen, erfordert jedoch genügend RAM für die kopierten Daten.",
   "product_kind": "minios-markup-document",
   "schema_version": 1
 }

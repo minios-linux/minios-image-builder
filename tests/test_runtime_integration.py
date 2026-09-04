@@ -878,8 +878,9 @@ def test_mount_medium_records_ownership_for_iso_loop(monkeypatch, tmp_path):
         calls.append(list(argv))
         return (0, '', '')
 
-    monkeypatch.setattr(ui.backend, 'find_loop_backing_device',
-                        lambda path: '/dev/loop5')
+    loop_scans = iter((('/dev/loop2',), ('/dev/loop2', '/dev/loop5')))
+    monkeypatch.setattr(ui.backend, 'find_loop_backing_devices',
+                        lambda path: next(loop_scans))
     monkeypatch.setattr(ui.backend, 'resolve_device_mountpoint',
                         lambda device: str(mount_dir))
 
@@ -892,6 +893,54 @@ def test_mount_medium_records_ownership_for_iso_loop(monkeypatch, tmp_path):
     assert calls[0][:4] == [
         '/usr/bin/udisksctl', 'loop-setup', '-r', '-f']
     assert ['/usr/bin/udisksctl', 'mount', '-b', '/dev/loop5',
+            '--no-user-interaction'] in calls
+
+
+def test_mount_medium_does_not_own_preexisting_loop_after_setup_failure(
+        monkeypatch, tmp_path):
+    iso = tmp_path / 'image.iso'
+    iso.write_bytes(b'x')
+    window = SimpleNamespace(
+        _udisksctl_path=lambda: '/usr/bin/udisksctl',
+        _unmount_medium=lambda ownership: None)
+    monkeypatch.setattr(
+        ui.backend, 'find_loop_backing_devices',
+        lambda path: ('/dev/loop2',))
+    calls = []
+
+    def failed_runner(argv):
+        calls.append(list(argv))
+        return (1, '', 'setup failed')
+
+    with pytest.raises(RuntimeError, match='Could not set up'):
+        ui.ImageBuilderWindow._mount_medium(
+            window, failed_runner, 'iso', str(iso), None)
+    assert not any('loop-delete' in call for call in calls)
+
+
+def test_mount_medium_cleans_new_loop_after_ambiguous_setup(
+        monkeypatch, tmp_path):
+    iso = tmp_path / 'image.iso'
+    iso.write_bytes(b'x')
+    window = SimpleNamespace(
+        _udisksctl_path=lambda: '/usr/bin/udisksctl',
+        _unmount_medium=lambda ownership: None)
+    loop_scans = iter(((), ('/dev/loop4', '/dev/loop5')))
+    monkeypatch.setattr(
+        ui.backend, 'find_loop_backing_devices',
+        lambda path: next(loop_scans))
+    calls = []
+
+    def runner(argv):
+        calls.append(list(argv))
+        return (0, '', '')
+
+    with pytest.raises(RuntimeError, match='Could not set up'):
+        ui.ImageBuilderWindow._mount_medium(
+            window, runner, 'iso', str(iso), None)
+    assert ['/usr/bin/udisksctl', 'loop-delete', '-b', '/dev/loop4',
+            '--no-user-interaction'] in calls
+    assert ['/usr/bin/udisksctl', 'loop-delete', '-b', '/dev/loop5',
             '--no-user-interaction'] in calls
 
 

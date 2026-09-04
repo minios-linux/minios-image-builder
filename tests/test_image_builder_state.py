@@ -1327,12 +1327,18 @@ def _fake_plan(tmp_path):
     if hasattr(os, 'O_DIRECTORY'):
         flags |= os.O_DIRECTORY
     descriptor = os.open(str(job), flags)
+    output_directory_descriptor = os.open(str(tmp_path), flags)
+    output_directory_stat = os.fstat(output_directory_descriptor)
     return SimpleNamespace(
-        output_path=str(output), job_directory=str(job),
+        output_path=str(output), scratch_directory=str(tmp_path),
+        job_directory=str(job),
         partial_output_path=str(job / 'image.partial.iso'),
         adapter_manifest_path=str(job / 'compose-manifest.json'),
         _job_identity=(int(file_stat.st_dev), int(file_stat.st_ino)),
-        _job_descriptor=descriptor)
+        _job_descriptor=descriptor,
+        _output_directory_identity=(int(output_directory_stat.st_dev),
+                                    int(output_directory_stat.st_ino)),
+        _output_directory_descriptor=output_directory_descriptor)
 
 
 def test_safe_cleanup_removes_only_identity_checked_plan_job(tmp_path):
@@ -1342,6 +1348,8 @@ def test_safe_cleanup_removes_only_identity_checked_plan_job(tmp_path):
     assert result.cleaned
     assert result.warning is None
     assert not os.path.exists(plan.job_directory)
+    assert plan._job_descriptor is None
+    assert plan._output_directory_descriptor is None
 
 
 def test_safe_cleanup_refuses_replaced_or_unrelated_directory(tmp_path):
@@ -1358,13 +1366,15 @@ def test_safe_cleanup_refuses_replaced_or_unrelated_directory(tmp_path):
     assert os.path.isdir(replaced.job_directory)
     os.close(replaced._job_descriptor)
     replaced._job_descriptor = None
+    os.close(replaced._output_directory_descriptor)
+    replaced._output_directory_descriptor = None
 
     outside = tmp_path / 'ordinary-directory'
     outside.mkdir()
     outside_stat = os.lstat(str(outside))
     unrelated = SimpleNamespace(
         output_path=str(tmp_path / 'release.iso'),
-        job_directory=str(outside),
+        scratch_directory=str(tmp_path), job_directory=str(outside),
         _job_identity=(outside_stat.st_dev, outside_stat.st_ino))
     result = controller.cleanup_plan_job(unrelated)
     assert not result.cleaned

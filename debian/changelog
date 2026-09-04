@@ -1,3 +1,17 @@
+minios-image-builder (1.0.8) unstable; urgency=medium
+
+  * Keep private build jobs in the selected temporary workspace instead of
+    creating them beside the destination ISO.
+  * Allow new output images on the live writable layer while capturing session
+    changes, and stage cross-filesystem publication only after verification.
+  * Retain the reviewed destination directory identity and keep cross-filesystem
+    publication copies private until their bytes and digest are verified.
+  * Account RAM-backed live writable layers in peak-memory planning.
+  * Clarify temporary-storage requirements with concrete filesystem examples.
+  * Refresh translations.
+
+ -- crims0n <crims0n@minios.dev>  Fri, 04 Sep 2026 14:45:11 +0300
+
 minios-image-builder (1.0.7) unstable; urgency=medium
 
   * Refresh translations

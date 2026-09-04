@@ -28,7 +28,7 @@
     },
     {
       "compiled": "de/boot-menu/session-storage.json",
-      "sha256": "6f6977cc27c4ba5427d5af0f8107058e172eabd0e4fbfea9d4dde48e33dd5ef7",
+      "sha256": "f7adf861e211ce046bf4cf276f74fe1f8dd2fba2626f872d59d5a2af1b2394c8",
       "source": "de/boot-menu/session-storage.md"
     },
     {
@@ -63,7 +63,7 @@
     },
     {
       "compiled": "en/boot-menu/session-storage.json",
-      "sha256": "1eb65c1f30bb98b27535ccbe7ca7f13d876bd106754eb6fea97aac69cdc48558",
+      "sha256": "6ed1cb969f87d12fd969ab76ccebc0c502e632248b077a52a8c6b76db99aa34d",
       "source": "en/boot-menu/session-storage.md"
     },
     {
@@ -98,7 +98,7 @@
     },
     {
       "compiled": "es/boot-menu/session-storage.json",
-      "sha256": "d6f25427159b58def7e2aa9a2cb3e9f6af213be3d99a2e5d0664284ec66fca39",
+      "sha256": "0000d1aa08fe2a7be48f4453e88cb769c808c8e3a6ac39f42a5df0d65de2fc60",
       "source": "es/boot-menu/session-storage.md"
     },
     {
@@ -133,7 +133,7 @@
     },
     {
       "compiled": "fr/boot-menu/session-storage.json",
-      "sha256": "eb8d50f43dcfd81ad1eb75f7ec7cc3b980d5ee096deb008d8308082d85ba8771",
+      "sha256": "da0934bae9ea9dffa1ba7c5904859d8b0d846432f53b493697d2a3ae3942258e",
       "source": "fr/boot-menu/session-storage.md"
     },
     {
@@ -168,7 +168,7 @@
     },
     {
       "compiled": "id/boot-menu/session-storage.json",
-      "sha256": "b171690c9ecec2e14efe07c1e32a3ed35aaf40e3447c56ed2b7cdd0af88a0ed6",
+      "sha256": "ad128b8ce0c665caac32888332ee05ffb70f9aa6b2ef4497a7d79a9bfd8d3896",
       "source": "id/boot-menu/session-storage.md"
     },
     {
@@ -203,7 +203,7 @@
     },
     {
       "compiled": "it/boot-menu/session-storage.json",
-      "sha256": "c5c2548f2abe87dd5728f163a35bd73df5d0a8aac5ada1a2b64914edf80e78eb",
+      "sha256": "17332f2227ec6d92165a3fb85ae4c2e31ec7ab93150608458022d46312179cbf",
       "source": "it/boot-menu/session-storage.md"
     },
     {
@@ -238,7 +238,7 @@
     },
     {
       "compiled": "pt/boot-menu/session-storage.json",
-      "sha256": "64fa1d3a96e7ac4f856dd576c476239a189ebbbc05dc1c7067d6d10959c6ea52",
+      "sha256": "e7692c87c64868f7b2b37c2297be88c4830a0e82e5d23863cbf3a5b2a9c85390",
       "source": "pt/boot-menu/session-storage.md"
     },
     {
@@ -273,7 +273,7 @@
     },
     {
       "compiled": "pt-BR/boot-menu/session-storage.json",
-      "sha256": "b20b49b66be3369768e0f2d0aad807487fde9e607ffa1758796861cbe764f82e",
+      "sha256": "c27a3965fe7e562d4179ed42466a59f3c333a1a34f2cc625944bbe58f44e93c6",
       "source": "pt-BR/boot-menu/session-storage.md"
     },
     {
@@ -308,7 +308,7 @@
     },
     {
       "compiled": "ru/boot-menu/session-storage.json",
-      "sha256": "2e6ea45bc286ef5aecca042fe5cf0a78eccba4618bcfdc54ba1c53460817e4bb",
+      "sha256": "e8f2485e3ee0124cb88847138a49bdc1831bb7665e90ab580994f85e73837e0f",
       "source": "ru/boot-menu/session-storage.md"
     },
     {

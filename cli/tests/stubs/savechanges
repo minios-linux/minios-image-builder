@@ -10,6 +10,23 @@ fi
 state=${SAVECHANGES_STUB_STATE:?SAVECHANGES_STUB_STATE is required}
 mkdir -p "$state"
 printf '%s\0' "$@" >"$state/args"
+if [[ -n ${SAVECHANGES_STUB_OUTPUT_DIR:-} ]]; then
+    shopt -s nullglob
+    output_work_directories=(
+        "$SAVECHANGES_STUB_OUTPUT_DIR"/.minios-image-compose-output.*)
+    printf '%s\n' "${#output_work_directories[@]}" \
+        >"$state/output-work-directory-count"
+fi
+if [[ ${SAVECHANGES_STUB_REPLACE_OUTPUT_PARENT:-false} == true ]]; then
+    mv -- "$SAVECHANGES_STUB_OUTPUT_DIR" \
+        "$SAVECHANGES_STUB_OUTPUT_DIR.before-capture-replacement"
+    mkdir -- "$SAVECHANGES_STUB_OUTPUT_DIR"
+fi
+if [[ -n ${SAVECHANGES_STUB_REPLACE_OUTPUT:-} ]]; then
+    rm -f -- "$SAVECHANGES_STUB_REPLACE_OUTPUT"
+    printf 'replacement created during capture\n' \
+        >"$SAVECHANGES_STUB_REPLACE_OUTPUT"
+fi
 
 profile=""
 compression=""

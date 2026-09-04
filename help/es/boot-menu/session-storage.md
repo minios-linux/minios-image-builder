@@ -9,9 +9,9 @@ La plantilla de entrada controla si MiniOS reanuda la última sesión, crea una 
 ## Tipo de almacenamiento
 
 - **Automático** mantiene el modo de plantilla o sesión guardada.
-- **Nativo** almacena los cambios en un directorio en un sistema de archivos Linux.
+- **Nativo** almacena los cambios directamente en un directorio del sistema de archivos con permisos Unix, como ext4, XFS o Btrfs.
 - **Dynfilefs** utiliza un contenedor expandible.
-- **Raw** usa una imagen de tamaño fijo.
+- **Raw** utiliza una imagen de tamaño fijo.
 - **LUKS** utiliza un contenedor cifrado.
 - **SquashFS** reanuda una sesión comprimida existente.
 

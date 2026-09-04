@@ -1023,6 +1023,9 @@ fi
 
 if [[ -e $TARGET || -L $TARGET ]]; then
     [[ ! -d $TARGET ]] || die 1 "$(gettext "Output path is a directory:") $TARGET"
+    if [[ -n $CAPTURE_CHANGES ]]; then
+        die 1 "$(gettext "Session capture requires a new output filename; remove or rename the existing output first:") $TARGET"
+    fi
     if [[ $OVERWRITE != true ]]; then
         die 1 "$(gettext "Output already exists; use --overwrite to replace it:") $TARGET"
     fi
@@ -1067,6 +1070,17 @@ fi
 if ! chmod 0700 "$TEMP_DIR"; then
     die 4 "$(gettext "Cannot secure temporary work directory:") $TEMP_DIR"
 fi
+output_intent_file=$TEMP_DIR/output-intent
+if ! run_isolated_python_to_file "$output_intent_file" inspect-output \
+    "$target_parent_canonical" "$target_basename" "$OVERWRITE"; then
+    die 1 "$(gettext "Cannot inspect retained ISO output intent")"
+fi
+mapfile -t output_intent <"$output_intent_file"
+(( ${#output_intent[@]} == 4 )) || die 1 "$(gettext "Invalid retained output intent")"
+target_parent_canonical=${output_intent[0]}
+EXPECTED_ISO_PARENT_DEVICE=${output_intent[1]}
+EXPECTED_ISO_PARENT_INODE=${output_intent[2]}
+EXPECTED_TARGET_INITIAL_STATE=${output_intent[3]}
 if [[ -n $OVERLAY_DIRECTORY_CANONICAL ]]; then
     temp_dir_canonical=$(realpath -e -- "$TEMP_DIR") ||
         die 4 "$(gettext "Cannot canonicalize temporary work directory:") $TEMP_DIR"
@@ -1086,31 +1100,6 @@ if [[ -n $CAPTURE_CHANGES ]]; then
     CAPTURE_CANCEL_FD_OPEN=true
     CAPTURE_CANCEL_FILE=$TEMP_DIR/$CAPTURE_CANCEL_NAME
 fi
-
-output_state_file=$TEMP_DIR/output-state
-if ! run_isolated_python_to_file "$output_state_file" prepare-output \
-    "$target_parent_canonical" "$target_basename" "$OVERWRITE"; then
-    die 1 "$(gettext "Cannot prepare retained same-filesystem ISO output")"
-fi
-mapfile -t output_state <"$output_state_file"
-(( ${#output_state[@]} == 7 )) || die 1 "$(gettext "Invalid retained output state")"
-target_parent_canonical=${output_state[0]}
-ISO_PARENT_DEVICE=${output_state[1]}
-ISO_PARENT_INODE=${output_state[2]}
-ISO_WORK_NAME=${output_state[3]}
-ISO_WORK_DEVICE=${output_state[4]}
-ISO_WORK_INODE=${output_state[5]}
-TARGET_INITIAL_STATE=${output_state[6]}
-ISO_WORK_PATH=$target_parent_canonical/$ISO_WORK_NAME
-exec 8<"$target_parent_canonical" || die 1 "$(gettext "Cannot retain output parent directory")"
-ISO_PARENT_FD_OPEN=true
-exec 9<"$ISO_WORK_PATH" || die 1 "$(gettext "Cannot retain private ISO directory")"
-ISO_WORK_FD_OPEN=true
-if ! run_isolated_python check-fds 8 9 "$ISO_PARENT_DEVICE" "$ISO_PARENT_INODE" \
-    "$ISO_WORK_NAME" "$ISO_WORK_DEVICE" "$ISO_WORK_INODE"; then
-    die 1 "$(gettext "Retained ISO output identity check failed")"
-fi
-ISO_BUILD_PATH=/proc/self/fd/9/image.iso
 
 detect_bootloader_type() {
     local has_syslinux=false
@@ -1748,6 +1737,8 @@ if [[ $OVERLAY_DIRECTORY_SET == true ]]; then
        ! run_isolated_python verify-overlay-tree "$overlay_metadata" "$overlay_verify_tree"; then
         die 1 "$(gettext "Image overlay module does not match the captured input manifest")"
     fi
+    rm -rf -- "$overlay_verify_tree" ||
+        die 1 "$(gettext "Cannot release verified image overlay workspace")"
     overlay_module_identity_file=$TEMP_DIR/image-overlay.identity
     if ! run_isolated_python_to_file "$overlay_module_identity_file" hash-file "$overlay_module"; then
         die 1 "$(gettext "Cannot bind image overlay module to immutable intent")"
@@ -2208,6 +2199,35 @@ if [[ -n $ventoy_kernel_destination && -n $ventoy_initramfs_destination ]]; then
     information "$(gettext "Created Ventoy compatibility symlinks in ISO")"
 fi
 
+# Reserve destination-side storage only after session capture. Otherwise a
+# work directory on the captured writable layer can become part of the image.
+output_state_file=$TEMP_DIR/output-state
+if ! run_isolated_python_to_file "$output_state_file" prepare-output \
+    "$target_parent_canonical" "$target_basename" "$OVERWRITE" \
+    "$EXPECTED_ISO_PARENT_DEVICE" "$EXPECTED_ISO_PARENT_INODE" \
+    "$EXPECTED_TARGET_INITIAL_STATE"; then
+    die 1 "$(gettext "Cannot prepare retained same-filesystem ISO output")"
+fi
+mapfile -t output_state <"$output_state_file"
+(( ${#output_state[@]} == 7 )) || die 1 "$(gettext "Invalid retained output state")"
+target_parent_canonical=${output_state[0]}
+ISO_PARENT_DEVICE=${output_state[1]}
+ISO_PARENT_INODE=${output_state[2]}
+ISO_WORK_NAME=${output_state[3]}
+ISO_WORK_DEVICE=${output_state[4]}
+ISO_WORK_INODE=${output_state[5]}
+TARGET_INITIAL_STATE=${output_state[6]}
+ISO_WORK_PATH=$target_parent_canonical/$ISO_WORK_NAME
+exec 8<"$target_parent_canonical" || die 1 "$(gettext "Cannot retain output parent directory")"
+ISO_PARENT_FD_OPEN=true
+exec 9<"$ISO_WORK_PATH" || die 1 "$(gettext "Cannot retain private ISO directory")"
+ISO_WORK_FD_OPEN=true
+if ! run_isolated_python check-fds 8 9 "$ISO_PARENT_DEVICE" "$ISO_PARENT_INODE" \
+    "$ISO_WORK_NAME" "$ISO_WORK_DEVICE" "$ISO_WORK_INODE"; then
+    die 1 "$(gettext "Retained ISO output identity check failed")"
+fi
+ISO_BUILD_PATH=/proc/self/fd/9/image.iso
+
 estimated_bytes=131072
 for destination in "${GRAFT_DESTINATIONS[@]}"; do
     graft_source=${GRAFT_SOURCES[$destination]}
@@ -2456,16 +2476,6 @@ if [[ $CUSTOMIZATION_REQUESTED == true ]]; then
         "$overlay_input_fingerprint" "$overlay_entry_count"; then
         die 1 "$(gettext "Embedded customization bytes or digest report failed verification")"
     fi
-    if [[ -n $overlay_extract ]]; then
-        if ! run_command unsquashfs -s "$overlay_extract"; then
-            die 1 "$(gettext "Embedded image overlay has an invalid SquashFS superblock")"
-        fi
-        embedded_overlay_tree=$customization_verify/image-overlay-tree
-        if ! run_command unsquashfs -d "$embedded_overlay_tree" "$overlay_extract" ||
-           ! run_isolated_python verify-overlay-tree "$overlay_metadata" "$embedded_overlay_tree"; then
-            die 1 "$(gettext "Embedded image overlay does not match the captured input manifest")"
-        fi
-    fi
 fi
 
 if [[ -n $CAPTURE_CHANGES ]]; then
@@ -2507,17 +2517,10 @@ if [[ -n $CAPTURE_CHANGES ]]; then
     fi
 fi
 
-iso_hash_file=$TEMP_DIR/iso-hash
-if ! run_isolated_python_to_file "$iso_hash_file" hash-file "$ISO_BUILD_PATH"; then
-    die 1 "$(gettext "Cannot hash verified private ISO")"
-fi
-mapfile -t iso_hash_values <"$iso_hash_file"
-(( ${#iso_hash_values[@]} == 2 )) || die 1 "$(gettext "Invalid private ISO hash result")"
-iso_hash=${iso_hash_values[1]}
 if ! run_isolated_python publish 8 9 "$target_parent_canonical" \
     "$ISO_PARENT_DEVICE" "$ISO_PARENT_INODE" "$ISO_WORK_NAME" \
     "$ISO_WORK_DEVICE" "$ISO_WORK_INODE" "$target_basename" \
-    "$TARGET_INITIAL_STATE" "$OVERWRITE" "$iso_hash"; then
+    "$TARGET_INITIAL_STATE" "$OVERWRITE"; then
     die 1 "$(gettext "Atomic ISO publication failed because an output path identity changed")"
 fi
 

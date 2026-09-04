@@ -111,7 +111,7 @@
                 ],
                 [
                   "text",
-                  " conserve le mode du modèle ou de la session sauvegardée."
+                  " conserve le mode modèle ou session enregistrée."
                 ]
               ]
             ]
@@ -141,7 +141,7 @@
                 ],
                 [
                   "text",
-                  " stocke les modifications dans un répertoire sur un système de fichiers Linux."
+                  " enregistre les modifications directement dans un répertoire sur un système de fichiers avec des permissions Unix, comme ext4, XFS ou Btrfs."
                 ]
               ]
             ]
@@ -195,7 +195,7 @@
                   [
                     [
                       "text",
-                      "Brut"
+                      "Raw"
                     ]
                   ]
                 ],
@@ -426,7 +426,7 @@
       ]
     ]
   ],
-  "plain_text": "Session et stockage\nChoisissez comment cette entrée détecte et enregistre les modifications persistantes.\nSélection de session\nLe modèle d'entrée contrôle si MiniOS reprend la dernière session, en crée une nouvelle ou demande au démarrage. Le type de stockage ne remplace pas ce choix de modèle.\nType de stockage\nAutomatique conserve le mode du modèle ou de la session sauvegardée.\nNatif stocke les modifications dans un répertoire sur un système de fichiers Linux.\nDynfilefs utilise un conteneur extensible.\nBrut utilise une image de taille fixe.\nLUKS utilise un conteneur chiffré.\nSquashFS reprend une session compressée existante.\nL'initramfs actuel peut reprendre mais ne peut pas créer de sessions SquashFS.\nCapacité\nTaille du conteneur s'applique uniquement aux sessions basées sur un conteneur, donc elle est désactivée pour Natif et SquashFS. Espace libre à conserver réserve de la place sur le périphérique de persistance afin que les modifications sauvegardées ne le remplissent pas complètement.\nLes options de démarrage correspondantes sont perchmode=, perchsize= et perchreserve=.\nCopier en RAM\ntoram=full copie l'ensemble du système en mémoire. toram=trim ne copie que l'ensemble filtré des modules. Cela peut permettre de retirer le périphérique de démarrage, mais nécessite suffisamment de RAM pour les données copiées.",
+  "plain_text": "Session et stockage\nChoisissez comment cette entrée détecte et enregistre les modifications persistantes.\nSélection de session\nLe modèle d'entrée contrôle si MiniOS reprend la dernière session, en crée une nouvelle ou demande au démarrage. Le type de stockage ne remplace pas ce choix de modèle.\nType de stockage\nAutomatique conserve le mode modèle ou session enregistrée.\nNatif enregistre les modifications directement dans un répertoire sur un système de fichiers avec des permissions Unix, comme ext4, XFS ou Btrfs.\nDynfilefs utilise un conteneur extensible.\nRaw utilise une image de taille fixe.\nLUKS utilise un conteneur chiffré.\nSquashFS reprend une session compressée existante.\nL'initramfs actuel peut reprendre mais ne peut pas créer de sessions SquashFS.\nCapacité\nTaille du conteneur s'applique uniquement aux sessions basées sur un conteneur, donc elle est désactivée pour Natif et SquashFS. Espace libre à conserver réserve de la place sur le périphérique de persistance afin que les modifications sauvegardées ne le remplissent pas complètement.\nLes options de démarrage correspondantes sont perchmode=, perchsize= et perchreserve=.\nCopier en RAM\ntoram=full copie l'ensemble du système en mémoire. toram=trim ne copie que l'ensemble filtré des modules. Cela peut permettre de retirer le périphérique de démarrage, mais nécessite suffisamment de RAM pour les données copiées.",
   "product_kind": "minios-markup-document",
   "schema_version": 1
 }

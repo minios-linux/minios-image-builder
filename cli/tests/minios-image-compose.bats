@@ -190,6 +190,9 @@ run_compose() {
         PKEXEC_STUB_STATE="$PKEXEC_STATE" \
         PKEXEC_STUB_ROOT="${PKEXEC_STUB_ROOT:-false}" \
         SAVECHANGES_STUB_STATE="$CAPTURE_STATE" \
+        SAVECHANGES_STUB_OUTPUT_DIR="$OUTPUT_DIR" \
+        SAVECHANGES_STUB_REPLACE_OUTPUT_PARENT="${SAVECHANGES_STUB_REPLACE_OUTPUT_PARENT:-false}" \
+        SAVECHANGES_STUB_REPLACE_OUTPUT="${SAVECHANGES_STUB_REPLACE_OUTPUT:-}" \
         SAVECHANGES_STUB_MODE="${SAVECHANGES_STUB_MODE:-success}" \
         SAVECHANGES_STUB_METADATA_MODE="${SAVECHANGES_STUB_METADATA_MODE:-valid}" \
         SAVECHANGES_STUB_VERSION="${SAVECHANGES_STUB_VERSION:-1.3.0}" \
@@ -424,6 +427,17 @@ assert_build_arg_pair() {
     [ "$(<"$OUTPUT")" = 'partial ISO' ]
 }
 
+@test "session capture refuses an existing output even with overwrite" {
+    write_file "$OUTPUT" old-output
+
+    run_compose --capture-changes exact --overwrite
+
+    [ "$status" -ne 0 ]
+    assert_output_contains 'Session capture requires a new output filename'
+    [ "$(<"$OUTPUT")" = old-output ]
+    [ ! -e "$CAPTURE_STATE/args" ]
+}
+
 @test "required boot module config and manifest exclusions fail preflight" {
     local pattern
     local expected
@@ -490,6 +504,16 @@ assert_build_arg_pair() {
     run_compose --manifest "$MANIFEST"
     [ "$status" -ne 0 ]
     assert_output_contains 'Manifest is not valid JSON'
+    [ ! -e "$OUTPUT" ]
+}
+
+@test "oversized JSON manifest is rejected before output work" {
+    truncate -s $((16 * 1024 * 1024 + 1)) "$MANIFEST"
+
+    run_compose --manifest "$MANIFEST"
+
+    [ "$status" -ne 0 ]
+    assert_output_contains 'JSON input is unexpectedly large'
     [ ! -e "$OUTPUT" ]
 }
 
@@ -1151,6 +1175,7 @@ assert capture["module_order"] == 3
     run_compose --capture-changes clean
 
     [ "$status" -eq 0 ]
+    [ "$(<"$CAPTURE_STATE/output-work-directory-count")" -eq 0 ]
     mapfile -d '' -t elevated_arguments <"$PKEXEC_STATE/args"
     [ "${elevated_arguments[0]}" = "$CAPTURE_STUB" ]
     [ "$(<"$PKEXEC_STATE/euid")" -eq "$EUID" ]
@@ -1163,6 +1188,25 @@ assert capture["module_order"] == 3
     assert_output_contains 'P:persistence'
     assert_output_contains 'P:iso-write'
     assert_output_contains 'P:verify'
+}
+
+@test "capture rejects an output directory replaced before reservation" {
+    SAVECHANGES_STUB_REPLACE_OUTPUT_PARENT=true \
+        run_compose --capture-changes clean
+
+    [ "$status" -ne 0 ]
+    assert_output_contains 'Cannot prepare retained same-filesystem ISO output'
+    [ ! -e "$OUTPUT" ]
+    [ -d "$OUTPUT_DIR.before-capture-replacement" ]
+}
+
+@test "capture preserves an output file that appears before reservation" {
+    SAVECHANGES_STUB_REPLACE_OUTPUT="$OUTPUT" \
+        run_compose --capture-changes clean
+
+    [ "$status" -ne 0 ]
+    assert_output_contains 'Cannot prepare retained same-filesystem ISO output'
+    [ "$(<"$OUTPUT")" = 'replacement created during capture' ]
 }
 
 @test "selected capture is hashed reported grafted top-level and phase-transparent" {

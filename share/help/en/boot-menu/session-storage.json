@@ -157,7 +157,7 @@
                 ],
                 [
                   "text",
-                  " stores changes in a directory on a Linux filesystem."
+                  " stores changes directly in a directory on a filesystem with Unix permissions, such as ext4, XFS, or Btrfs."
                 ]
               ]
             ]
@@ -478,7 +478,7 @@
       ]
     ]
   ],
-  "plain_text": "Session and storage\nChoose how this entry finds and stores persistent changes.\nSession selection\nThe entry template controls whether MiniOS resumes the latest session, creates\na new one, or asks at startup. The storage type does not replace that template\nchoice.\nStorage type\nAutomatic keeps the template or saved-session mode.\nNative stores changes in a directory on a Linux filesystem.\nDynfilefs uses an expandable container.\nRaw uses a fixed-size image.\nLUKS uses an encrypted container.\nSquashFS resumes an existing compressed session.\nThe current initramfs can resume but cannot create SquashFS sessions.\nCapacity\nContainer size applies only to container-backed sessions, so it is disabled\nfor Native and SquashFS. Free space to keep reserves room on the persistence\ndevice so that saved changes do not fill it completely.\nThe corresponding boot options are perchmode=, perchsize=, and\nperchreserve=.\nCopy to RAM\ntoram=full copies the entire system to memory. toram=trim copies only the\nfiltered module set. This may allow removal of the boot device, but requires\nenough RAM for the copied data.",
+  "plain_text": "Session and storage\nChoose how this entry finds and stores persistent changes.\nSession selection\nThe entry template controls whether MiniOS resumes the latest session, creates\na new one, or asks at startup. The storage type does not replace that template\nchoice.\nStorage type\nAutomatic keeps the template or saved-session mode.\nNative stores changes directly in a directory on a filesystem with Unix permissions, such as ext4, XFS, or Btrfs.\nDynfilefs uses an expandable container.\nRaw uses a fixed-size image.\nLUKS uses an encrypted container.\nSquashFS resumes an existing compressed session.\nThe current initramfs can resume but cannot create SquashFS sessions.\nCapacity\nContainer size applies only to container-backed sessions, so it is disabled\nfor Native and SquashFS. Free space to keep reserves room on the persistence\ndevice so that saved changes do not fill it completely.\nThe corresponding boot options are perchmode=, perchsize=, and\nperchreserve=.\nCopy to RAM\ntoram=full copies the entire system to memory. toram=trim copies only the\nfiltered module set. This may allow removal of the boot device, but requires\nenough RAM for the copied data.",
   "product_kind": "minios-markup-document",
   "schema_version": 1
 }
