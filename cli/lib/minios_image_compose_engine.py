@@ -322,7 +322,7 @@ def target_set_file(path, stride_text):
     print(digest)
 
 
-def input_record(path):
+def input_record(path, allow_readonly_metadata=False):
     text_path = os.fsdecode(path)
     parent_fd, name, metadata, descriptor = open_final_nofollow(text_path)
     try:
@@ -340,7 +340,14 @@ def input_record(path):
         }
         if stat.S_ISREG(metadata.st_mode):
             base["kind"] = "regular"
-            base["sha256"] = hash_fd(descriptor, metadata)
+            readonly = bool(
+                os.fstatvfs(descriptor).f_flag & getattr(os, "ST_RDONLY", 1))
+            if allow_readonly_metadata and readonly:
+                base["integrity"] = "readonly-metadata"
+                base["sha256"] = None
+            else:
+                base["integrity"] = "sha256"
+                base["sha256"] = hash_fd(descriptor, metadata)
         elif stat.S_ISLNK(metadata.st_mode):
             base["kind"] = "symlink"
             target = os.readlink(name, dir_fd=parent_fd)
@@ -357,14 +364,15 @@ def input_record(path):
         os.close(parent_fd)
 
 
-def record_inputs(list_path, output_path):
+def record_inputs(list_path, output_path, readonly_module_list):
     records = []
     seen = set()
+    readonly_modules = set(read_nul(readonly_module_list))
     for path in read_nul(list_path):
         if path in seen:
             continue
         seen.add(path)
-        records.append(input_record(path))
+        records.append(input_record(path, path in readonly_modules))
     with open(output_path, "x", encoding="utf-8") as stream:
         json.dump(records, stream, sort_keys=True, separators=(",", ":"))
         stream.write("\n")
@@ -381,7 +389,9 @@ def verify_inputs(records_path, required_list):
             fail("final graft source was not present in the original input snapshot")
     for record in records:
         try:
-            current = input_record(os.fsencode(record["path"]))
+            current = input_record(
+                os.fsencode(record["path"]),
+                record.get("integrity") == "readonly-metadata")
         except (AdapterError, OSError) as error:
             fail("cannot re-read build input {}: {}".format(
                 repr(record["path"]), error))
@@ -460,6 +470,14 @@ def snapshot_inputs(records_path, source_list, snapshot_directory, mapping_path)
                          follow_symlinks=False)
                 snapshot = destination
             elif record["kind"] == "regular" and descriptor is not None:
+                if record.get("integrity") == "readonly-metadata":
+                    readonly = bool(
+                        os.fstatvfs(descriptor).f_flag &
+                        getattr(os, "ST_RDONLY", 1))
+                    if not readonly:
+                        fail("read-only source module became writable")
+                    mappings.append((path, path))
+                    continue
                 if hash_fd(descriptor, metadata) != record["sha256"]:
                     fail("snapshot input digest changed")
                 snapshot = destination
@@ -2208,7 +2226,7 @@ def main(arguments):
         prepare_output(*values)
     elif command == "check-fds" and len(values) == 7:
         check_output_fds(*values)
-    elif command == "record-inputs" and len(values) == 2:
+    elif command == "record-inputs" and len(values) == 3:
         record_inputs(*values)
     elif command == "verify-inputs" and len(values) == 2:
         verify_inputs(*values)
@@ -2256,11 +2274,12 @@ def main(arguments):
         fail("invalid isolated adapter helper invocation")
 
 
-try:
-    main(sys.argv[1:])
-except AdapterError as error:
-    print("E: {}".format(error), file=sys.stderr)
-    raise SystemExit(1)
-except (OSError, TypeError, UnicodeError, ValueError) as error:
-    print("E: isolated adapter helper failed: {}".format(error), file=sys.stderr)
-    raise SystemExit(1)
+if __name__ == "__main__":
+    try:
+        main(sys.argv[1:])
+    except AdapterError as error:
+        print("E: {}".format(error), file=sys.stderr)
+        raise SystemExit(1)
+    except (OSError, TypeError, UnicodeError, ValueError) as error:
+        print("E: isolated adapter helper failed: {}".format(error), file=sys.stderr)
+        raise SystemExit(1)

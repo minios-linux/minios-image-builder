@@ -96,11 +96,11 @@ VERIFICATION_STRUCTURAL = 'structurally_verified'
 SOURCE_FINGERPRINT_ALGORITHM = 'effective-content-sha256-v2'
 HASH_CHUNK_SIZE = 1024 * 1024
 MAX_PROJECT_BYTES = 2 * 1024 * 1024
-MIN_DESTINATION_HEADROOM = 256 * 1024 * 1024
-MIN_SCRATCH_HEADROOM = 512 * 1024 * 1024
+MIN_ISO_OVERHEAD = 16 * 1024 * 1024
+MIN_SCRATCH_HEADROOM = 32 * 1024 * 1024
 # Fixed working-memory reserve for tool buffers, inventory, and framing that a
 # RAM-backed workspace must hold on top of its staged bytes.
-MIN_MEMORY_HEADROOM = 256 * 1024 * 1024
+MIN_MEMORY_HEADROOM = 64 * 1024 * 1024
 # Filesystem backing classes the resource planner reports for the destination
 # and scratch work areas. RAM-backed selections are allowed but accounted for
 # against available memory, not just free space.
@@ -2036,9 +2036,45 @@ def _secure_hash_regular(path, expected_lstat=None):
         os.close(descriptor)
 
 
-def _build_source_manifest(source_path):
-    """Hash every effective regular file and safe symlink in source."""
+def _readonly_regular_metadata(path, expected_lstat=None):
+    flags = os.O_RDONLY
+    if hasattr(os, 'O_NOFOLLOW'):
+        flags |= os.O_NOFOLLOW
+    descriptor = os.open(path, flags)
+    try:
+        opened = os.fstat(descriptor)
+        if (not stat.S_ISREG(opened.st_mode) or
+                (expected_lstat is not None and
+                 _identity(opened) != _identity(expected_lstat))):
+            raise SourceInspectionError(
+                'Input changed while opening: {}'.format(path))
+        readonly_flag = getattr(os, 'ST_RDONLY', 1)
+        if not os.fstatvfs(descriptor).f_flag & readonly_flag:
+            raise SourceInspectionError(
+                'Input filesystem is no longer read-only: {}'.format(path))
+        return opened
+    finally:
+        os.close(descriptor)
+
+
+def _is_source_module_relative(relative_path):
+    parts = relative_path.split('/')
+    return (relative_path.endswith('.sb') and
+            (len(parts) == 1 or (len(parts) >= 2 and parts[0] == 'modules')))
+
+
+def _path_filesystem_is_readonly(path):
+    try:
+        return bool(os.statvfs(path).f_flag & getattr(os, 'ST_RDONLY', 1))
+    except OSError:
+        return False
+
+
+def _build_source_manifest(source_path, metadata_only_module_paths=()):
+    """Inventory source files, avoiding content reads for read-only modules."""
     source_path = os.path.abspath(_path_string(source_path, 'source_path'))
+    all_readonly_modules = metadata_only_module_paths is None
+    metadata_only_module_paths = set(metadata_only_module_paths or ())
     root_stat = os.lstat(source_path)
     if not stat.S_ISDIR(root_stat.st_mode) or stat.S_ISLNK(root_stat.st_mode):
         raise SourceInspectionError(
@@ -2090,33 +2126,53 @@ def _build_source_manifest(source_path):
             elif stat.S_ISDIR(file_stat.st_mode):
                 stack.append((path, relative))
             elif stat.S_ISREG(file_stat.st_mode):
-                digest, opened_stat = _secure_hash_regular(path, file_stat)
+                integrity = 'sha256'
+                metadata_only = (
+                    _is_source_module_relative(normalized) and
+                    (all_readonly_modules or
+                     normalized in metadata_only_module_paths) and
+                    _path_filesystem_is_readonly(path))
+                if metadata_only:
+                    opened_stat = _readonly_regular_metadata(path, file_stat)
+                    digest = None
+                    integrity = 'readonly-metadata'
+                else:
+                    digest, opened_stat = _secure_hash_regular(path, file_stat)
                 records.append({
                     'relative_path': normalized,
                     'path': path,
                     'type': 'file',
                     'size': int(opened_stat.st_size),
                     'sha256': digest,
+                    'integrity': integrity,
                     'link_target': None,
                     'device': int(opened_stat.st_dev),
                     'inode': int(opened_stat.st_ino),
                     'mode': stat.S_IMODE(opened_stat.st_mode),
+                    'mtime_ns': _stat_mtime_ns(opened_stat),
+                    'ctime_ns': getattr(opened_stat, 'st_ctime_ns',
+                                        int(opened_stat.st_ctime * 1000000000)),
                 })
                 total_bytes += opened_stat.st_size
             else:
                 # minios-image-compose's source traversal includes files/symlinks, not devices.
                 continue
     records.sort(key=lambda item: item['relative_path'])
-    fingerprint_records = [
-        {
+    fingerprint_records = []
+    for item in records:
+        fingerprint_record = {
             'relative_path': item['relative_path'],
             'type': item['type'],
             'size': item['size'],
             'sha256': item['sha256'],
+            'integrity': item.get('integrity', 'sha256'),
             'link_target': item['link_target'],
         }
-        for item in records
-    ]
+        if item.get('integrity') == 'readonly-metadata':
+            fingerprint_record.update({
+                'mtime_ns': item['mtime_ns'],
+            })
+        fingerprint_records.append(fingerprint_record)
     fingerprint = '{}:{}'.format(
         SOURCE_FINGERPRINT_ALGORITHM, _json_digest(fingerprint_records))
     return fingerprint, total_bytes, tuple(records)
@@ -2150,10 +2206,15 @@ def _followed_module_digest(path):
 
 def _module_from_record(record, source_category, active=None):
     details = describe_module_name(record['relative_path'])
-    digest, target_stat = _followed_module_digest(record['path'])
+    if record['type'] == 'file':
+        digest = record.get('sha256')
+        target_size = record['size']
+    else:
+        digest, target_stat = _followed_module_digest(record['path'])
+        target_size = target_stat.st_size
     return ModuleInfo(
         path=record['path'], relative_path=record['relative_path'],
-        size=target_stat.st_size, sha256=digest,
+        size=target_size, sha256=digest,
         order_prefix=details['order_prefix'], role=details['role'],
         friendly_name=details['friendly_name'],
         description=details['description'], source_category=source_category,
@@ -3733,7 +3794,8 @@ def discover_running_source(roots=None, livekit_root=None, dracut_root=None,
                             mounts_path='/proc/mounts',
                             sys_block_root='/sys/class/block',
                             runtime_release_path='/etc/minios-release',
-                            subdirectories=None):
+                            subdirectories=None,
+                            reuse_readonly_modules=True):
     """Discover livekit/dracut data, medium, or iso MiniOS source trees."""
     roots = _normalize_roots(roots, livekit_root, dracut_root)
     if subdirectories is None:
@@ -3813,7 +3875,9 @@ def discover_running_source(roots=None, livekit_root=None, dracut_root=None,
     diagnostics.extend(errors)
     try:
         fingerprint, total_bytes, source_manifest = _build_source_manifest(
-            source_path)
+            source_path,
+            metadata_only_module_paths=(
+                None if reuse_readonly_modules else ()))
         modules, module_diagnostics = inspect_source_modules(
             source_path, source_manifest)
         boot = _boot_inventory(source_path)
@@ -3919,7 +3983,7 @@ def discover_mounted_source(mount_path, media_category='iso',
         roots=((media_category, mount_path),),
         mounts_path=mounts_path, sys_block_root=sys_block_root,
         runtime_release_path=runtime_release_path,
-        subdirectories=('',))
+        subdirectories=('',), reuse_readonly_modules=True)
 
 
 class ImageProject(_Immutable):
@@ -5180,12 +5244,17 @@ def _base_module_fingerprint(modules):
     digest.update(b'minios-base-modules-v2\x00')
     records = []
     for item in modules:
-        if (isinstance(item.size, bool) or not isinstance(item.size, int) or
-                item.size <= 0 or not _is_sha256(item.sha256)):
+        module_size = item.size
+        module_digest = item.sha256
+        if not _is_sha256(module_digest):
+            module_digest, module_stat = _followed_module_digest(item.path)
+            module_size = module_stat.st_size
+        if (isinstance(module_size, bool) or
+                not isinstance(module_size, int) or module_size <= 0):
             raise ValueError('source module metadata is incomplete')
         order = re.match(r'^([0-9]+)', item.basename)
         records.append((int(order.group(1)) if order else 0,
-                        item.basename, item.size, item.sha256))
+                        item.basename, module_size, module_digest))
     records.sort(key=lambda item: (item[0], item[1]), reverse=True)
     for _order, name, size, module_digest in records:
         digest.update(name.encode('ascii', 'strict'))
@@ -5314,6 +5383,7 @@ class BuildPlan(_Immutable):
     __slots__ = (
         'errors', 'warnings', 'estimated_input_bytes', 'argv', 'display_argv',
         'execution_cwd', 'output_path', 'scratch_directory',
+        'job_parent_directory',
         'partial_output_path', 'job_directory', 'adapter_manifest_path',
         'plan_id', '_manifest_json', '_manifest_payload', '_input_records',
         '_job_identity', '_job_descriptor', '_source_path',
@@ -5343,6 +5413,7 @@ class BuildPlan(_Immutable):
                    boot_config_payloads=None,
                    job_descriptor=None, source_path=None, display_argv=None,
                    scratch_directory=None, scratch_identity=None,
+                   job_parent_directory=None,
                    output_directory_identity=None,
                    output_directory_descriptor=None, _token=None):
         if _token is not _PLAN_TOKEN:
@@ -5358,6 +5429,7 @@ class BuildPlan(_Immutable):
             if job_descriptor is not None else None)
         self.output_path = output_path
         self.scratch_directory = scratch_directory
+        self.job_parent_directory = job_parent_directory
         self.partial_output_path = partial_output_path
         self.job_directory = job_directory
         self.adapter_manifest_path = adapter_manifest_path
@@ -5533,9 +5605,11 @@ def _source_input_records(source_manifest):
             'link_target': item['link_target'],
             'size': item['size'],
             'sha256': item['sha256'],
+            'integrity': item.get('integrity', 'sha256'),
             'device': item['device'],
             'inode': item['inode'],
-            'mtime_ns': None,
+            'mtime_ns': item.get('mtime_ns'),
+            'ctime_ns': item.get('ctime_ns'),
         })
     return result
 
@@ -5659,8 +5733,14 @@ def create_build_plan(project, source_info=None,
     current_total_bytes = 0
     if source_info.source_path and os.path.isdir(source_info.source_path):
         try:
+            metadata_only_modules = {
+                item['relative_path'] for item in source_info.input_manifest
+                if item.get('integrity') == 'readonly-metadata'
+            }
             current_fingerprint, current_total_bytes, current_source_manifest = (
-                _build_source_manifest(source_info.source_path))
+                _build_source_manifest(
+                    source_info.source_path,
+                    metadata_only_module_paths=metadata_only_modules))
         except (OSError, SourceInspectionError) as error:
             _add_diagnostic(
                 errors, 'error', 'source_fingerprint_failed', str(error),
@@ -6378,29 +6458,70 @@ def create_build_plan(project, source_info=None,
             'Scratch directory must not be inside the project filesystem '
             'layer.', scratch_directory)
 
-    estimated_input_bytes = sum(item['size'] for item in included_source_records)
-    estimated_input_bytes += sum(item.get('size') or 0 for item in additional)
+    reusable_input_bytes = sum(
+        item['size'] for item in included_source_records)
+    reusable_input_bytes += sum(
+        item.get('size') or 0 for item in additional)
+    generated_iso_bytes = 0
     if config_record:
-        estimated_input_bytes += (
+        generated_iso_bytes += (
             rendered_config_size if rendered_config_size is not None
             else config_record['size'])
     if background_record:
-        estimated_input_bytes += background_record['size']
+        generated_iso_bytes += background_record['size']
+    boot_config_bytes = sum(item['size'] for item in boot_expected_records)
+    generated_iso_bytes += boot_config_bytes
+    overlay_bytes = 0
     if overlay_inventory_value is not None:
         overlay_bytes = overlay_inventory_value['regular_bytes']
-        estimated_input_bytes += overlay_bytes + max(
-            1024 * 1024, overlay_bytes // 10)
+        # Only the generated SquashFS module enters the ISO. Its uncompressed
+        # size is a conservative upper bound; source modules remain direct
+        # xorriso graft inputs and consume no staging space.
+        generated_iso_bytes += overlay_bytes
     if capture_estimated_bytes is not None:
-        estimated_input_bytes += capture_estimated_bytes
-    # The complete private build, including the unpublished ISO, lives under
-    # scratch. The 2x input bound covers one image-sized artifact plus private
-    # staging. Destination space is needed only for final publication; on a
-    # different filesystem publication briefly holds both copies.
-    required_destination_bytes = (
-        estimated_input_bytes +
-        max(MIN_DESTINATION_HEADROOM, estimated_input_bytes // 2))
-    required_scratch_bytes = max(
-        MIN_SCRATCH_HEADROOM, estimated_input_bytes * 2)
+        generated_iso_bytes += capture_estimated_bytes
+    estimated_input_bytes = reusable_input_bytes + generated_iso_bytes
+    estimated_iso_bytes = estimated_input_bytes + max(
+        MIN_ISO_OVERHEAD, estimated_input_bytes // 50)
+
+    # Without session capture the private job can live beside the destination,
+    # so the partial and final ISO are the same inode. Capture keeps all build
+    # work in scratch to prevent it from entering the saved session.
+    output_supports_private_job = (
+        not errors and os.path.isdir(output_directory) and
+        _probe_private_workspace(output_directory) is None)
+    job_on_destination = bool(
+        not capture_requested and output_supports_private_job)
+    staged_config_bytes = rendered_config_size or 0
+    customization_verification_bytes = boot_config_bytes
+    if project.live_config_overrides and rendered_config_size is not None:
+        customization_verification_bytes += rendered_config_size
+    compose_customization_bytes = boot_config_bytes * 3
+    if project.live_config_overrides and rendered_config_size is not None:
+        compose_customization_bytes += rendered_config_size
+    if background_record:
+        background_verification_bytes = (
+            background_record['size'] * len(background_targets))
+        customization_verification_bytes += background_verification_bytes
+        compose_customization_bytes += (
+            background_verification_bytes + background_record['size'])
+    outer_verification_bytes = customization_verification_bytes
+    scratch_generated_bytes = (
+        MIN_SCRATCH_HEADROOM + compose_customization_bytes)
+    if overlay_bytes:
+        scratch_generated_bytes += overlay_bytes * 3
+        outer_verification_bytes += overlay_bytes * 2
+    if capture_estimated_bytes is not None:
+        scratch_generated_bytes += capture_estimated_bytes * 2
+        outer_verification_bytes += capture_estimated_bytes
+    required_destination_bytes = estimated_iso_bytes
+    if job_on_destination:
+        required_destination_bytes += (
+            staged_config_bytes + outer_verification_bytes)
+    required_scratch_bytes = scratch_generated_bytes
+    if not job_on_destination:
+        required_scratch_bytes = estimated_iso_bytes + staged_config_bytes + max(
+            scratch_generated_bytes, outer_verification_bytes)
     destination_free = None
     scratch_free = None
     shared_filesystem = False
@@ -6442,10 +6563,10 @@ def create_build_plan(project, source_info=None,
             _add_diagnostic(
                 errors, 'error', 'space_filesystem_probe_failed', str(error))
         if shared_filesystem:
-            # The unpublished ISO already lives in scratch. Same-filesystem
-            # publication reuses that inode, so no second output-sized copy is
-            # needed at publication time.
-            combined_required_bytes = required_scratch_bytes
+            combined_required_bytes = (
+                required_scratch_bytes if not job_on_destination else
+                estimated_iso_bytes + staged_config_bytes + max(
+                    scratch_generated_bytes, outer_verification_bytes))
             if min(destination_free, scratch_free) < combined_required_bytes:
                 _add_diagnostic(
                     errors, 'error', 'combined_space_insufficient',
@@ -6517,14 +6638,24 @@ def create_build_plan(project, source_info=None,
          live_writable_backing_filesystem_class ==
          FILESYSTEM_CLASS_RAM_BACKED))
     available_memory_bytes = _available_memory_bytes(meminfo_path)
-    ram_backed_bytes = 0
-    if destination_ram_backed:
-        ram_backed_bytes += required_destination_bytes
-    if scratch_ram_backed:
-        if shared_filesystem:
-            ram_backed_bytes = max(ram_backed_bytes, combined_required_bytes)
-        else:
-            ram_backed_bytes += required_scratch_bytes
+    if shared_filesystem and (destination_ram_backed or scratch_ram_backed):
+        ram_backed_bytes = combined_required_bytes
+    elif job_on_destination:
+        build_ram_bytes = (
+            ((estimated_iso_bytes + staged_config_bytes)
+             if destination_ram_backed else 0) +
+            (scratch_generated_bytes if scratch_ram_backed else 0))
+        verify_ram_bytes = (
+            required_destination_bytes if destination_ram_backed else 0)
+        ram_backed_bytes = max(build_ram_bytes, verify_ram_bytes)
+    else:
+        build_ram_bytes = (
+            required_scratch_bytes if scratch_ram_backed else 0)
+        publish_ram_bytes = (
+            ((estimated_iso_bytes + staged_config_bytes)
+             if scratch_ram_backed else 0) +
+            (estimated_iso_bytes if destination_ram_backed else 0))
+        ram_backed_bytes = max(build_ram_bytes, publish_ram_bytes)
     peak_memory_bytes = (
         ram_backed_bytes + MIN_MEMORY_HEADROOM if ram_backed_bytes else None)
     if (peak_memory_bytes is not None and available_memory_bytes is not None
@@ -6712,7 +6843,8 @@ def create_build_plan(project, source_info=None,
         'input_digests': {
             'source_files': [
                 {key: item.get(key) for key in (
-                    'relative_path', 'type', 'size', 'sha256', 'link_target')}
+                    'relative_path', 'type', 'size', 'sha256', 'integrity',
+                    'link_target')}
                 for item in included_source_records],
             'additional_modules': [
                 {key: item.get(key) for key in (
@@ -6734,6 +6866,12 @@ def create_build_plan(project, source_info=None,
         },
         'estimate': {
             'input_bytes': estimated_input_bytes,
+            'reusable_input_bytes': reusable_input_bytes,
+            'generated_iso_bytes': generated_iso_bytes,
+            'estimated_iso_bytes': estimated_iso_bytes,
+            'job_on_destination': job_on_destination,
+            'scratch_generated_bytes': scratch_generated_bytes,
+            'outer_verification_bytes': outer_verification_bytes,
             'required_destination_bytes': required_destination_bytes,
             'required_scratch_bytes': required_scratch_bytes,
             'destination_free_bytes': destination_free,
@@ -6796,9 +6934,12 @@ def create_build_plan(project, source_info=None,
     job_directory = None
     job_descriptor = None
     validated_scratch_directory = os.path.realpath(scratch_directory)
+    job_parent_directory = (
+        output_directory if job_on_destination
+        else validated_scratch_directory)
     try:
         job_directory, job_stat, job_descriptor = _allocate_job_directory(
-            validated_scratch_directory)
+            job_parent_directory)
         if _is_within(job_directory, source_info.source_path):
             raise ImageProjectError('job directory resolved inside source')
         partial_basename = 'image.partial.iso'
@@ -6834,7 +6975,7 @@ def create_build_plan(project, source_info=None,
                 pass
         _add_diagnostic(
             errors, 'error', 'secure_job_allocation_failed', str(error),
-            validated_scratch_directory)
+            job_parent_directory)
         return _failed_plan(
             errors, warnings, estimated_input_bytes, output_path, base_manifest)
 
@@ -6941,6 +7082,7 @@ def create_build_plan(project, source_info=None,
         display_argv=display_argv,
         scratch_directory=validated_scratch_directory,
         scratch_identity=scratch_identity,
+        job_parent_directory=job_parent_directory,
         output_directory_identity=output_directory_identity,
         output_directory_descriptor=output_directory_descriptor,
         _token=_PLAN_TOKEN)
@@ -7092,8 +7234,15 @@ def revalidate_build_plan_inputs(plan):
             'Build plan has no private source binding.'))
         return tuple(diagnostics)
     try:
+        metadata_only_modules = {
+            item['relative_path']
+            for item in plan.manifest['input_digests']['source_files']
+            if item.get('integrity') == 'readonly-metadata'
+        }
         current_fingerprint, unused_size, unused_manifest = (
-            _build_source_manifest(source_path))
+            _build_source_manifest(
+                source_path,
+                metadata_only_module_paths=metadata_only_modules))
         if current_fingerprint != plan.manifest['source']['fingerprint']:
             raise ImageProjectError('complete source fingerprint changed')
     except (OSError, ImageProjectError, SourceInspectionError) as error:
@@ -7118,9 +7267,21 @@ def revalidate_build_plan_inputs(plan):
             else:
                 if stat.S_ISLNK(file_stat.st_mode):
                     raise ImageProjectError('input became a symlink')
-                digest, opened_stat = _secure_hash_regular(path, file_stat)
-                if digest != record['sha256']:
-                    raise ImageProjectError('content digest changed')
+                if record.get('integrity') == 'readonly-metadata':
+                    opened_stat = _readonly_regular_metadata(path, file_stat)
+                    if (int(opened_stat.st_dev) != record['device'] or
+                            int(opened_stat.st_ino) != record['inode'] or
+                            int(opened_stat.st_size) != record['size'] or
+                            _stat_mtime_ns(opened_stat) != record['mtime_ns'] or
+                            getattr(opened_stat, 'st_ctime_ns',
+                                    int(opened_stat.st_ctime * 1000000000)) !=
+                            record['ctime_ns']):
+                        raise ImageProjectError(
+                            'read-only module metadata changed')
+                else:
+                    digest, opened_stat = _secure_hash_regular(path, file_stat)
+                    if digest != record['sha256']:
+                        raise ImageProjectError('content digest changed')
         except (OSError, ImageProjectError, SourceInspectionError) as error:
             diagnostics.append(Diagnostic(
                 'error', 'build_input_changed',
@@ -8905,9 +9066,9 @@ def publish_verified_output(plan, verification_result, runner=None,
         raise OutputPublishError(
             'verification has no retained artifact identity')
     try:
+        _validate_output_directory_identity(plan)
         _validate_job_identity(plan)
         _validate_scratch_identity(plan)
-        _validate_output_directory_identity(plan)
         retained = os.fstat(verification_result._artifact_descriptor)
     except (OSError, ImageProjectError) as error:
         raise OutputPublishError(str(error))

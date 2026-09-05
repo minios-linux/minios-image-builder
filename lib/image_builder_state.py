@@ -1353,11 +1353,13 @@ def cleanup_plan_job(plan):
     if plan is None or not getattr(plan, 'job_directory', None):
         return CleanupResult(True, None)
     job_directory = os.path.abspath(plan.job_directory)
-    scratch_directory = getattr(plan, 'scratch_directory', None)
-    if not scratch_directory:
+    job_parent_directory = (
+        getattr(plan, 'job_parent_directory', None) or
+        getattr(plan, 'scratch_directory', None))
+    if not job_parent_directory:
         return CleanupResult(False, 'plan temporary work path is unavailable')
-    scratch_directory = os.path.abspath(scratch_directory)
-    if (os.path.dirname(job_directory) != scratch_directory or
+    job_parent_directory = os.path.abspath(job_parent_directory)
+    if (os.path.dirname(job_directory) != job_parent_directory or
             not os.path.basename(job_directory).startswith(_JOB_PREFIX)):
         return CleanupResult(
             False, 'job directory is outside the expected temporary workspace')

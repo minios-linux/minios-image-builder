@@ -205,6 +205,18 @@ def _warning_codes(result):
     return set(item.code for item in result.warnings)
 
 
+def _force_scratch_job(monkeypatch, output_directory):
+    real_probe = backend._probe_private_workspace
+    expected = os.path.realpath(str(output_directory))
+
+    def probe(path):
+        if os.path.realpath(path) == expected:
+            return 'destination does not support private jobs'
+        return real_probe(path)
+
+    monkeypatch.setattr(backend, '_probe_private_workspace', probe)
+
+
 def _prepare_artifact(plan, payload=b'fake-iso'):
     _write_path(plan.partial_output_path, payload)
     backend.atomic_write_json(plan.adapter_manifest_path, plan.manifest)
@@ -448,6 +460,63 @@ def test_discovery_hashes_contents_and_inspects_livekit_modules(tmp_path):
     assert all(item.active is None for item in info.modules)
     assert all(len(item['sha256']) == 64 for item in info.input_manifest)
     json.dumps(info.to_dict())
+
+
+def test_readonly_running_modules_use_metadata_without_content_hashing(
+        tmp_path, monkeypatch):
+    root, source, mounts, sys_block, release, unused_info = _make_source(tmp_path)
+    real_hash = backend._secure_hash_regular
+    hashed_paths = []
+
+    def record_hash(path, expected_lstat=None):
+        hashed_paths.append(path)
+        return real_hash(path, expected_lstat)
+
+    def readonly_metadata(path, expected_lstat=None):
+        metadata = os.stat(path, follow_symlinks=False)
+        assert expected_lstat is None or backend._identity(metadata) == (
+            backend._identity(expected_lstat))
+        return metadata
+
+    monkeypatch.setattr(backend, '_secure_hash_regular', record_hash)
+    monkeypatch.setattr(
+        backend, '_path_filesystem_is_readonly',
+        lambda path: path.endswith('.sb'))
+    monkeypatch.setattr(
+        backend, '_readonly_regular_metadata', readonly_metadata)
+
+    info = backend.discover_running_source(
+        roots=(('livekit', str(root)),), mounts_path=str(mounts),
+        sys_block_root=str(sys_block), runtime_release_path=str(release))
+
+    module_records = [
+        backend._thaw(item) for item in info.input_manifest
+        if item['relative_path'].endswith('.sb')]
+    assert module_records
+    assert all(item['integrity'] == 'readonly-metadata'
+               for item in module_records)
+    assert all(item['sha256'] is None for item in module_records)
+    assert all(module.sha256 is None for module in info.modules)
+    assert not any(path.endswith('.sb') for path in hashed_paths)
+    assert hashed_paths
+
+    project_dir = tmp_path / 'project'
+    project_dir.mkdir()
+    project = _project(info, project_dir / 'out.iso', project_dir)
+    plan = _plan(project, info, _config(project_dir))
+    backend.prepare_build_command(plan)
+
+    assert plan.buildable
+    assert not any(path.endswith('.sb') for path in hashed_paths)
+
+    module_path = module_records[0]['path']
+    module_stat = os.stat(module_path)
+    os.utime(
+        module_path,
+        ns=(module_stat.st_atime_ns, module_stat.st_mtime_ns + 1000000000))
+    diagnostics = backend.revalidate_build_plan_inputs(plan)
+    assert {'build_source_changed', 'build_input_changed'} <= {
+        item.code for item in diagnostics}
 
 
 @pytest.mark.parametrize('backend_name,category', [
@@ -1420,8 +1489,7 @@ def test_build_plan_uses_secure_job_and_explicit_companion_contract(tmp_path):
     plan = _plan(project, info, config)
 
     assert plan.buildable
-    assert os.path.dirname(plan.job_directory) == str(project_dir)
-    assert os.path.dirname(plan.job_directory) != str(output_dir)
+    assert os.path.dirname(plan.job_directory) == str(output_dir)
     assert stat.S_IMODE(os.lstat(plan.job_directory).st_mode) == 0o700
     assert plan.partial_output_path.startswith(plan.job_directory + os.sep)
     assert not os.path.exists(plan.partial_output_path)
@@ -2906,6 +2974,34 @@ def test_destination_and_scratch_space_are_checked_conservatively(tmp_path):
     assert 'combined_space_insufficient' in _error_codes(plan)
 
 
+def test_plain_rebuild_reuses_modules_and_reserves_only_one_iso(tmp_path):
+    root, source, mounts, sys_block, release, info = _make_source(tmp_path)
+    project_dir = tmp_path / 'project'
+    scratch = tmp_path / 'scratch'
+    project_dir.mkdir()
+    scratch.mkdir()
+    additional = _fake_module(project_dir / 'addon.sb', b'additional-data')
+    project = _project(
+        info, project_dir / 'out.iso', project_dir,
+        additional_module_paths=(str(additional),))
+
+    plan = backend.create_build_plan(
+        project, info, current_config_path=str(_config(project_dir)),
+        disk_usage_func=_large_disk, scratch_directory=str(scratch),
+        tool_capabilities=_tool_capabilities(),
+        command_runner=AcceptSquashfsRunner())
+
+    estimate = plan.manifest['estimate']
+    assert plan.buildable
+    assert estimate['job_on_destination'] is True
+    assert estimate['reusable_input_bytes'] > 0
+    assert estimate['generated_iso_bytes'] < estimate['reusable_input_bytes']
+    assert estimate['required_scratch_bytes'] == backend.MIN_SCRATCH_HEADROOM
+    assert (estimate['required_destination_bytes'] -
+            estimate['estimated_iso_bytes']) < 1024 * 1024
+    assert os.path.dirname(plan.job_directory) == str(project_dir)
+
+
 def _write_mount_table(tmp_path, entries):
     path = tmp_path / 'resource-mounts'
     path.write_text(''.join(
@@ -3751,6 +3847,7 @@ def test_cross_filesystem_publication_staging_stays_private_until_complete(
     try:
         if os.stat(scratch).st_dev == os.stat(str(project_dir)).st_dev:
             pytest.skip('/dev/shm shares the test filesystem')
+        _force_scratch_job(monkeypatch, project_dir)
         project = _project(info, project_dir / 'out.iso', project_dir)
         plan = backend.create_build_plan(
             project, info, current_config_path=str(_config(project_dir)),
@@ -3801,6 +3898,7 @@ def test_cross_filesystem_overwrite_publishes_from_retained_private_directory(
     try:
         if os.stat(scratch).st_dev == os.stat(str(project_dir)).st_dev:
             pytest.skip('/dev/shm shares the test filesystem')
+        _force_scratch_job(monkeypatch, project_dir)
         project = _project(
             info, output, project_dir, overwrite_output=True)
         plan = backend.create_build_plan(
@@ -3839,7 +3937,8 @@ def test_cross_filesystem_overwrite_publishes_from_retained_private_directory(
         shutil.rmtree(scratch, ignore_errors=True)
 
 
-def test_publish_copies_only_at_final_step_when_filesystems_differ(tmp_path):
+def test_publish_copies_only_at_final_step_when_filesystems_differ(
+        tmp_path, monkeypatch):
     if not os.path.isdir('/dev/shm'):
         pytest.skip('/dev/shm is unavailable')
     root, source, mounts, sys_block, release, info = _make_source(tmp_path)
@@ -3850,6 +3949,7 @@ def test_publish_copies_only_at_final_step_when_filesystems_differ(tmp_path):
     try:
         if os.stat(scratch).st_dev == os.stat(str(project_dir)).st_dev:
             pytest.skip('/dev/shm shares the test filesystem')
+        _force_scratch_job(monkeypatch, project_dir)
         project = _project(info, project_dir / 'out.iso', project_dir)
         plan = backend.create_build_plan(
             project, info, current_config_path=str(_config(project_dir)),

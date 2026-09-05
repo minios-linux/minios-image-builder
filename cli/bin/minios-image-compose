@@ -1577,17 +1577,23 @@ if [[ -n $BOOT_BACKGROUND_FILE ]]; then
     printf '%s\0' "$BOOT_BACKGROUND_FILE" >>"$original_input_list"
 fi
 input_records=$TEMP_DIR/input-identities.json
-if ! run_isolated_python record-inputs "$original_input_list" "$input_records"; then
+source_module_list=$TEMP_DIR/source-modules.paths
+: >"$source_module_list"
+for source_module in "${SOURCE_MODULE_PATHS[@]}"; do
+    printf '%s\0' "$source_module" >>"$source_module_list"
+done
+readonly_module_list=$source_module_list
+if [[ -n $CAPTURE_CHANGES ]]; then
+    readonly_module_list=$TEMP_DIR/no-readonly-source-modules.paths
+    : >"$readonly_module_list"
+fi
+if ! run_isolated_python record-inputs "$original_input_list" "$input_records" \
+    "$readonly_module_list"; then
     die 2 "$(gettext "Cannot record original build input identities and digests")"
 fi
 
 source_module_fingerprint=""
 if [[ -n $CAPTURE_CHANGES ]]; then
-    source_module_list=$TEMP_DIR/source-modules.paths
-    : >"$source_module_list"
-    for source_module in "${SOURCE_MODULE_PATHS[@]}"; do
-        printf '%s\0' "$source_module" >>"$source_module_list"
-    done
     source_module_fingerprint_file=$TEMP_DIR/source-module-fingerprint
     if ! run_isolated_python_to_file "$source_module_fingerprint_file" module-fingerprint \
         "$input_records" "$source_module_list"; then

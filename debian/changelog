@@ -1,3 +1,12 @@
+minios-image-builder (1.0.9) unstable; urgency=medium
+
+  * Reuse read-only source modules without hashing or copying their contents.
+  * Refine disk and memory estimates and keep private build jobs on the
+    destination filesystem when safe.
+  * Extend composition and project-planning regression coverage.
+
+ -- crims0n <crims0n@minios.dev>  Sun, 06 Sep 2026 00:09:08 +0300
+
 minios-image-builder (1.0.8) unstable; urgency=medium
 
   * Keep private build jobs in the selected temporary workspace instead of
