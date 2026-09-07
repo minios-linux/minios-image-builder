@@ -562,6 +562,45 @@ def test_readonly_running_modules_use_metadata_without_content_hashing(
         item.code for item in diagnostics}
 
 
+def test_deselected_readonly_module_keeps_source_fingerprint_stable(
+        tmp_path, monkeypatch):
+    names = ('00-core-amd64.sb', '01-kernel-amd64.sb',
+             '04-xfce-desktop-amd64.sb', '05-firefox.sb')
+    root, source, mounts, sys_block, release, unused_info = _make_source(
+        tmp_path, module_names=names)
+    monkeypatch.setattr(
+        backend, '_path_filesystem_is_readonly',
+        lambda path: path.endswith('.sb'))
+    monkeypatch.setattr(
+        backend, '_readonly_regular_metadata',
+        lambda path, expected_lstat=None: os.stat(path, follow_symlinks=False))
+    info = backend.discover_running_source(
+        roots=(('livekit', str(root)),), mounts_path=str(mounts),
+        sys_block_root=str(sys_block), runtime_release_path=str(release))
+    project_dir = tmp_path / 'project'
+    project_dir.mkdir()
+    project = backend.ImageProject(
+        project_base=str(project_dir), source_backend=info.backend,
+        source_root_path=info.root_path, source_path=info.source_path,
+        source_fingerprint=info.fingerprint,
+        selected_source_modules=names[:-1], output_path='out.iso')
+
+    plan = _plan(project, info, _config(project_dir))
+
+    assert plan.buildable, [(item.code, item.message) for item in plan.errors]
+    assert not backend.revalidate_build_plan_inputs(plan)
+    backend.prepare_build_command(plan)
+
+    excluded = source / names[-1]
+    excluded_stat = excluded.stat()
+    os.utime(
+        str(excluded),
+        ns=(excluded_stat.st_atime_ns,
+            excluded_stat.st_mtime_ns + 1000000000))
+    diagnostics = backend.revalidate_build_plan_inputs(plan)
+    assert 'build_source_changed' in {item.code for item in diagnostics}
+
+
 @pytest.mark.parametrize('backend_name,category', [
     ('dracut', 'medium'), ('dracut', 'iso'), ('livekit', 'iso'),
 ])

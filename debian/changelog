@@ -1,3 +1,12 @@
+minios-image-builder (1.0.11) unstable; urgency=medium
+
+  * Keep session capture bound to every original base module when optional
+    source modules are excluded.
+  * Retain read-only module metadata bindings for complete source
+    revalidation.
+
+ -- crims0n <crims0n@minios.dev>  Mon, 07 Sep 2026 19:43:49 +0300
+
 minios-image-builder (1.0.10) unstable; urgency=medium
 
   * Replace local task, chooser, dialog, log and command helpers with the

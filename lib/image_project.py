@@ -5387,6 +5387,7 @@ class BuildPlan(_Immutable):
         'partial_output_path', 'job_directory', 'adapter_manifest_path',
         'plan_id', '_manifest_json', '_manifest_payload', '_input_records',
         '_job_identity', '_job_descriptor', '_source_path',
+        '_source_metadata_only_module_paths',
         '_output_expectation', '_output_directory_identity',
         '_output_directory_descriptor', '_nonce', '_tool_capabilities',
         '_capture_selection_path', '_capture_selection_payload',
@@ -5411,7 +5412,8 @@ class BuildPlan(_Immutable):
                   adapter_customization_requested=False,
                   overlay_directory=None, overlay_inventory=None,
                    boot_config_payloads=None,
-                   job_descriptor=None, source_path=None, display_argv=None,
+                   job_descriptor=None, source_path=None,
+                   source_metadata_only_module_paths=(), display_argv=None,
                    scratch_directory=None, scratch_identity=None,
                    job_parent_directory=None,
                    output_directory_identity=None,
@@ -5441,6 +5443,8 @@ class BuildPlan(_Immutable):
         self._job_identity = tuple(job_identity) if job_identity else None
         self._job_descriptor = job_descriptor
         self._source_path = source_path
+        self._source_metadata_only_module_paths = frozenset(
+            source_metadata_only_module_paths)
         self._output_expectation = _freeze(output_expectation)
         self._output_directory_identity = (
             tuple(output_directory_identity)
@@ -5731,6 +5735,7 @@ def create_build_plan(project, source_info=None,
     current_source_manifest = ()
     current_fingerprint = None
     current_total_bytes = 0
+    metadata_only_modules = set()
     if source_info.source_path and os.path.isdir(source_info.source_path):
         try:
             metadata_only_modules = {
@@ -7094,6 +7099,7 @@ def create_build_plan(project, source_info=None,
         boot_config_payloads=boot_expected_payloads,
         job_descriptor=job_descriptor,
         source_path=source_info.source_path,
+        source_metadata_only_module_paths=metadata_only_modules,
         display_argv=display_argv,
         scratch_directory=validated_scratch_directory,
         scratch_identity=scratch_identity,
@@ -7249,15 +7255,11 @@ def revalidate_build_plan_inputs(plan):
             'Build plan has no private source binding.'))
         return tuple(diagnostics)
     try:
-        metadata_only_modules = {
-            item['relative_path']
-            for item in plan.manifest['input_digests']['source_files']
-            if item.get('integrity') == 'readonly-metadata'
-        }
         current_fingerprint, unused_size, unused_manifest = (
             _build_source_manifest(
                 source_path,
-                metadata_only_module_paths=metadata_only_modules))
+                metadata_only_module_paths=(
+                    plan._source_metadata_only_module_paths)))
         if current_fingerprint != plan.manifest['source']['fingerprint']:
             raise ImageProjectError('complete source fingerprint changed')
     except (OSError, ImageProjectError, SourceInspectionError) as error:

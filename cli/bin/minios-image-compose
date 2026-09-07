@@ -4,7 +4,7 @@
 
 set -Eeuo pipefail
 
-VERSION="1.0.10"
+VERSION="1.0.11"
 SYSTEMNAME="MiniOS"
 export TEXTDOMAIN="minios-image-compose"
 
@@ -84,6 +84,7 @@ declare -a GRAFT_DESTINATIONS=()
 declare -a GRAFT_POINTS=()
 declare -a REQUIRED_ISO_PATHS=()
 declare -a SOURCE_MODULE_PATHS=()
+declare -a CAPTURE_BASE_MODULE_PATHS=()
 declare -a SOURCE_SYMLINK_DESTINATIONS=()
 declare -a SOURCE_SYMLINK_TARGETS=()
 declare -a KERNEL_DESTINATIONS=()
@@ -1374,6 +1375,10 @@ while IFS= read -r -d '' source_path; do
         continue
     fi
 
+    if [[ -n $CAPTURE_CHANGES ]] && is_source_module "$relative_path"; then
+        CAPTURE_BASE_MODULE_PATHS+=("$source_path")
+    fi
+
     excluded=false
     if matches_user_exclusion "$relative_path"; then
         excluded=true
@@ -1592,10 +1597,19 @@ fi
 if [[ -n $BOOT_BACKGROUND_FILE ]]; then
     printf '%s\0' "$BOOT_BACKGROUND_FILE" >>"$original_input_list"
 fi
+if [[ -n $CAPTURE_CHANGES ]]; then
+    for source_module in "${CAPTURE_BASE_MODULE_PATHS[@]}"; do
+        printf '%s\0' "$source_module" >>"$original_input_list"
+    done
+fi
 input_records=$TEMP_DIR/input-identities.json
 source_module_list=$TEMP_DIR/source-modules.paths
 : >"$source_module_list"
-for source_module in "${SOURCE_MODULE_PATHS[@]}"; do
+source_modules_for_fingerprint=("${SOURCE_MODULE_PATHS[@]}")
+if [[ -n $CAPTURE_CHANGES ]]; then
+    source_modules_for_fingerprint=("${CAPTURE_BASE_MODULE_PATHS[@]}")
+fi
+for source_module in "${source_modules_for_fingerprint[@]}"; do
     printf '%s\0' "$source_module" >>"$source_module_list"
 done
 readonly_module_list=$source_module_list

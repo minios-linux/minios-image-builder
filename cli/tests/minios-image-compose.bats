@@ -1307,6 +1307,17 @@ assert value["selection_sha256"] == sys.argv[2]
     [ ! -e "$OUTPUT" ]
 }
 
+@test "running capture remains bound when an optional source module is excluded" {
+    write_file "$SOURCE/05-firefox-amd64.sb" firefox-module
+
+    run_compose --exclude firefox --capture-changes exact
+
+    [ "$status" -eq 0 ]
+    [ -s "$OUTPUT" ]
+    ! grep -Fqx '/minios/05-firefox-amd64.sb' "$STATE/tree"
+    grep -Fqx '/minios/02-session-changes.sb' "$STATE/tree"
+}
+
 @test "capture rejects malformed additive sizing footprint and required identity metadata" {
     local metadata_mode
     local -a metadata_modes=(
