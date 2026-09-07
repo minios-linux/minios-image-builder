@@ -65,6 +65,16 @@ write_file() {
     printf '%s\n' "$*" >"$path"
 }
 
+@test "runtime version matches the Debian release" {
+    package_version=$(dpkg-parsechangelog \
+        -l"$BATS_TEST_DIRNAME/../../debian/changelog" -SVersion)
+
+    run "$COMPOSE" --version
+
+    [ "$status" -eq 0 ]
+    [ "$output" = "minios-image-compose $package_version" ]
+}
+
 prepare_custom_boot_fixture() {
     mkdir -p "$SOURCE/boot/syslinux/lang"
     write_file "$SOURCE/boot/grub/grub.cfg" $'set default=0\nset timeout=10\nmenuentry "English" {\n  configfile /minios/boot/grub/main.cfg\n}'
@@ -146,8 +156,12 @@ for relative, size in (("boot/syslinux/isolinux.bin", 4096),
 
 assert_process_gone() {
     local process_id=$1
+    local process_state
     for _ in {1..100}; do
         kill -0 "$process_id" 2>/dev/null || return 0
+        process_state=$(awk '{print $3}' "/proc/$process_id/stat" 2>/dev/null) ||
+            return 0
+        [[ $process_state == Z ]] && return 0
         sleep 0.05
     done
     kill -KILL "$process_id" 2>/dev/null || true
@@ -339,6 +353,20 @@ assert_build_arg_pair() {
     [ "$status" -eq 0 ]
     grep -Fqx '/minios/00-core-amd64.sb' "$STATE/tree"
     grep -Fqx '/minios/01-kernel-amd64.sb' "$STATE/tree"
+}
+
+@test "baseline ignored source trees are pruned before traversal" {
+    write_file "$SOURCE/changes/private/secret" ignored-change
+    write_file "$SOURCE/kernels/private/secret" ignored-kernel
+    chmod 000 "$SOURCE/changes/private" "$SOURCE/kernels/private"
+
+    run_compose
+    result_status=$status
+    chmod 0700 "$SOURCE/changes/private" "$SOURCE/kernels/private"
+
+    [ "$result_status" -eq 0 ]
+    ! grep -Fq '/minios/changes/' "$STATE/tree"
+    ! grep -Fq '/minios/kernels/' "$STATE/tree"
 }
 
 @test "graft argv preserves spaces equals backslashes globs tabs and leading dashes" {
@@ -1048,10 +1076,8 @@ assert capture["module_order"] == 3
     [ -e "$pause.ready" ]
     write_file "$overlay/value" after
     : >"$pause.continue"
-    set +e
-    wait "$script_pid"
-    result=$?
-    set -e
+    result=0
+    wait "$script_pid" || result=$?
 
     [ "$result" -ne 0 ]
     grep -q 'could not be snapshotted safely' "$log"
@@ -1096,10 +1122,8 @@ assert capture["module_order"] == 3
     mapfile -t child_pids <"$started"
     [ "${#child_pids[@]}" -eq 2 ]
     kill -TERM "$script_pid"
-    set +e
-    wait "$script_pid"
-    result=$?
-    set -e
+    result=0
+    wait "$script_pid" || result=$?
 
     [ "$result" -eq 130 ]
     grep -Fqx 'P:customize' "$log"
@@ -1540,8 +1564,8 @@ assert report["module"]["target"] == "minios/101-session-changes.sb"
     [ "${#active_temp_dirs[@]}" -eq 1 ]
     [ "$(stat -c '%a' "${active_temp_dirs[0]}")" = 700 ]
     kill -TERM "$script_pid"
-    wait "$script_pid"
-    result=$?
+    result=0
+    wait "$script_pid" || result=$?
     set -e
 
     [ "$result" -eq 130 ]

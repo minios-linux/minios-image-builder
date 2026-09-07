@@ -9,10 +9,6 @@ headerbar.minios-headerbar {
     background-color: @theme_bg_color;
 }
 
-.rail-boundary {
-    background-color: alpha(@borders, 0.72);
-}
-
 .page-eyebrow {
     color: @theme_selected_bg_color;
     font-size: 10px;
@@ -417,13 +413,3 @@ progressbar progress {
     font-family: monospace;
     font-size: 11px;
 }
-
-.action-bar {
-    min-height: 32px;
-    padding-top: 4px;
-    padding-bottom: 4px;
-    border-top: 1px solid alpha(@borders, 0.78);
-    background-color: shade(@theme_bg_color, 0.97);
-}
-
-/* Footer buttons stay theme-native (roominess comes from the shared minios.css). */

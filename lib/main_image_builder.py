@@ -48,14 +48,16 @@ from image_builder_state import (
     review_customization_summary,
     session_inventory_summary, verification_capture_summary,
     verification_customization_summary, verification_selection_summary)
-from ui_utils import (
-    CommandRunner, LogView, apply_css_if_exists, ask_confirmation,
-    human_size, show_error_dialog)
+from ui_utils import human_size
 
-from minios_gui import (HelpPopoverButton, TokenCompletionPopover,
-                        classify_module, document_asset_path,
-                        load_localized_document, new_header_bar, new_icon,
-                        resolve_icon)
+from minios_gui import (CommandRunner, HelpPopoverButton, LogView,
+                        TokenCompletionPopover, apply_minios_css,
+                        ask_confirmation, choose_folder, choose_open_file,
+                        choose_open_files, choose_save_file, classify_module,
+                        document_asset_path, load_localized_document,
+                        new_header_bar, new_header_icon_button, new_icon,
+                        resolve_icon,
+                        show_error_dialog)
 
 
 APPLICATION_ID = 'org.minios.imagebuilder'
@@ -63,7 +65,6 @@ APP_NAME = 'minios-image-builder'
 LOCALE_DIRECTORY = '/usr/share/locale'
 ICON_WINDOW = 'isomaster'
 CSS_PATHS = (
-    '/usr/share/minios/minios.css',
     '/usr/share/minios-image-builder/style.css',
     os.path.normpath(os.path.join(
         _LIB_DIR, '..', 'share', 'styles', 'style.css')),
@@ -885,7 +886,7 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         self.available_locales = _read_available_locales()
         self.available_keyboard_layouts = _read_available_keyboard_layouts()
 
-        apply_css_if_exists(CSS_PATHS)
+        apply_minios_css(*CSS_PATHS)
         self._build_header()
         self._build_workspace()
         self.connect('size-allocate', self._on_size_allocate)
@@ -920,15 +921,9 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         self.header.pack_end(self.save_button)
 
     def _header_button(self, icon_name, accessible_name, tooltip, action_name):
-        button = Gtk.Button()
-        button.set_image(new_icon(
-            icon_name, accessible_name=accessible_name))
-        button.set_tooltip_text(tooltip)
-        button.set_focus_on_click(False)
+        button = new_header_icon_button(
+            icon_name, accessible_name, tooltip=tooltip)
         button.set_action_name(action_name)
-        accessible = button.get_accessible()
-        if accessible is not None:
-            accessible.set_name(accessible_name)
         return button
 
     def _install_actions(self, application):
@@ -959,7 +954,6 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         self.rail = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self.rail.set_size_request(180, -1)
         self.rail.get_style_context().add_class('minios-sidebar')
-        _set_margins(self.rail, top=8, bottom=8, start=6, end=4)
         workspace.pack_start(self.rail, False, False, 0)
 
         self.step_buttons = []
@@ -991,10 +985,6 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             self.step_markers.append(marker)
             self.step_labels.append(label)
 
-        boundary = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
-        boundary.get_style_context().add_class('rail-boundary')
-        workspace.pack_start(boundary, False, False, 0)
-
         main = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         main.set_hexpand(True)
         main.set_vexpand(True)
@@ -1024,28 +1014,38 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             label.set_visible(not compact)
 
     def _build_footer(self, parent):
-        footer = Gtk.Box(
+        footer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        _set_margins(footer, bottom=10, start=10, end=10)
+
+        separator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
+        separator.get_style_context().add_class('nav-separator')
+        footer.pack_start(separator, False, False, 0)
+
+        actions = Gtk.Box(
             orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        footer.get_style_context().add_class('action-bar')
-        _set_margins(footer, top=0, bottom=0, start=10, end=10)
+        actions.set_margin_top(6)
 
         self.back_button = Gtk.Button(label=_('Back'))
+        self.back_button.set_size_request(104, -1)
         self.back_button.connect('clicked', self._on_back_clicked)
-        footer.pack_start(self.back_button, False, False, 0)
+        actions.pack_start(self.back_button, False, False, 0)
 
         self.footer_status = Gtk.Label(xalign=0)
         self.footer_status.set_ellipsize(3)
         self.footer_status.get_style_context().add_class('footer-status')
-        footer.pack_start(self.footer_status, True, True, 4)
+        actions.pack_start(self.footer_status, True, True, 4)
 
         self.secondary_button = Gtk.Button()
+        self.secondary_button.set_size_request(104, -1)
         self.secondary_button.connect('clicked', self._on_secondary_clicked)
-        footer.pack_end(self.secondary_button, False, False, 0)
+        actions.pack_end(self.secondary_button, False, False, 0)
 
         self.primary_button = Gtk.Button()
+        self.primary_button.set_size_request(104, -1)
         self.primary_button.get_style_context().add_class('suggested-action')
         self.primary_button.connect('clicked', self._on_primary_clicked)
-        footer.pack_end(self.primary_button, False, False, 0)
+        actions.pack_end(self.primary_button, False, False, 0)
+        footer.pack_start(actions, False, False, 0)
         parent.pack_end(footer, False, False, 0)
 
     def _page(self, eyebrow, title, description):
@@ -1479,20 +1479,10 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         self.source_use_button.set_sensitive(ready)
 
     def _on_choose_source_iso(self, _button):
-        dialog = Gtk.FileChooserDialog(
-            title=_('Choose a MiniOS ISO image'), transient_for=self,
-            action=Gtk.FileChooserAction.OPEN)
-        dialog.add_buttons(
-            _('Cancel'), Gtk.ResponseType.CANCEL,
-            _('Choose'), Gtk.ResponseType.OK)
-        file_filter = Gtk.FileFilter()
-        file_filter.set_name(_('ISO images (*.iso)'))
-        file_filter.add_pattern('*.iso')
-        dialog.add_filter(file_filter)
-        response = dialog.run()
-        path = (dialog.get_filename()
-                if response == Gtk.ResponseType.OK else None)
-        dialog.destroy()
+        path = choose_open_file(
+            self, _('Choose a MiniOS ISO image'),
+            filters=((_('ISO images (*.iso)'), ('*.iso',)),),
+            accept_label=_('Choose'))
         if path:
             self._source_iso_path = path
             self.source_iso_button.set_label(os.path.basename(path))
@@ -2065,20 +2055,10 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             self._intent_changed(render_content=True)
 
     def _on_add_modules(self, _button):
-        dialog = Gtk.FileChooserDialog(
-            title=_('Add MiniOS module files'), transient_for=self,
-            action=Gtk.FileChooserAction.OPEN)
-        dialog.add_buttons(
-            _('Cancel'), Gtk.ResponseType.CANCEL,
-            _('Add'), Gtk.ResponseType.OK)
-        dialog.set_select_multiple(True)
-        file_filter = Gtk.FileFilter()
-        file_filter.set_name(_('MiniOS modules (*.sb)'))
-        file_filter.add_pattern('*.sb')
-        dialog.add_filter(file_filter)
-        response = dialog.run()
-        paths = dialog.get_filenames() if response == Gtk.ResponseType.OK else []
-        dialog.destroy()
+        paths = choose_open_files(
+            self, _('Add MiniOS module files'),
+            filters=((_('MiniOS modules (*.sb)'), ('*.sb',)),),
+            accept_label=_('Add')) or []
         if not paths:
             return
         errors = []
@@ -4176,20 +4156,10 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             self._update_chrome()
 
     def _on_choose_boot_background(self, _button):
-        dialog = Gtk.FileChooserDialog(
-            title=_('Choose boot background PNG'), transient_for=self,
-            action=Gtk.FileChooserAction.OPEN)
-        dialog.add_buttons(
-            _('Cancel'), Gtk.ResponseType.CANCEL,
-            _('Choose'), Gtk.ResponseType.OK)
-        file_filter = Gtk.FileFilter()
-        file_filter.set_name(_('PNG images (*.png)'))
-        file_filter.add_mime_type('image/png')
-        file_filter.add_pattern('*.png')
-        dialog.add_filter(file_filter)
-        response = dialog.run()
-        path = dialog.get_filename() if response == Gtk.ResponseType.OK else None
-        dialog.destroy()
+        path = choose_open_file(
+            self, _('Choose boot background PNG'),
+            filters=((_('PNG images (*.png)'), ('*.png',), ('image/png',)),),
+            accept_label=_('Choose'))
         if not path:
             return
         try:
@@ -4208,31 +4178,18 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         self._render_customization_metadata()
 
     def _choose_overlay_parent(self):
-        dialog = Gtk.FileChooserDialog(
-            title=_('Choose the project directory'), transient_for=self,
-            action=Gtk.FileChooserAction.SELECT_FOLDER)
-        dialog.add_buttons(
-            _('Cancel'), Gtk.ResponseType.CANCEL,
-            _('Choose'), Gtk.ResponseType.OK)
-        if os.path.isdir(self.state.project_base):
-            dialog.set_current_folder(self.state.project_base)
-        response = dialog.run()
-        path = dialog.get_filename() if response == Gtk.ResponseType.OK else None
-        dialog.destroy()
-        return path
+        current_folder = (self.state.project_base
+                          if os.path.isdir(self.state.project_base) else None)
+        return choose_folder(
+            self, _('Choose the project directory'),
+            current_folder=current_folder, accept_label=_('Choose'))
 
     def _on_choose_overlay_directory(self, _button):
-        dialog = Gtk.FileChooserDialog(
-            title=_('Choose an existing project filesystem layer'),
-            transient_for=self, action=Gtk.FileChooserAction.SELECT_FOLDER)
-        dialog.add_buttons(
-            _('Cancel'), Gtk.ResponseType.CANCEL,
-            _('Choose'), Gtk.ResponseType.OK)
-        if os.path.isdir(self.state.project_base):
-            dialog.set_current_folder(self.state.project_base)
-        response = dialog.run()
-        path = dialog.get_filename() if response == Gtk.ResponseType.OK else None
-        dialog.destroy()
+        current_folder = (self.state.project_base
+                          if os.path.isdir(self.state.project_base) else None)
+        path = choose_folder(
+            self, _('Choose an existing project filesystem layer'),
+            current_folder=current_folder, accept_label=_('Choose'))
         if not path:
             return
         try:
@@ -4474,8 +4431,8 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             argv, (workspace.output_path, workspace.cancel_path,
                    workspace.directory))
         self.runner = CommandRunner(
-            list(argv), line_cb=lambda _line: None,
-            on_finished=lambda returncode, cancelled:
+            list(argv), lambda _line: None,
+            lambda returncode, cancelled:
                 self._on_inventory_command_finished(
                     generation, returncode, cancelled),
             display_argv=display_argv)
@@ -4603,44 +4560,32 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             self._intent_changed()
 
     def _on_choose_output(self, _button):
-        dialog = Gtk.FileChooserDialog(
-            title=_('Choose output image'), transient_for=self,
-            action=Gtk.FileChooserAction.SAVE)
-        dialog.add_buttons(
-            _('Cancel'), Gtk.ResponseType.CANCEL,
-            _('Choose'), Gtk.ResponseType.OK)
-        dialog.set_do_overwrite_confirmation(False)
         current = self.state.output_path
+        current_folder = None
+        current_name = None
         if current:
             directory = os.path.dirname(current)
             if os.path.isdir(directory):
-                dialog.set_current_folder(directory)
-            dialog.set_current_name(os.path.basename(current))
-        file_filter = Gtk.FileFilter()
-        file_filter.set_name(_('ISO images (*.iso)'))
-        file_filter.add_pattern('*.iso')
-        dialog.add_filter(file_filter)
-        if dialog.run() == Gtk.ResponseType.OK:
-            path = dialog.get_filename()
+                current_folder = directory
+            current_name = os.path.basename(current)
+        path = choose_save_file(
+            self, _('Choose output image'),
+            filters=((_('ISO images (*.iso)'), ('*.iso',)),),
+            current_folder=current_folder, current_name=current_name,
+            accept_label=_('Choose'), overwrite_confirmation=False)
+        if path:
             if not path.lower().endswith('.iso'):
                 path += '.iso'
             self.output_entry.set_text(path)
-        dialog.destroy()
 
     def _on_choose_scratch(self, _button):
-        dialog = Gtk.FileChooserDialog(
-            title=_('Choose temporary work directory'), transient_for=self,
-            action=Gtk.FileChooserAction.SELECT_FOLDER)
-        dialog.add_buttons(
-            _('Cancel'), Gtk.ResponseType.CANCEL,
-            _('Choose'), Gtk.ResponseType.OK)
-        if os.path.isdir(self.scratch_directory):
-            dialog.set_current_folder(self.scratch_directory)
-        if dialog.run() == Gtk.ResponseType.OK:
-            path = dialog.get_filename()
-            if path:
-                self.scratch_entry.set_text(path)
-        dialog.destroy()
+        current_folder = (self.scratch_directory
+                          if os.path.isdir(self.scratch_directory) else None)
+        path = choose_folder(
+            self, _('Choose temporary work directory'),
+            current_folder=current_folder, accept_label=_('Choose'))
+        if path:
+            self.scratch_entry.set_text(path)
 
     # Review page and planning --------------------------------------------
     def _build_review_page(self):
@@ -5137,7 +5082,8 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
                 self, _('Replace the existing output image?'),
                 _('The backend will bind this exact existing file into a new '
                   'plan and will refuse publication if it changes.\n\n{path}').format(
-                    path=path), confirm_label=_('Replace')):
+                    path=path), destructive=True,
+                confirm_label=_('Replace')):
             self._clear_overwrite_approval()
             return
         self.state.set_overwrite_output(True)
@@ -5446,10 +5392,10 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         build_env = os.environ.copy()
         build_env['TMPDIR'] = plan.scratch_directory
         self.runner = CommandRunner(
-            list(argv), line_cb=self._on_command_line,
-            on_finished=self._on_command_finished,
+            list(argv), self._on_command_line, self._on_command_finished,
             cwd=plan.execution_cwd, env=build_env,
-            display_argv=plan.display_argv)
+            display_argv=plan.display_argv,
+            preserve_output_prefixes=('P:', 'E:'))
         self.build_log.feed('$ {}\n\n'.format(
             self.runner.formatted_command))
         self.runner.start()
@@ -5464,7 +5410,7 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
                 key=len, reverse=True):
             line = line.replace(path, '<selected-path>')
         event = parse_build_output_line(line)
-        GLib.idle_add(self._handle_command_event, event)
+        self._handle_command_event(event)
 
     def _handle_command_event(self, event):
         if self._closing and self.runner is None:
@@ -6190,19 +6136,10 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
     def _on_open_project(self, _action, _parameter):
         if not self._confirm_discard():
             return
-        dialog = Gtk.FileChooserDialog(
-            title=_('Open image project'), transient_for=self,
-            action=Gtk.FileChooserAction.OPEN)
-        dialog.add_buttons(
-            _('Cancel'), Gtk.ResponseType.CANCEL,
-            _('Open'), Gtk.ResponseType.OK)
-        file_filter = Gtk.FileFilter()
-        file_filter.set_name(_('JSON image projects (*.json)'))
-        file_filter.add_pattern('*.json')
-        dialog.add_filter(file_filter)
-        response = dialog.run()
-        path = dialog.get_filename() if response == Gtk.ResponseType.OK else None
-        dialog.destroy()
+        path = choose_open_file(
+            self, _('Open image project'),
+            filters=((_('JSON image projects (*.json)'), ('*.json',)),),
+            accept_label=_('Open'))
         if not path:
             return
         try:
@@ -6237,25 +6174,17 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         self._choose_project_save_path()
 
     def _choose_project_save_path(self):
-        dialog = Gtk.FileChooserDialog(
-            title=_('Save image project'), transient_for=self,
-            action=Gtk.FileChooserAction.SAVE)
-        dialog.add_buttons(
-            _('Cancel'), Gtk.ResponseType.CANCEL,
-            _('Save'), Gtk.ResponseType.OK)
-        dialog.set_do_overwrite_confirmation(True)
+        current_folder = None
         if self.state.project_path:
-            dialog.set_current_folder(os.path.dirname(self.state.project_path))
-            dialog.set_current_name(os.path.basename(self.state.project_path))
+            current_folder = os.path.dirname(self.state.project_path)
+            current_name = os.path.basename(self.state.project_path)
         else:
-            dialog.set_current_name('minios-image-project.json')
-        file_filter = Gtk.FileFilter()
-        file_filter.set_name(_('JSON image projects (*.json)'))
-        file_filter.add_pattern('*.json')
-        dialog.add_filter(file_filter)
-        response = dialog.run()
-        path = dialog.get_filename() if response == Gtk.ResponseType.OK else None
-        dialog.destroy()
+            current_name = 'minios-image-project.json'
+        path = choose_save_file(
+            self, _('Save image project'),
+            filters=((_('JSON image projects (*.json)'), ('*.json',)),),
+            current_folder=current_folder, current_name=current_name,
+            accept_label=_('Save'), overwrite_confirmation=True)
         if path:
             if not path.lower().endswith('.json'):
                 path += '.json'
@@ -6328,6 +6257,7 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         return ask_confirmation(
             self, _('Discard changes?'),
             _('Unsaved changes in the current project will be lost.'),
+            destructive=True,
             confirm_label=_('Discard changes'))
 
     def _new_default_output_path(self):
@@ -6376,6 +6306,7 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
                       'Pure Python hashing may finish its current pass before '
                       'the safe cleanup point; publication already in progress '
                       'will complete atomically.'),
+                    destructive=True,
                     confirm_label=_('Stop and close')):
                 return True
             self._closing = True

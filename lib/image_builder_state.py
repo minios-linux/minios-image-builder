@@ -25,6 +25,8 @@ from collections import namedtuple
 from collections.abc import Mapping
 
 import image_project
+from minios_gui import (
+    BackgroundTask, CancellationToken, TaskCancelled, TaskOutcome)
 
 
 STEP_SOURCE = 0
@@ -61,7 +63,6 @@ CAPTURE_INVENTORY_PAGE_SIZE = 500
 CAPTURE_INVENTORY_MAX_DISPLAY_ROWS = 2000
 
 CleanupResult = namedtuple('CleanupResult', ('cleaned', 'warning'))
-TaskOutcome = namedtuple('TaskOutcome', ('result', 'error', 'cancelled'))
 InventoryCancelResult = namedtuple(
     'InventoryCancelResult', ('marker_requested', 'runner_cancelled', 'error'))
 
@@ -94,129 +95,6 @@ class InventoryWorkspace(object):
             self.close()
         except (AttributeError, OSError):
             pass
-
-
-class TaskCancelled(Exception):
-    """Raised at a cooperative cancellation checkpoint."""
-
-
-class CancellationToken(object):
-    """Thread-safe cooperative token with process-cancellation callbacks."""
-
-    def __init__(self):
-        self._event = threading.Event()
-        self._lock = threading.Lock()
-        self._callbacks = []
-
-    @property
-    def cancelled(self):
-        return self._event.is_set()
-
-    def cancel(self):
-        with self._lock:
-            if self._event.is_set():
-                return False
-            self._event.set()
-            callbacks = list(self._callbacks)
-            self._callbacks = []
-        for callback in callbacks:
-            try:
-                callback()
-            except Exception:
-                pass
-        return True
-
-    def checkpoint(self):
-        if self.cancelled:
-            raise TaskCancelled('operation was cancelled')
-
-    def wait(self, timeout=None):
-        return self._event.wait(timeout)
-
-    def add_cancel_callback(self, callback):
-        call_now = False
-        with self._lock:
-            if self._event.is_set():
-                call_now = True
-            else:
-                self._callbacks.append(callback)
-        if call_now:
-            callback()
-
-        def remove():
-            with self._lock:
-                try:
-                    self._callbacks.remove(callback)
-                except ValueError:
-                    pass
-
-        return remove
-
-
-class BackgroundTask(object):
-    """Run one token-aware worker and always deliver a terminal outcome."""
-
-    def __init__(self, worker, completion, dispatcher=None, token=None):
-        self.worker = worker
-        self.completion = completion
-        self.dispatcher = dispatcher
-        self.token = token or CancellationToken()
-        self._state = 'idle'
-        self._lock = threading.Lock()
-        self._done = threading.Event()
-        self._thread = None
-
-    @property
-    def state(self):
-        with self._lock:
-            return self._state
-
-    def start(self):
-        with self._lock:
-            if self._state != 'idle':
-                raise RuntimeError('BackgroundTask can only be started once')
-            self._state = 'running'
-        self._thread = threading.Thread(target=self._run, daemon=True)
-        self._thread.start()
-        return self
-
-    def cancel(self):
-        return self.token.cancel()
-
-    def wait(self, timeout=None):
-        return self._done.wait(timeout)
-
-    def _run(self):
-        result = None
-        error = None
-        try:
-            result = self.worker(self.token)
-        except TaskCancelled as caught:
-            error = caught
-        except Exception as caught:
-            error = caught
-        cancelled = self.token.cancelled or isinstance(error, TaskCancelled)
-        with self._lock:
-            if cancelled:
-                self._state = 'cancelled'
-            elif error is not None:
-                self._state = 'failed'
-            else:
-                self._state = 'finished'
-        outcome = TaskOutcome(result, error, cancelled)
-        self._done.set()
-        if self.dispatcher is None:
-            self._deliver(outcome)
-        else:
-            self.dispatcher(self._deliver, outcome)
-
-    def _deliver(self, outcome):
-        if self.token.cancelled and not outcome.cancelled:
-            outcome = TaskOutcome(outcome.result, outcome.error, True)
-            with self._lock:
-                self._state = 'cancelled'
-        self.completion(outcome)
-        return False
 
 
 def _signal_process_group(process, pgid, process_signal):

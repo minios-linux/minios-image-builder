@@ -237,6 +237,7 @@ def _expected_iso_paths(plan):
     paths.update(expected['kernel_targets'])
     paths.update(expected['initramfs_targets'])
     paths.update(expected['menu_targets'])
+    paths.update(expected.get('compatibility_symlink_targets', ()))
     capture = expected['session_capture']
     if capture['requested']:
         paths.add(capture['report_target'])
@@ -259,11 +260,38 @@ def _expected_iso_paths(plan):
     return tuple(sorted('/' + path.lstrip('/') for path in paths))
 
 
+def _populate_expected_iso_tree(staging, plan, payload=b'nonempty'):
+    expected = plan.manifest['expected_iso']
+    symlinks = set(
+        '/' + item.lstrip('/')
+        for item in expected.get('compatibility_symlink_targets', ()))
+    for iso_path in _expected_iso_paths(plan):
+        if iso_path not in symlinks:
+            _write(staging / iso_path.lstrip('/'), payload)
+    versioned_kernel = next(
+        (os.path.basename(item) for item in expected['kernel_targets']
+         if os.path.basename(item).startswith('vmlinuz-')), None)
+    versioned_initramfs = next(
+        (os.path.basename(item) for item in expected['initramfs_targets']
+         if backend._initramfs_version_from_name(os.path.basename(item))), None)
+    link_targets = {
+        '/minios/boot/vmlinuz': versioned_kernel,
+        '/minios/boot/initrfs.img': versioned_initramfs,
+    }
+    for iso_path in symlinks:
+        target = link_targets.get(iso_path)
+        assert target
+        path = staging / iso_path.lstrip('/')
+        path.parent.mkdir(parents=True, exist_ok=True)
+        os.symlink(target, str(path))
+
+
 class FakeXorriso(object):
     def __init__(self, plan, omit=(), extra=(), boot=True,
                   volume_label=None, returncode=0, capture_module=None,
                   capture_report=None, customization_report=None,
-                  customization_overlay_module=None, build_manifest=None):
+                  customization_overlay_module=None, build_manifest=None,
+                  compatibility_symlink_targets=None):
         self.plan = plan
         self.omit = set(omit)
         self.extra = tuple(extra)
@@ -275,6 +303,11 @@ class FakeXorriso(object):
         self.build_manifest = (
             plan.manifest_payload if build_manifest is None
             else build_manifest)
+        planned_links = plan.manifest['expected_iso'].get(
+            'compatibility_symlink_targets', {})
+        self.compatibility_symlink_targets = dict(
+            planned_links if compatibility_symlink_targets is None
+            else compatibility_symlink_targets)
         inventory = plan._session_inventory
         capture = plan.manifest['expected_iso']['session_capture']
         self.capture_report = capture_report
@@ -379,6 +412,13 @@ class FakeXorriso(object):
                     continue
                 source_path = argv[index + 1]
                 destination = argv[index + 2]
+                relative_source = source_path.lstrip('/')
+                if relative_source in self.compatibility_symlink_targets:
+                    os.symlink(
+                        self.compatibility_symlink_targets[relative_source],
+                        destination)
+                    index += 3
+                    continue
                 if source_path == '/minios/session-capture.json':
                     if isinstance(self.capture_report, bytes):
                         payload = self.capture_report
@@ -428,17 +468,20 @@ class FakeXorriso(object):
         if '-pvd_info' in argv:
             return self.returncode, "Volume id    : '{}'".format(
                 self.volume_label), ''
+        symlinks = set(
+            '/minios/' + item['relative_path']
+            for item in self.plan.manifest['input_digests']['source_files']
+            if item['type'] == 'symlink')
+        symlinks.update(
+            '/' + item.lstrip('/') for item in self.plan.manifest[
+                'expected_iso'].get('compatibility_symlink_targets', ()))
         if 'report_lba' in argv:
             lines = [
                 "File data lba: 0 , 33 , 1 , 12 , '{}'".format(path)
-                for path in paths
+                for path in paths if path not in symlinks
             ]
             return self.returncode, '\n'.join(lines), ''
         if '-type' in argv and argv[argv.index('-type') + 1] == 'l':
-            symlinks = set(
-                '/minios/' + item['relative_path']
-                for item in self.plan.manifest['input_digests']['source_files']
-                if item['type'] == 'symlink')
             return self.returncode, '\n'.join(
                 path for path in paths if path in symlinks), ''
         return self.returncode, '\n'.join(paths), ''
@@ -3217,7 +3260,12 @@ def test_structural_verification_is_bound_to_plan_and_exact_expected_paths(
     ]
     assert '-print' not in runner.calls[0]
     assert all('-no_rc' in call for call in runner.calls[:5])
-    assert len(runner.calls) == 6
+    assert len(runner.calls) == 7
+    symlink_command = runner.calls[5]
+    assert symlink_command[:6] == [
+        '/tools/xorriso', '-no_rc', '-osirrox', 'on', '-indev',
+        plan.partial_output_path]
+    assert symlink_command[-1] == '-end'
 
 
 def test_customization_verification_attests_config_boot_background_and_overlay(
@@ -3412,7 +3460,7 @@ def test_capture_verification_extracts_and_attests_bound_layer(tmp_path):
         inventory.source_fingerprint)
     assert result.capture_summary['module_sha256'] == hashlib.sha256(
         runner.capture_module).hexdigest()
-    assert len(result.commands) == 8
+    assert len(result.commands) == 9
     assert any('-extract' in command for command in result.commands)
     assert not list(
         project_dir.glob('.minios-image-builder-*/capture-verify-*'))
@@ -3600,6 +3648,75 @@ def test_new_dynamic_layers_are_verified_with_inherited_layers(tmp_path):
     assert result.structurally_verified, codes
     assert 'session_capture_module_set_mismatch' not in codes
     assert 'image_overlay_module_set_mismatch' not in codes
+
+
+def test_verification_expects_generated_ventoy_aliases_as_symlinks(tmp_path):
+    root, source, mounts, sys_block, release, unused_info = _make_source(tmp_path)
+    _write(source / 'boot' / 'vmlinuz', b'generic-kernel')
+    _write(source / 'boot' / 'initrfs.img', b'generic-initramfs')
+    info = backend.discover_running_source(
+        roots=(('livekit', str(root)),), mounts_path=str(mounts),
+        sys_block_root=str(sys_block), runtime_release_path=str(release))
+    project_dir = tmp_path / 'project'
+    project_dir.mkdir()
+    project = _project(info, project_dir / 'out.iso', project_dir)
+    plan = _plan(project, info, _config(project_dir))
+    _prepare_artifact(plan)
+
+    source_types = {
+        item['relative_path']: item['type']
+        for item in plan.manifest['input_digests']['source_files']}
+    assert source_types['boot/vmlinuz'] == 'file'
+    assert source_types['boot/initrfs.img'] == 'file'
+    compatibility_links = plan.manifest['expected_iso'][
+        'compatibility_symlink_targets']
+    assert set(compatibility_links) == {
+        'minios/boot/vmlinuz', 'minios/boot/initrfs.img'}
+    assert compatibility_links['minios/boot/vmlinuz'] in {
+        os.path.basename(item) for item in
+        plan.manifest['expected_iso']['kernel_targets']}
+    assert compatibility_links['minios/boot/initrfs.img'] in {
+        os.path.basename(item) for item in
+        plan.manifest['expected_iso']['initramfs_targets']}
+    assert backend._kernel_version_from_name(
+        compatibility_links['minios/boot/vmlinuz']) == (
+            backend._initramfs_version_from_name(
+                compatibility_links['minios/boot/initrfs.img']))
+
+    result = backend.verify_iso(plan, runner=FakeXorriso(plan))
+    codes = _error_codes(result)
+    assert result.structurally_verified, codes
+    assert 'expected_regular_file_unobserved' not in codes
+    assert 'expected_symlink_unobserved' not in codes
+    assert 'expected_symlink_is_regular_file' not in codes
+
+
+@pytest.mark.parametrize('failure', ['wrong-target', 'dangling-target'])
+def test_verification_rejects_invalid_ventoy_symlink_targets(tmp_path, failure):
+    root, source, mounts, sys_block, release, info = _make_source(tmp_path)
+    project_dir = tmp_path / 'project'
+    project_dir.mkdir()
+    project = _project(info, project_dir / 'out.iso', project_dir)
+    plan = _plan(project, info, _config(project_dir))
+    _prepare_artifact(plan)
+    planned_links = dict(plan.manifest['expected_iso'][
+        'compatibility_symlink_targets'])
+    runner = FakeXorriso(plan)
+    if failure == 'wrong-target':
+        planned_links['minios/boot/vmlinuz'] = 'wrong-kernel'
+        runner.compatibility_symlink_targets = planned_links
+        expected_code = 'compatibility_symlink_target_mismatch'
+    else:
+        runner.omit.add('/minios/boot/' + planned_links[
+            'minios/boot/vmlinuz'])
+        expected_code = 'compatibility_symlink_dangling'
+
+    result = backend.verify_iso(plan, runner=runner)
+
+    assert result.level == backend.VERIFICATION_BUILT
+    assert expected_code in _error_codes(result)
+    assert not list(
+        project_dir.glob('.minios-image-builder-*/symlink-verify-*'))
 
 
 def test_verification_requires_modules_config_kernel_initramfs_and_forbids_deselected(
@@ -3847,6 +3964,10 @@ def test_cross_filesystem_publication_staging_stays_private_until_complete(
     try:
         if os.stat(scratch).st_dev == os.stat(str(project_dir)).st_dev:
             pytest.skip('/dev/shm shares the test filesystem')
+        trust_error = backend._scratch_path_trust_error(scratch)
+        if trust_error:
+            pytest.skip('/dev/shm is not a trusted workspace: {}'.format(
+                trust_error))
         _force_scratch_job(monkeypatch, project_dir)
         project = _project(info, project_dir / 'out.iso', project_dir)
         plan = backend.create_build_plan(
@@ -3898,6 +4019,10 @@ def test_cross_filesystem_overwrite_publishes_from_retained_private_directory(
     try:
         if os.stat(scratch).st_dev == os.stat(str(project_dir)).st_dev:
             pytest.skip('/dev/shm shares the test filesystem')
+        trust_error = backend._scratch_path_trust_error(scratch)
+        if trust_error:
+            pytest.skip('/dev/shm is not a trusted workspace: {}'.format(
+                trust_error))
         _force_scratch_job(monkeypatch, project_dir)
         project = _project(
             info, output, project_dir, overwrite_output=True)
@@ -3949,6 +4074,10 @@ def test_publish_copies_only_at_final_step_when_filesystems_differ(
     try:
         if os.stat(scratch).st_dev == os.stat(str(project_dir)).st_dev:
             pytest.skip('/dev/shm shares the test filesystem')
+        trust_error = backend._scratch_path_trust_error(scratch)
+        if trust_error:
+            pytest.skip('/dev/shm is not a trusted workspace: {}'.format(
+                trust_error))
         _force_scratch_job(monkeypatch, project_dir)
         project = _project(info, project_dir / 'out.iso', project_dir)
         plan = backend.create_build_plan(
@@ -4087,8 +4216,7 @@ def test_real_xorriso_integration_rejects_nonboot_iso(tmp_path):
     project = _project(info, project_dir / 'out.iso', project_dir)
     plan = _plan(project, info, _config(project_dir))
     staging = tmp_path / 'iso-tree'
-    for iso_path in _expected_iso_paths(plan):
-        _write(staging / iso_path.lstrip('/'), b'nonempty')
+    _populate_expected_iso_tree(staging, plan)
     _write(
         staging / plan.manifest['expected_iso']['build_manifest_target'],
         plan.manifest_payload)
@@ -4141,8 +4269,7 @@ def test_real_xorriso_extracts_and_attests_capture_layer(tmp_path):
     report = FakeXorriso(
         plan, capture_module=module_bytes).capture_report
     staging = tmp_path / 'capture-iso-tree'
-    for iso_path in _expected_iso_paths(plan):
-        _write(staging / iso_path.lstrip('/'), b'nonempty')
+    _populate_expected_iso_tree(staging, plan)
     _write(
         staging / plan.manifest['expected_iso']['build_manifest_target'],
         plan.manifest_payload)
@@ -4211,8 +4338,7 @@ def test_real_xorriso_extracts_and_attests_image_customization(tmp_path):
         plan, customization_overlay_module=overlay_bytes).customization_report
     customization = plan.manifest['expected_iso']['image_customization']
     staging = tmp_path / 'customization-iso-tree'
-    for iso_path in _expected_iso_paths(plan):
-        _write(staging / iso_path.lstrip('/'), b'nonempty')
+    _populate_expected_iso_tree(staging, plan)
     _write(
         staging / plan.manifest['expected_iso']['build_manifest_target'],
         plan.manifest_payload)

@@ -4,7 +4,7 @@
 
 set -Eeuo pipefail
 
-VERSION="1.0.0"
+VERSION="1.0.10"
 SYSTEMNAME="MiniOS"
 export TEXTDOMAIN="minios-image-compose"
 
@@ -176,8 +176,7 @@ phase() {
 
 child_tree_alive() {
     [[ -n $CHILD_PID ]] || return 1
-    kill -0 -- "-$CHILD_PID" 2>/dev/null || kill -0 "$CHILD_PID" 2>/dev/null ||
-        child_process_running "$CHILD_PID" || process_group_running "$CHILD_PID"
+    child_process_running "$CHILD_PID" || process_group_running "$CHILD_PID"
 }
 
 child_process_running() {
@@ -1186,6 +1185,16 @@ source_path_is_baseline_ignored() {
     return 1
 }
 
+escape_find_pattern() {
+    local value=$1
+    value=${value//\\/\\\\}
+    value=${value//\*/\\*}
+    value=${value//\?/\\?}
+    value=${value//\[/\\[}
+    value=${value//\]/\\]}
+    REPLY=$value
+}
+
 add_graft() {
     local destination=$1
     local source_path=$2
@@ -1334,7 +1343,14 @@ validate_source_symlink() {
 }
 
 inventory_file=$TEMP_DIR/source.inventory
-if ! run_command_to_file "$inventory_file" find "$MINIOS" -mindepth 1 \( -type f -o -type l \) -print0; then
+escape_find_pattern "$MINIOS"
+source_find_pattern=$REPLY
+if ! run_command_to_file "$inventory_file" find "$MINIOS" -mindepth 1 \
+    \( -path "$source_find_pattern/config.conf" -o \
+       -path "$source_find_pattern/changes" -o \
+       -path "$source_find_pattern/kernels" -o \
+       -path "$source_find_pattern/boot/active-kernel" \) -prune -o \
+    \( -type f -o -type l \) -print0; then
     die 2 "$(gettext "Cannot inventory MiniOS source:") $MINIOS"
 fi
 

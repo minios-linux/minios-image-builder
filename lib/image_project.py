@@ -6679,6 +6679,20 @@ def create_build_plan(project, source_info=None,
     expected_initramfs_targets = ['minios/' + item
                                   for item in initramfs_relative]
     expected_menu_targets = ['minios/' + item for item in menu_relative]
+    compatibility_symlink_targets = {}
+    for kernel in kernel_relative:
+        kernel_version = _kernel_version_from_name(posixpath.basename(kernel))
+        for initramfs in initramfs_relative:
+            if (kernel_version and kernel_version ==
+                    _initramfs_version_from_name(
+                        posixpath.basename(initramfs))):
+                compatibility_symlink_targets = {
+                    'minios/boot/vmlinuz': posixpath.basename(kernel),
+                    'minios/boot/initrfs.img': posixpath.basename(initramfs),
+                }
+                break
+        if compatibility_symlink_targets:
+            break
     bios_target = None
     if boot:
         if boot['bootloader'] == 'grub-only':
@@ -6814,6 +6828,7 @@ def create_build_plan(project, source_info=None,
             'kernel_targets': expected_kernel_targets,
             'initramfs_targets': expected_initramfs_targets,
             'menu_targets': expected_menu_targets,
+            'compatibility_symlink_targets': compatibility_symlink_targets,
             'bios_required': bool(boot and boot['bootloader'] != 'unknown'),
             'bios_target': bios_target,
             'uefi_targets': [
@@ -7773,6 +7788,105 @@ def _read_bounded_extracted_file(path, maximum_bytes, context):
     return _read_stable_regular_bytes(path, maximum_bytes)
 
 
+def _verify_compatibility_symlinks(plan, iso_path, expected_links,
+                                   path_set, file_sizes, runner, xorriso,
+                                   commands, diagnostics):
+    extraction_directory = None
+    extraction_identity = None
+    descriptor = None
+    try:
+        _validate_job_identity(plan)
+        extraction_directory = tempfile.mkdtemp(
+            prefix='symlink-verify-', dir=plan.job_directory)
+        os.chmod(extraction_directory, 0o700)
+        extraction_stat = os.lstat(extraction_directory)
+        if (stat.S_ISLNK(extraction_stat.st_mode) or
+                not stat.S_ISDIR(extraction_stat.st_mode) or
+                stat.S_IMODE(extraction_stat.st_mode) != 0o700):
+            raise ImageProjectError(
+                'symlink extraction directory is not private')
+        extraction_identity = _identity(extraction_stat)
+        command = [xorriso, '-no_rc', '-osirrox', 'on', '-indev', iso_path]
+        for link_path in sorted(expected_links):
+            command.extend((
+                '-extract', '/' + link_path.lstrip('/'),
+                os.path.join(extraction_directory,
+                             posixpath.basename(link_path))))
+        command.append('-end')
+        commands.append(command)
+        returncode, stdout, stderr = _run_command(runner, command)
+        if returncode != 0:
+            raise ImageProjectError(
+                'xorriso compatibility symlink extraction failed{}.'.format(
+                    ': ' + (stderr or stdout).strip()
+                    if (stderr or stdout).strip() else ''))
+
+        job_descriptor = _duplicate_job_descriptor(plan)
+        try:
+            basename = os.path.basename(extraction_directory)
+            observed_directory = _entry_metadata(job_descriptor, basename)
+            if (observed_directory is None or
+                    _identity(observed_directory) != extraction_identity):
+                raise ImageProjectError(
+                    'symlink extraction directory identity changed')
+            descriptor = os.open(
+                basename, _directory_open_flags(), dir_fd=job_descriptor)
+        finally:
+            os.close(job_descriptor)
+        opened_directory = os.fstat(descriptor)
+        if (_identity(opened_directory) != extraction_identity or
+                not stat.S_ISDIR(opened_directory.st_mode)):
+            raise ImageProjectError(
+                'symlink extraction directory changed while opening')
+
+        for link_path, expected_target in sorted(expected_links.items()):
+            name = posixpath.basename(link_path)
+            link_stat = os.stat(
+                name, dir_fd=descriptor, follow_symlinks=False)
+            if not stat.S_ISLNK(link_stat.st_mode):
+                raise ImageProjectError(
+                    'extracted compatibility alias is not a symlink: {}'.format(
+                        link_path))
+            observed_target = os.readlink(name, dir_fd=descriptor)
+            final_stat = os.stat(
+                name, dir_fd=descriptor, follow_symlinks=False)
+            if _metadata_snapshot(final_stat) != _metadata_snapshot(link_stat):
+                raise ImageProjectError(
+                    'extracted compatibility alias changed while reading')
+            resolved_target = posixpath.normpath(posixpath.join(
+                posixpath.dirname('/' + link_path.lstrip('/')),
+                observed_target))
+            planned_target = posixpath.join(
+                posixpath.dirname('/' + link_path.lstrip('/')),
+                expected_target)
+            if resolved_target != planned_target:
+                diagnostics.append(Diagnostic(
+                    'error', 'compatibility_symlink_target_mismatch',
+                    'Compatibility symlink {} resolves to {}, not {}.'.format(
+                        '/' + link_path.lstrip('/'), resolved_target,
+                        planned_target), '/' + link_path.lstrip('/')))
+            elif (planned_target not in path_set or
+                  planned_target not in file_sizes):
+                diagnostics.append(Diagnostic(
+                    'error', 'compatibility_symlink_dangling',
+                    'Compatibility symlink target is missing or is not a '
+                    'regular file: {}.'.format(planned_target),
+                    '/' + link_path.lstrip('/')))
+        _validate_job_identity(plan)
+    except (OSError, TypeError, ImageProjectError) as error:
+        diagnostics.append(Diagnostic(
+            'error', 'compatibility_symlink_attestation_failed', str(error)))
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+        try:
+            _cleanup_private_extraction(
+                extraction_directory, plan, extraction_identity)
+        except (OSError, ImageProjectError) as error:
+            diagnostics.append(Diagnostic(
+                'error', 'private_extraction_cleanup_failed', str(error)))
+
+
 def _read_private_job_file(plan, path, maximum_bytes, context):
     basename = _private_job_basename(plan, path)
     job_descriptor = _duplicate_job_descriptor(plan)
@@ -8502,6 +8616,7 @@ def verify_iso(plan, runner=None, xorriso=None, unsquashfs=None):
     required_targets.extend(expected['kernel_targets'])
     required_targets.extend(expected['initramfs_targets'])
     required_targets.extend(expected['menu_targets'])
+    required_targets.extend(expected.get('compatibility_symlink_targets', ()))
     if capture_report_path in source_iso_paths:
         required_targets.append(capture_report_path)
     if customization_report_path in source_iso_paths:
@@ -8622,6 +8737,8 @@ def verify_iso(plan, runner=None, xorriso=None, unsquashfs=None):
     expected_type_by_path = {}
     for item in plan.manifest['input_digests']['source_files']:
         expected_type_by_path['/minios/' + item['relative_path']] = item['type']
+    for target in expected.get('compatibility_symlink_targets', ()):
+        expected_type_by_path['/' + target.lstrip('/')] = 'symlink'
     for target in required_targets:
         expected_type = expected_type_by_path.get(target, 'file')
         if type_rc == 0 and expected_type == 'file':
@@ -8645,6 +8762,15 @@ def verify_iso(plan, runner=None, xorriso=None, unsquashfs=None):
                     'error', 'expected_symlink_is_regular_file',
                     'Expected symlink was emitted as a regular file: {}'.format(
                         target), target))
+
+    compatibility_links = expected.get('compatibility_symlink_targets', {})
+    compatibility_paths = set(
+        '/' + item.lstrip('/') for item in compatibility_links)
+    if (type_rc == 0 and link_rc == 0 and compatibility_links and
+            compatibility_paths.issubset(symlink_paths)):
+        _verify_compatibility_symlinks(
+            plan, path, compatibility_links, path_set, file_sizes, runner,
+            xorriso, commands, diagnostics)
 
     if (tree_rc == 0 and type_rc == 0 and
             build_manifest_path in path_set and

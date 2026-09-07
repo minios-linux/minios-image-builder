@@ -1,5 +1,4 @@
 import os
-import signal
 import subprocess
 import sys
 import time
@@ -13,7 +12,8 @@ from gi.repository import Gdk, GLib, Gtk, Pango
 
 import image_builder_state as controller
 import main_image_builder as ui
-from ui_utils import CommandRunner, apply_css_if_exists
+import minios_gui
+from minios_gui import CommandRunner, apply_minios_css
 
 
 def test_command_runner_streams_carriage_return_frames():
@@ -32,7 +32,7 @@ def test_command_runner_streams_carriage_return_frames():
 
     def on_line(frame):
         frames.append(frame)
-        live_frames.append(runner.process.poll() is None)
+        live_frames.append(GLib.main_context_default().is_owner())
 
     def on_finished(returncode, cancelled):
         result.append((returncode, cancelled))
@@ -57,22 +57,97 @@ def test_command_runner_streams_carriage_return_frames():
     assert live_frames[0] is True
 
 
-def test_application_css_loads_after_shared_css(tmp_path):
+def test_application_css_loads_after_shared_css(tmp_path, monkeypatch):
     shared = tmp_path / 'shared.css'
     application = tmp_path / 'application.css'
     shared.write_text('.section-heading { font-weight: 400; }')
     application.write_text('.section-heading { font-weight: 700; }')
+    monkeypatch.setattr('minios_gui.style.SHARED_CSS_PATH', str(shared))
+    monkeypatch.setattr(
+        'minios_gui.style.Gdk.Screen.get_default', lambda: object())
 
-    loaded = apply_css_if_exists((
-        str(shared), str(tmp_path / 'missing.css'), str(application)))
+    class CssProvider(object):
+        def load_from_path(self, path):
+            assert os.path.isfile(path)
+
+    monkeypatch.setattr('minios_gui.style.Gtk.CssProvider', CssProvider)
+    monkeypatch.setattr(
+        'minios_gui.style.Gtk.StyleContext.add_provider_for_screen',
+        lambda *args: None)
+
+    loaded = apply_minios_css(
+        str(tmp_path / 'missing.css'), str(application))
 
     assert loaded == (str(shared), str(application))
+
+
+def test_css_paths_only_contain_installed_and_development_app_styles():
+    assert ui.CSS_PATHS == (
+        '/usr/share/minios-image-builder/style.css',
+        os.path.normpath(os.path.join(
+            os.path.dirname(ui.__file__), '..', 'share', 'styles',
+            'style.css')),
+    )
+
+
+def test_footer_uses_installer_navigation_pattern():
+    css = open(ui.CSS_PATHS[1], encoding='utf-8').read()
+    source = open(ui.__file__, encoding='utf-8').read()
+
+    assert "add_class('action-bar')" not in source
+    assert '.action-bar {' not in css
+    assert "separator.get_style_context().add_class('nav-separator')" in source
+    assert 'actions.set_margin_top(6)' in source
+    assert '_set_margins(footer, bottom=10, start=10, end=10)' in source
+    assert source.count('set_size_request(104, -1)') == 3
+
+
+def test_main_module_reuses_shared_css_and_dialog_helpers():
+    assert ui.CommandRunner is minios_gui.CommandRunner
+    assert ui.LogView is minios_gui.LogView
+    assert ui.apply_minios_css is minios_gui.apply_minios_css
+    assert ui.ask_confirmation is minios_gui.ask_confirmation
+    assert ui.show_error_dialog is minios_gui.show_error_dialog
+    assert ui.choose_folder is minios_gui.choose_folder
+    assert ui.choose_open_file is minios_gui.choose_open_file
+    assert ui.choose_open_files is minios_gui.choose_open_files
+    assert ui.choose_save_file is minios_gui.choose_save_file
+
+
+def test_controller_reexports_shared_task_api():
+    assert controller.BackgroundTask is minios_gui.BackgroundTask
+    assert controller.CancellationToken is minios_gui.CancellationToken
+    assert controller.TaskCancelled is minios_gui.TaskCancelled
+    assert controller.TaskOutcome is minios_gui.TaskOutcome
+
+
+def test_output_chooser_keeps_local_iso_extension_policy(monkeypatch):
+    observed = {}
+
+    def choose(*args, **kwargs):
+        observed['args'] = args
+        observed['kwargs'] = kwargs
+        return '/tmp/custom-image'
+
+    monkeypatch.setattr(ui, 'choose_save_file', choose)
+    entry = SimpleNamespace(set_text=lambda value: observed.update(path=value))
+    window = SimpleNamespace(
+        state=SimpleNamespace(output_path='/tmp/current.iso'),
+        output_entry=entry)
+
+    ui.ImageBuilderWindow._on_choose_output(window, None)
+
+    assert observed['args'][:2] == (window, ui._('Choose output image'))
+    assert observed['kwargs']['current_folder'] == '/tmp'
+    assert observed['kwargs']['current_name'] == 'current.iso'
+    assert observed['kwargs']['overwrite_confirmation'] is False
+    assert observed['path'] == '/tmp/custom-image.iso'
 
 
 def test_boot_option_heading_has_typographic_application_style():
     if Gdk.Screen.get_default() is None:
         pytest.skip('GTK screen is unavailable')
-    assert apply_css_if_exists((ui.CSS_PATHS[2],)) == (ui.CSS_PATHS[2],)
+    assert apply_minios_css(ui.CSS_PATHS[1])[-1:] == (ui.CSS_PATHS[1],)
     surface = Gtk.Box()
     surface.get_style_context().add_class('boot-option-heading')
     label = Gtk.Label(label='Session and storage')
@@ -512,10 +587,11 @@ def test_build_runner_receives_plan_cwd_and_redacted_display(monkeypatch):
 
     class FakeRunner(object):
         def __init__(self, argv, line_cb, on_finished, cwd=None, env=None,
-                     display_argv=None):
+                     display_argv=None, preserve_output_prefixes=()):
             observed.update(
                 argv=tuple(argv), line_cb=line_cb, cwd=cwd, env=env,
-                display_argv=tuple(display_argv))
+                display_argv=tuple(display_argv),
+                preserve_output_prefixes=preserve_output_prefixes)
             self.formatted_command = ' '.join(display_argv)
 
         def start(self):
@@ -524,7 +600,7 @@ def test_build_runner_receives_plan_cwd_and_redacted_display(monkeypatch):
     monkeypatch.setattr(ui, 'CommandRunner', FakeRunner)
     monkeypatch.setattr(
         ui.GLib, 'idle_add',
-        lambda callback, event: callback(event))
+        lambda *_args: pytest.fail('shared line callback was dispatched twice'))
     label = SimpleNamespace(set_text=lambda _text: None)
     log = SimpleNamespace(feed=lambda text: events.append(text))
     plan = SimpleNamespace(
@@ -563,6 +639,7 @@ def test_build_runner_receives_plan_cwd_and_redacted_display(monkeypatch):
     assert observed['cwd'] == plan.execution_cwd
     assert observed['env']['TMPDIR'] == '/mnt/fast-work'
     assert observed['display_argv'] == display_argv
+    assert observed['preserve_output_prefixes'] == ('P:', 'E:')
     assert observed['started']
     serialized = repr(events)
     for private in (
@@ -752,69 +829,6 @@ def test_build_cancel_and_close_remain_signal_only(monkeypatch):
     assert events == [('sensitive', False), 'signal']
 
 
-def test_command_runner_kills_pipe_holder_after_leader_exit(tmp_path):
-    pid_path = tmp_path / 'child.pid'
-    result = []
-    timed_out = []
-    loop = GLib.MainLoop()
-    child_pid = None
-    child_code = (
-        'import signal,time; '
-        'signal.signal(signal.SIGTERM, signal.SIG_IGN); '
-        'time.sleep(30)')
-    leader_code = (
-        'import subprocess,sys; '
-        'child=subprocess.Popen([sys.executable,"-c",sys.argv[2]], '
-        'stdout=sys.stdout,stderr=sys.stderr); '
-        'open(sys.argv[1],"w").write(str(child.pid))')
-
-    def finished(returncode, cancelled):
-        result.append((returncode, cancelled))
-        loop.quit()
-
-    def timeout():
-        timed_out.append(True)
-        loop.quit()
-        return False
-
-    runner = CommandRunner(
-        [sys.executable, '-c', leader_code, str(pid_path), child_code],
-        lambda _line: None, finished, cancel_grace=0.1)
-    runner.start()
-    try:
-        deadline = time.time() + 3
-        while (not pid_path.exists() or runner.process is None or
-               runner.process.poll() is None) and time.time() < deadline:
-            time.sleep(0.01)
-        assert pid_path.exists()
-        child_pid = int(pid_path.read_text(encoding='utf-8'))
-        assert runner.process.poll() == 0
-        assert runner.cancel()
-
-        timeout_id = GLib.timeout_add(4000, timeout)
-        loop.run()
-        if not timed_out:
-            GLib.source_remove(timeout_id)
-        assert not timed_out
-        assert result == [(0, True)]
-        deadline = time.time() + 2
-        while time.time() < deadline:
-            try:
-                os.kill(child_pid, 0)
-            except ProcessLookupError:
-                break
-            time.sleep(0.02)
-        else:
-            raise AssertionError(
-                'pipe-holding process-group child survived cancellation')
-    finally:
-        if child_pid is not None:
-            try:
-                os.kill(child_pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-
-
 def test_command_runner_bounds_display_output_but_keeps_phase_records():
     frames = []
     result = []
@@ -831,7 +845,8 @@ def test_command_runner_bounds_display_output_but_keeps_phase_records():
 
     runner = CommandRunner(
         [sys.executable, '-c', script], frames.append, finished,
-        maximum_output_bytes=1024)
+        maximum_output_bytes=925,
+        preserve_output_prefixes=('P:', 'E:'))
     runner.start()
     timeout_id = GLib.timeout_add(3000, lambda: loop.quit() or False)
     loop.run()

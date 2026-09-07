@@ -6,6 +6,11 @@ LIB_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'lib'))
 if LIB_DIR not in sys.path:
     sys.path.insert(0, LIB_DIR)
 
+MINIOS_GUI_DIR = os.path.abspath(os.path.join(
+    os.path.dirname(__file__), '..', '..', 'minios-gui'))
+if MINIOS_GUI_DIR not in sys.path:
+    sys.path.insert(0, MINIOS_GUI_DIR)
+
 # Ubuntu 18.04 ships pytest 3.3, which provides ``tmpdir`` but not
 # ``tmp_path``.  Keep the test suite runnable there while preserving the
 # pathlib.Path interface expected by the tests.

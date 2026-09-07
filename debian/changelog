@@ -1,3 +1,15 @@
+minios-image-builder (1.0.10) unstable; urgency=medium
+
+  * Replace local task, chooser, dialog, log and command helpers with the
+    minios-gui 1.4 APIs and align the wizard navigation with shared styling.
+  * Prune ignored MiniOS changes and kernels trees before source traversal.
+  * Verify generated Ventoy kernel and initramfs compatibility links as symlinks.
+  * Keep build phase and error records after display truncation, dispatch UI
+    callbacks on the GTK main loop and handle cancellation outcomes consistently.
+  * Treat exited process-group zombies as terminated during child cleanup.
+
+ -- crims0n <crims0n@minios.dev>  Mon, 07 Sep 2026 03:09:59 +0300
+
 minios-image-builder (1.0.9) unstable; urgency=medium
 
   * Reuse read-only source modules without hashing or copying their contents.

@@ -3,10 +3,10 @@
 # This file is distributed under the same license as the minios-image-compose package.
 msgid ""
 msgstr ""
-"Project-Id-Version: minios-image-compose 1.0.0\n"
+"Project-Id-Version: minios-image-builder 1.0.10\n"
 "Report-Msgid-Bugs-To: support@minios.dev\n"
-"POT-Creation-Date: 2026-09-01 01:29+0300\n"
-"PO-Revision-Date: 2026-08-31 21:49+0000\n"
+"POT-Creation-Date: 2026-09-07 02:26+0300\n"
+"PO-Revision-Date: 2026-09-06 23:27+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: de\n"
@@ -127,1097 +127,1109 @@ msgstr "Versuchen Sie"
 msgid "for more information."
 msgstr "für weitere Informationen."
 
-#: bin/minios-image-compose:219
+#: bin/minios-image-compose:218
 msgid "Cannot request privileged capture cancellation"
 msgstr "Privilegierte Sitzungsabbruch-Anfrage nicht möglich"
 
-#: bin/minios-image-compose:250
+#: bin/minios-image-compose:249
 msgid "Child process did not exit after bounded cancellation wait"
 msgstr "Kindprozess ist nach der begrenzten Abbruchwartezeit nicht beendet"
 
-#: bin/minios-image-compose:259
+#: bin/minios-image-compose:258
 msgid "Child command exited while descendant processes remained"
 msgstr "Kindprozess wurde beendet, während Nachfolgeprozesse noch liefen"
 
-#: bin/minios-image-compose:291
+#: bin/minios-image-compose:290
 msgid "Cannot remove temporary directory:"
 msgstr "Temporäres Verzeichnis kann nicht entfernt werden:"
 
-#: bin/minios-image-compose:365
+#: bin/minios-image-compose:364
 msgid "Option requires an argument:"
 msgstr "Option erfordert ein Argument:"
 
-#: bin/minios-image-compose:379
+#: bin/minios-image-compose:378
 msgid "must not contain newline characters"
 msgstr "darf keine Zeilenumbrüche enthalten"
 
-#: bin/minios-image-compose:584
+#: bin/minios-image-compose:583
 msgid "Unknown option:"
 msgstr "Unbekannte Option:"
 
-#: bin/minios-image-compose:598 bin/minios-image-compose:716
-#: bin/minios-image-compose:721 bin/minios-image-compose:726
-#: bin/minios-image-compose:743 bin/minios-image-compose:750
-#: bin/minios-image-compose:757
+#: bin/minios-image-compose:597 bin/minios-image-compose:715
+#: bin/minios-image-compose:720 bin/minios-image-compose:725
+#: bin/minios-image-compose:742 bin/minios-image-compose:749
+#: bin/minios-image-compose:756
 msgid "Required command not found:"
 msgstr "Erforderlicher Befehl nicht gefunden:"
 
-#: bin/minios-image-compose:600
+#: bin/minios-image-compose:599
 msgid "Cannot canonicalize readlink"
 msgstr "Kann readlink nicht kanonisieren"
 
-#: bin/minios-image-compose:602
+#: bin/minios-image-compose:601
 msgid "Trusted system readlink is unavailable"
 msgstr "Vertrauenswürdiges System-readlink ist nicht verfügbar"
 
-#: bin/minios-image-compose:603
+#: bin/minios-image-compose:602
 msgid "Cannot resolve script path"
 msgstr "Skriptpfad kann nicht aufgelöst werden"
 
-#: bin/minios-image-compose:613
+#: bin/minios-image-compose:612
 msgid "Source-test overrides are unavailable in this invocation"
 msgstr "Source-Test-Überschreibungen sind in diesem Aufruf nicht verfügbar"
 
-#: bin/minios-image-compose:630
+#: bin/minios-image-compose:629
 msgid "minios-image-compose helper engine not found"
 msgstr "minios-image-compose-Hilfsmotor nicht gefunden"
 
-#: bin/minios-image-compose:638
+#: bin/minios-image-compose:637
 msgid "Invalid session capture mode:"
 msgstr "Ungültiger Sitzungsaufnahmemodus:"
 
-#: bin/minios-image-compose:641
+#: bin/minios-image-compose:640
 msgid "Invalid session capture mode: empty value"
 msgstr "Ungültiger Sitzungsaufnahmemodus: Wert fehlt"
 
-#: bin/minios-image-compose:644
+#: bin/minios-image-compose:643
 msgid "--capture-changes selected requires --capture-selection"
 msgstr "--capture-changes selected erfordert --capture-selection"
 
-#: bin/minios-image-compose:647
+#: bin/minios-image-compose:646
 msgid "--capture-selection is only valid with --capture-changes selected"
 msgstr "--capture-selection ist nur gültig, wenn --capture-changes ausgewählt ist"
 
-#: bin/minios-image-compose:650
+#: bin/minios-image-compose:649
 msgid "--capture-compression requires --capture-changes"
 msgstr "--capture-compression erfordert --capture-changes"
 
-#: bin/minios-image-compose:654
+#: bin/minios-image-compose:653
 msgid "Invalid session capture compression:"
 msgstr "Ungültige Sitzungsaufnahme-Komprimierung:"
 
-#: bin/minios-image-compose:657 bin/minios-image-compose:658
+#: bin/minios-image-compose:656 bin/minios-image-compose:657
 msgid "Boot timeout must be an integer from 0 to 300"
 msgstr "Boot-Timeout muss eine Ganzzahl von 0 bis 300 sein"
 
-#: bin/minios-image-compose:664
+#: bin/minios-image-compose:663
 msgid "Invalid default boot mode:"
 msgstr "Ungültiger Standard-Boot-Modus:"
 
-#: bin/minios-image-compose:668
+#: bin/minios-image-compose:667
 msgid "Boot menu customization must not be empty"
 msgstr "Die Anpassung des Boot-Menüs darf nicht leer sein"
 
-#: bin/minios-image-compose:669
+#: bin/minios-image-compose:668
 msgid "Boot menu customization"
 msgstr "Anpassung des Boot-Menüs"
 
-#: bin/minios-image-compose:671
+#: bin/minios-image-compose:670
 msgid "Boot menu customization exceeds 65536 UTF-8 bytes"
 msgstr "Die Anpassung des Boot-Menüs überschreitet 65536 UTF-8-Bytes"
 
-#: bin/minios-image-compose:672
+#: bin/minios-image-compose:671
 msgid "--boot-menu-json cannot be combined with --default-boot"
 msgstr "--boot-menu-json kann nicht mit --default-boot kombiniert werden"
 
-#: bin/minios-image-compose:675
+#: bin/minios-image-compose:674
 msgid "Kernel arguments must not be empty"
 msgstr "Kernel-Parameter dürfen nicht leer sein"
 
-#: bin/minios-image-compose:676
+#: bin/minios-image-compose:675
 msgid "Kernel arguments"
 msgstr "Kernel-Parameter"
 
-#: bin/minios-image-compose:678
+#: bin/minios-image-compose:677
 msgid "Kernel arguments exceed 4096 UTF-8 bytes"
 msgstr "Kernel-Parameter überschreiten 4096 UTF-8-Bytes"
 
-#: bin/minios-image-compose:681
+#: bin/minios-image-compose:680
 msgid "Boot background path must not be empty"
 msgstr "Boot-Hintergrundpfad darf nicht leer sein"
 
-#: bin/minios-image-compose:682
+#: bin/minios-image-compose:681
 msgid "Boot background path"
 msgstr "Boot-Hintergrundpfad"
 
-#: bin/minios-image-compose:685
+#: bin/minios-image-compose:684
 msgid "Overlay directory path must not be empty"
 msgstr "Overlay-Verzeichnis-Pfad darf nicht leer sein"
 
-#: bin/minios-image-compose:686 bin/minios-image-compose:913
+#: bin/minios-image-compose:685 bin/minios-image-compose:912
 msgid "Overlay directory path"
 msgstr "Overlay-Verzeichnis-Pfad"
 
-#: bin/minios-image-compose:695
+#: bin/minios-image-compose:694
 msgid "Invalid menu type:"
 msgstr "Ungültiger Menütyp:"
 
-#: bin/minios-image-compose:695
+#: bin/minios-image-compose:694
 msgid "Valid types: multilang, en_US, ru_RU, de_DE, es_ES, it_IT, id_ID, pt_BR, pt_PT, fr_FR"
 msgstr "Gültige Typen: multilang, en_US, ru_RU, de_DE, es_ES, it_IT, id_ID, pt_BR, pt_PT, fr_FR"
 
-#: bin/minios-image-compose:698
+#: bin/minios-image-compose:697
 msgid "Exclusion regex"
 msgstr "Ausschluss-Regulärer Ausdruck"
 
-#: bin/minios-image-compose:708
+#: bin/minios-image-compose:707
 msgid "ISO volume label must contain 1 to 32 printable ASCII characters"
 msgstr "Das ISO-Volume-Label muss 1 bis 32 druckbare ASCII-Zeichen enthalten"
 
-#: bin/minios-image-compose:711
+#: bin/minios-image-compose:710
 msgid "The volume label is accepted by xorriso but is outside the strict ISO 9660 A-Z, 0-9, underscore set"
 msgstr "Das Volume-Label wird von xorriso akzeptiert, liegt aber außerhalb des strikten ISO 9660 A-Z, 0-9, Unterstrich-Sets"
 
-#: bin/minios-image-compose:714
+#: bin/minios-image-compose:713
 msgid "date"
 msgstr "Datum"
 
-#: bin/minios-image-compose:723
+#: bin/minios-image-compose:722
 msgid "Cannot canonicalize mkfs.ext2"
 msgstr "Kann mkfs.ext2 nicht kanonisieren"
 
-#: bin/minios-image-compose:728
+#: bin/minios-image-compose:727
 msgid "Trusted system mkfs.ext2 is unavailable"
 msgstr "Vertrauenswürdiges System mkfs.ext2 ist nicht verfügbar"
 
-#: bin/minios-image-compose:731
+#: bin/minios-image-compose:730
 msgid "Trusted /usr/bin/python3 is unavailable"
 msgstr "Vertrauenswürdiges /usr/bin/python3 ist nicht verfügbar"
 
-#: bin/minios-image-compose:732
+#: bin/minios-image-compose:731
 msgid "Trusted /usr/bin/env is unavailable"
 msgstr "Vertrauenswürdiges /usr/bin/env ist nicht verfügbar"
 
-#: bin/minios-image-compose:733
+#: bin/minios-image-compose:732
 msgid "Trusted /usr/bin/setsid is unavailable"
 msgstr "Vertrauenswürdiges /usr/bin/setsid ist nicht verfügbar"
 
-#: bin/minios-image-compose:736
+#: bin/minios-image-compose:735
 msgid "Invalid boot menu customization"
 msgstr "Ungültige Anpassung des Boot-Menüs"
 
-#: bin/minios-image-compose:745
+#: bin/minios-image-compose:744
 msgid "Cannot canonicalize test mksquashfs"
 msgstr "Kann Test-mksquashfs nicht kanonisieren"
 
-#: bin/minios-image-compose:747
+#: bin/minios-image-compose:746
 msgid "Invalid test mksquashfs"
 msgstr "Ungültiges Test-mksquashfs"
 
-#: bin/minios-image-compose:752
+#: bin/minios-image-compose:751
 msgid "Trusted system mksquashfs is unavailable"
 msgstr "Vertrauenswürdiges System mksquashfs ist nicht verfügbar"
 
-#: bin/minios-image-compose:763
+#: bin/minios-image-compose:762
 msgid "savechanges executable path"
 msgstr "savechanges-Programmdateipfad"
 
-#: bin/minios-image-compose:765
+#: bin/minios-image-compose:764
 msgid "savechanges is not an executable non-symlink regular file:"
 msgstr "savechanges ist keine ausführbare reguläre Datei ohne Symlink:"
 
-#: bin/minios-image-compose:767
+#: bin/minios-image-compose:766
 msgid "Cannot canonicalize savechanges executable:"
 msgstr "Kann savechanges-Programmdatei nicht kanonisieren:"
 
-#: bin/minios-image-compose:770
+#: bin/minios-image-compose:769
 msgid "Trusted /usr/bin/savechanges is unavailable"
 msgstr "Vertrauenswürdiges /usr/bin/savechanges ist nicht verfügbar"
 
-#: bin/minios-image-compose:771
+#: bin/minios-image-compose:770
 msgid "savechanges trust check failed"
 msgstr "savechanges Vertrauensprüfung fehlgeschlagen"
 
-#: bin/minios-image-compose:774
+#: bin/minios-image-compose:773
 msgid "savechanges version probe failed"
 msgstr "savechanges Versionsabfrage fehlgeschlagen"
 
-#: bin/minios-image-compose:779
+#: bin/minios-image-compose:778
 msgid "savechanges version is invalid"
 msgstr "savechanges-Version ist ungültig"
 
-#: bin/minios-image-compose:783
+#: bin/minios-image-compose:782
 msgid "savechanges 1.3.0 or newer is required for capture"
 msgstr "savechanges 1.3.0 oder neuer wird für Capture benötigt"
 
-#: bin/minios-image-compose:787
+#: bin/minios-image-compose:786
 msgid "Invalid test pkexec"
 msgstr "Ungültiges Test-pkexec"
 
-#: bin/minios-image-compose:790
+#: bin/minios-image-compose:789
 msgid "Session capture requires trusted /usr/bin/pkexec for its narrow privileged stage"
 msgstr "Sitzungsaufnahme erfordert vertrauenswürdiges /usr/bin/pkexec für die privilegierte Phase"
 
-#: bin/minios-image-compose:800
+#: bin/minios-image-compose:799
 msgid "Invalid exclusion regular expression:"
 msgstr "Ungültiger Ausschluss-Regulärer Ausdruck:"
 
-#: bin/minios-image-compose:803
+#: bin/minios-image-compose:802
 msgid "Preparing ISO build"
 msgstr "ISO-Build wird vorbereitet"
 
-#: bin/minios-image-compose:837 bin/minios-image-compose:1356
+#: bin/minios-image-compose:836 bin/minios-image-compose:1361
 msgid "Source path"
 msgstr "Quellpfad"
 
-#: bin/minios-image-compose:839
+#: bin/minios-image-compose:838
 msgid "MiniOS source must not be a symbolic link:"
 msgstr "MiniOS-Quelle darf kein symbolischer Link sein:"
 
-#: bin/minios-image-compose:841
+#: bin/minios-image-compose:840
 msgid "MiniOS source is not a directory:"
 msgstr "MiniOS-Quelle ist kein Verzeichnis:"
 
-#: bin/minios-image-compose:843 bin/minios-image-compose:850
+#: bin/minios-image-compose:842 bin/minios-image-compose:849
 msgid "Cannot canonicalize MiniOS source:"
 msgstr "MiniOS-Quelle kann nicht kanonisiert werden:"
 
-#: bin/minios-image-compose:847
+#: bin/minios-image-compose:846
 msgid "Cannot find MiniOS source directory with boot files"
 msgstr "MiniOS-Quellverzeichnis mit Boot-Dateien konnte nicht gefunden werden"
 
-#: bin/minios-image-compose:866
+#: bin/minios-image-compose:865
 msgid "MiniOS source has no readable boot directory:"
 msgstr "MiniOS-Quelle hat kein lesbares Boot-Verzeichnis:"
 
-#: bin/minios-image-compose:869
+#: bin/minios-image-compose:868
 msgid "MiniOS modules path is not a readable directory:"
 msgstr "MiniOS-Modulpfad ist kein lesbares Verzeichnis:"
 
-#: bin/minios-image-compose:880
+#: bin/minios-image-compose:879
 msgid "must not be a symbolic link:"
 msgstr "darf kein symbolischer Link sein:"
 
-#: bin/minios-image-compose:883
+#: bin/minios-image-compose:882
 msgid "must be a readable regular file:"
 msgstr "muss eine lesbare reguläre Datei sein:"
 
-#: bin/minios-image-compose:885
+#: bin/minios-image-compose:884
 msgid "Cannot canonicalize input file:"
 msgstr "Eingabedatei kann nicht kanonisiert werden:"
 
-#: bin/minios-image-compose:890
+#: bin/minios-image-compose:889
 msgid "Configuration file"
 msgstr "Konfigurationsdatei"
 
-#: bin/minios-image-compose:894
+#: bin/minios-image-compose:893
 msgid "Manifest file"
 msgstr "Manifestdatei"
 
-#: bin/minios-image-compose:896
+#: bin/minios-image-compose:895
 msgid "Manifest is not valid JSON:"
 msgstr "Manifest ist kein gültiges JSON:"
 
-#: bin/minios-image-compose:902
+#: bin/minios-image-compose:901
 msgid "Session selection file"
 msgstr "Sitzungsauswahldatei"
 
-#: bin/minios-image-compose:907
+#: bin/minios-image-compose:906
 msgid "Boot background"
 msgstr "Boot-Hintergrund"
 
-#: bin/minios-image-compose:917
+#: bin/minios-image-compose:916
 msgid "Overlay directory must be an absolute path"
 msgstr "Overlay-Verzeichnis muss ein absoluter Pfad sein"
 
-#: bin/minios-image-compose:920
+#: bin/minios-image-compose:919
 msgid "Overlay directory path must be normalized"
 msgstr "Overlay-Verzeichnispfad muss normalisiert sein"
 
-#: bin/minios-image-compose:925
+#: bin/minios-image-compose:924
 msgid "Overlay directory must be a readable real directory"
 msgstr "Overlay-Verzeichnis muss ein lesbares, echtes Verzeichnis sein"
 
-#: bin/minios-image-compose:928
+#: bin/minios-image-compose:927
 msgid "Cannot canonicalize overlay directory"
 msgstr "Overlay-Verzeichnis kann nicht kanonisiert werden"
 
-#: bin/minios-image-compose:934
+#: bin/minios-image-compose:933
 msgid "Overlay directory must not be inside the MiniOS source tree"
 msgstr "Overlay-Verzeichnis darf sich nicht im MiniOS-Quellbaum befinden"
 
-#: bin/minios-image-compose:939
+#: bin/minios-image-compose:938
 msgid "Overlay directory must not contain the MiniOS source tree"
 msgstr "Overlay-Verzeichnis darf den MiniOS-Quellbaum nicht enthalten"
 
-#: bin/minios-image-compose:949
+#: bin/minios-image-compose:948
 msgid "Unsafe module basename (expected a portable .sb name):"
 msgstr "Unsicherer Modul-Basename (erwartet wurde ein portabler .sb-Name):"
 
-#: bin/minios-image-compose:955
+#: bin/minios-image-compose:954
 msgid "Module path"
 msgstr "Modulpfad"
 
-#: bin/minios-image-compose:957
+#: bin/minios-image-compose:956
 msgid "Additional module must not be a symbolic link:"
 msgstr "Zusätzliches Modul darf kein symbolischer Link sein:"
 
-#: bin/minios-image-compose:959
+#: bin/minios-image-compose:958
 msgid "Additional module must be a readable regular file:"
 msgstr "Zusätzliches Modul muss eine lesbare reguläre Datei sein:"
 
-#: bin/minios-image-compose:961
+#: bin/minios-image-compose:960
 msgid "Cannot canonicalize additional module:"
 msgstr "Zusätzliches Modul kann nicht kanonisiert werden:"
 
-#: bin/minios-image-compose:966
+#: bin/minios-image-compose:965
 msgid "Additional module was specified more than once:"
 msgstr "Zusätzliches Modul wurde mehr als einmal angegeben:"
 
-#: bin/minios-image-compose:970
+#: bin/minios-image-compose:969
 msgid "Additional module is not valid SquashFS:"
 msgstr "Zusätzliches Modul ist kein gültiges SquashFS:"
 
-#: bin/minios-image-compose:978
+#: bin/minios-image-compose:977
 msgid "Output path"
 msgstr "Ausgabepfad"
 
-#: bin/minios-image-compose:979
+#: bin/minios-image-compose:978
 msgid "Invalid output filename"
 msgstr "Ungültiger Ausgabedateiname"
 
-#: bin/minios-image-compose:988
+#: bin/minios-image-compose:987
 msgid "Invalid output filename:"
 msgstr "Ungültiger Ausgabedateiname:"
 
-#: bin/minios-image-compose:992
+#: bin/minios-image-compose:991
 msgid "Output directory does not exist:"
 msgstr "Ausgabeverzeichnis existiert nicht:"
 
-#: bin/minios-image-compose:994
+#: bin/minios-image-compose:993
 msgid "Output directory is not writable:"
 msgstr "Ausgabeverzeichnis ist nicht beschreibbar:"
 
-#: bin/minios-image-compose:996
+#: bin/minios-image-compose:995
 msgid "Cannot canonicalize output directory:"
 msgstr "Ausgabeverzeichnis kann nicht kanonisiert werden:"
 
-#: bin/minios-image-compose:1006
+#: bin/minios-image-compose:1005
 msgid "Output must not be inside the MiniOS source tree:"
 msgstr "Ausgabe darf sich nicht im MiniOS-Quellbaum befinden:"
 
-#: bin/minios-image-compose:1013
+#: bin/minios-image-compose:1012
 msgid "Output must not replace an input file:"
 msgstr "Ausgabe darf keine Eingabedatei ersetzen:"
 
-#: bin/minios-image-compose:1019
+#: bin/minios-image-compose:1018
 msgid "Output must not be inside the overlay directory"
 msgstr "Ausgabe darf sich nicht im Overlay-Verzeichnis befinden"
 
-#: bin/minios-image-compose:1025
+#: bin/minios-image-compose:1024
 msgid "Output path is a directory:"
 msgstr "Ausgabepfad ist ein Verzeichnis:"
 
-#: bin/minios-image-compose:1027
+#: bin/minios-image-compose:1026
+msgid "Session capture requires a new output filename; remove or rename the existing output first:"
+msgstr "Für die Sitzungsaufzeichnung ist ein neuer Ausgabedateiname erforderlich; entfernen oder benennen Sie die vorhandene Ausgabedatei zuerst um:"
+
+#: bin/minios-image-compose:1029
 msgid "Output already exists; use --overwrite to replace it:"
 msgstr "Ausgabe existiert bereits; verwenden Sie --overwrite, um sie zu ersetzen:"
 
-#: bin/minios-image-compose:1032
+#: bin/minios-image-compose:1034
 msgid "Temporary directory path"
 msgstr "Temporärer Verzeichnispfad"
 
-#: bin/minios-image-compose:1034
+#: bin/minios-image-compose:1036
 msgid "Temporary directory is not writable:"
 msgstr "Temporäres Verzeichnis ist nicht beschreibbar:"
 
-#: bin/minios-image-compose:1036
+#: bin/minios-image-compose:1038
 msgid "Cannot canonicalize temporary directory:"
 msgstr "Temporäres Verzeichnis kann nicht kanonisiert werden:"
 
-#: bin/minios-image-compose:1047
+#: bin/minios-image-compose:1049
 msgid "Invalid capture test root"
 msgstr "Ungültiges Capture-Test-Root-Verzeichnis"
 
-#: bin/minios-image-compose:1048
+#: bin/minios-image-compose:1050
 msgid "Cannot canonicalize capture test root"
 msgstr "Capture-Test-Root-Verzeichnis kann nicht kanonisiert werden"
 
-#: bin/minios-image-compose:1055
+#: bin/minios-image-compose:1057
 msgid "Non-root test capture is confined to MINIOS_TOOLS_TEST_ROOT"
 msgstr "Nicht-Root-Test-Captures sind auf MINIOS_TOOLS_TEST_ROOT beschränkt"
 
-#: bin/minios-image-compose:1059
+#: bin/minios-image-compose:1061
 msgid "Cannot canonicalize test capture changes root"
 msgstr "Test-Capture-Änderungs-Root kann nicht kanonisiert werden"
 
-#: bin/minios-image-compose:1061
+#: bin/minios-image-compose:1063
 msgid "Test capture changes root is outside MINIOS_TOOLS_TEST_ROOT"
 msgstr "Test-Capture-Änderungs-Root liegt außerhalb von MINIOS_TOOLS_TEST_ROOT"
 
-#: bin/minios-image-compose:1065
+#: bin/minios-image-compose:1067
 msgid "Cannot create temporary work directory"
 msgstr "Temporäres Arbeitsverzeichnis kann nicht erstellt werden"
 
-#: bin/minios-image-compose:1068
+#: bin/minios-image-compose:1070
 msgid "Cannot secure temporary work directory:"
 msgstr "Temporäres Arbeitsverzeichnis kann nicht gesichert werden:"
 
-#: bin/minios-image-compose:1072
+#: bin/minios-image-compose:1075
+msgid "Cannot inspect retained ISO output intent"
+msgstr "Beibehaltene ISO-Ausgabeabsicht kann nicht geprüft werden"
+
+#: bin/minios-image-compose:1078
+msgid "Invalid retained output intent"
+msgstr "Ungültige beibehaltene Ausgabeabsicht"
+
+#: bin/minios-image-compose:1085
 msgid "Cannot canonicalize temporary work directory:"
 msgstr "Temporäres Arbeitsverzeichnis kann nicht kanonisiert werden:"
 
-#: bin/minios-image-compose:1075
+#: bin/minios-image-compose:1088
 msgid "Overlay directory must not be inside the work directory"
 msgstr "Overlay-Verzeichnis darf nicht im Arbeitsverzeichnis liegen"
 
-#: bin/minios-image-compose:1080
+#: bin/minios-image-compose:1093
 msgid "Overlay directory must not contain the work directory"
 msgstr "Overlay-Verzeichnis darf das Arbeitsverzeichnis nicht enthalten"
 
-#: bin/minios-image-compose:1085
+#: bin/minios-image-compose:1098
 msgid "Cannot retain capture cancellation directory"
 msgstr "Capture-Abbruchverzeichnis kann nicht beibehalten werden"
 
-#: bin/minios-image-compose:1093
-msgid "Cannot prepare retained same-filesystem ISO output"
-msgstr "Vorbereitung der beibehaltenen ISO-Ausgabe auf demselben Dateisystem fehlgeschlagen"
-
-#: bin/minios-image-compose:1096
-msgid "Invalid retained output state"
-msgstr "Ungültiger Zustand der beibehaltenen Ausgabe"
-
-#: bin/minios-image-compose:1105
-msgid "Cannot retain output parent directory"
-msgstr "Übergeordnetes Ausgabeverzeichnis kann nicht beibehalten werden"
-
-#: bin/minios-image-compose:1107
-msgid "Cannot retain private ISO directory"
-msgstr "Privates ISO-Verzeichnis kann nicht beibehalten werden"
-
-#: bin/minios-image-compose:1111
-msgid "Retained ISO output identity check failed"
-msgstr "Identitätsprüfung der beibehaltenen ISO-Ausgabe fehlgeschlagen"
-
-#: bin/minios-image-compose:1137
+#: bin/minios-image-compose:1125
 msgid "Cannot detect a supported BIOS bootloader in:"
 msgstr "Unterstützter BIOS-Bootloader konnte nicht erkannt werden in:"
 
-#: bin/minios-image-compose:1139
+#: bin/minios-image-compose:1127
 msgid "Detected bootloader type:"
 msgstr "Erkannter Bootloader-Typ:"
 
-#: bin/minios-image-compose:1182
+#: bin/minios-image-compose:1170
 msgid "Cannot evaluate exclusion regular expression"
 msgstr "Ausschluss-Regulärer Ausdruck kann nicht ausgewertet werden"
 
-#: bin/minios-image-compose:1204
+#: bin/minios-image-compose:1202
 msgid "ISO destination"
 msgstr "ISO-Ziel"
 
-#: bin/minios-image-compose:1207
+#: bin/minios-image-compose:1205
 msgid "Multiple inputs would be written to ISO path:"
 msgstr "Mehrere Eingaben würden in den gleichen ISO-Pfad geschrieben:"
 
-#: bin/minios-image-compose:1242
+#: bin/minios-image-compose:1240
 msgid "Module destinations differ only by case:"
 msgstr "Modulziele unterscheiden sich nur in der Groß-/Kleinschreibung:"
 
-#: bin/minios-image-compose:1245
+#: bin/minios-image-compose:1243
 msgid "Duplicate module basename after runtime flattening:"
 msgstr "Doppelter Modul-Basename nach Laufzeit-Glättung:"
 
-#: bin/minios-image-compose:1296
+#: bin/minios-image-compose:1294
 msgid "Cannot read source symbolic link:"
 msgstr "Quell-Symlink kann nicht gelesen werden:"
 
-#: bin/minios-image-compose:1299
+#: bin/minios-image-compose:1297
 msgid "Cannot parse source symbolic link:"
 msgstr "Quell-Symlink kann nicht geparst werden:"
 
-#: bin/minios-image-compose:1302
+#: bin/minios-image-compose:1300
 msgid "Unsafe source symbolic link:"
 msgstr "Unsicherer Quell-Symlink:"
 
-#: bin/minios-image-compose:1307
+#: bin/minios-image-compose:1305
 msgid "Cannot normalize source symbolic link target:"
 msgstr "Ziel des Quell-Symlinks kann nicht normalisiert werden:"
 
-#: bin/minios-image-compose:1312 bin/minios-image-compose:1331
+#: bin/minios-image-compose:1310 bin/minios-image-compose:1329
 msgid "Source symbolic link escapes the MiniOS tree:"
 msgstr "Quell-Symlink verlässt den MiniOS-Baum:"
 
-#: bin/minios-image-compose:1323
+#: bin/minios-image-compose:1321
 msgid "Source symbolic link chain contains an excluded path:"
 msgstr "Symlink-Kette der Quelle enthält einen ausgeschlossenen Pfad:"
 
-#: bin/minios-image-compose:1327
+#: bin/minios-image-compose:1325
 msgid "Dangling source symbolic link:"
 msgstr "Hängender Quell-Symlink:"
 
-#: bin/minios-image-compose:1339
+#: bin/minios-image-compose:1337
 msgid "Source symbolic link points to an excluded path:"
 msgstr "Quell-Symlink verweist auf einen ausgeschlossenen Pfad:"
 
-#: bin/minios-image-compose:1349
+#: bin/minios-image-compose:1354
 msgid "Cannot inventory MiniOS source:"
 msgstr "MiniOS-Quelle kann nicht inventarisiert werden:"
 
-#: bin/minios-image-compose:1385
+#: bin/minios-image-compose:1390
 msgid "Exclusion removes a required source module:"
 msgstr "Ausschluss entfernt ein erforderliches Quellmodul:"
 
-#: bin/minios-image-compose:1390
+#: bin/minios-image-compose:1395
 msgid "Exclusion removes a required kernel or initramfs file:"
 msgstr "Ausschluss entfernt eine erforderliche Kernel- oder Initramfs-Datei:"
 
-#: bin/minios-image-compose:1397
+#: bin/minios-image-compose:1402
 msgid "Source file is not a readable regular file:"
 msgstr "Quelldatei ist keine lesbare reguläre Datei:"
 
-#: bin/minios-image-compose:1415
+#: bin/minios-image-compose:1420
 msgid "Not duplicating EFI symlink whose relative target would change:"
 msgstr "EFI-Symlink wird nicht dupliziert, da sich das relative Ziel ändern würde:"
 
-#: bin/minios-image-compose:1444
+#: bin/minios-image-compose:1449
 msgid "MiniOS source has no core module"
 msgstr "MiniOS-Quelle enthält kein Core-Modul"
 
-#: bin/minios-image-compose:1445
+#: bin/minios-image-compose:1450
 msgid "MiniOS source has no kernel module"
 msgstr "MiniOS-Quelle enthält kein Kernel-Modul"
 
-#: bin/minios-image-compose:1446
+#: bin/minios-image-compose:1451
 msgid "No kernel image remains after exclusions"
 msgstr "Nach Ausschlüssen bleibt kein Kernel-Image übrig"
 
-#: bin/minios-image-compose:1447
+#: bin/minios-image-compose:1452
 msgid "No initramfs image remains after exclusions"
 msgstr "Nach den Ausschlüssen bleibt kein initramfs-Image übrig"
 
-#: bin/minios-image-compose:1481 bin/minios-image-compose:1485
+#: bin/minios-image-compose:1486 bin/minios-image-compose:1490
 msgid "Kernel and initramfs versions do not match after exclusions"
 msgstr "Kernel- und initramfs-Versionen stimmen nach den Ausschlüssen nicht überein"
 
-#: bin/minios-image-compose:1488
+#: bin/minios-image-compose:1493
 msgid "No coherent kernel and initramfs pair remains after exclusions"
 msgstr "Nach den Ausschlüssen bleibt kein zusammenpassendes Kernel- und initramfs-Paar übrig"
 
-#: bin/minios-image-compose:1493
+#: bin/minios-image-compose:1498
 msgid "Included source module is not valid SquashFS:"
 msgstr "Das eingebundene Quellmodul ist kein gültiges SquashFS:"
 
-#: bin/minios-image-compose:1503
+#: bin/minios-image-compose:1508
 msgid "Included symbolic link target is absent from the ISO inventory:"
 msgstr "Das eingebundene Ziel des symbolischen Links fehlt im ISO-Inventar:"
 
-#: bin/minios-image-compose:1517
+#: bin/minios-image-compose:1522
 msgid "Cannot preserve an empty symbolic-link target directory"
 msgstr "Ein leeres Zielverzeichnis eines symbolischen Links kann nicht erhalten bleiben"
 
-#: bin/minios-image-compose:1526
+#: bin/minios-image-compose:1531
 msgid "Required boot file is missing or excluded:"
 msgstr "Erforderliche Boot-Datei fehlt oder wurde ausgeschlossen:"
 
-#: bin/minios-image-compose:1535
+#: bin/minios-image-compose:1540
 msgid "Exclusion would remove minios/config.conf"
 msgstr "Der Ausschluss würde minios/config.conf entfernen"
 
-#: bin/minios-image-compose:1539
+#: bin/minios-image-compose:1544
 msgid "Exclusion would remove minios/build-manifest.json"
 msgstr "Der Ausschluss würde minios/build-manifest.json entfernen"
 
-#: bin/minios-image-compose:1544
+#: bin/minios-image-compose:1549
 msgid "Cannot create ISO information file"
 msgstr "ISO-Informationsdatei kann nicht erstellt werden"
 
-#: bin/minios-image-compose:1547
+#: bin/minios-image-compose:1552
 msgid "Cannot secure ISO information file"
 msgstr "ISO-Informationsdatei kann nicht gesichert werden"
 
-#: bin/minios-image-compose:1567
+#: bin/minios-image-compose:1572
 msgid "Additional module destination collides with another input:"
 msgstr "Das Ziel eines zusätzlichen Moduls kollidiert mit einer anderen Eingabe:"
 
-#: bin/minios-image-compose:1592
+#: bin/minios-image-compose:1608
 msgid "Cannot record original build input identities and digests"
 msgstr "Ursprüngliche Build-Eingaben und Prüfsummen können nicht aufgezeichnet werden"
 
-#: bin/minios-image-compose:1605
+#: bin/minios-image-compose:1616
 msgid "Cannot fingerprint effective MiniOS source modules"
 msgstr "Fingerabdruck der effektiven MiniOS-Quellmodule kann nicht erstellt werden"
 
-#: bin/minios-image-compose:1609
+#: bin/minios-image-compose:1620
 msgid "Invalid MiniOS source module fingerprint"
 msgstr "Ungültiger Fingerabdruck eines MiniOS-Quellmoduls"
 
-#: bin/minios-image-compose:1619
+#: bin/minios-image-compose:1630
 msgid "Numeric module order exceeds the supported six-digit range:"
 msgstr "Die numerische Modulreihenfolge überschreitet den unterstützten sechsstelligen Bereich:"
 
-#: bin/minios-image-compose:1653
+#: bin/minios-image-compose:1664
 msgid "Preparing image-specific customization"
 msgstr "Image-spezifische Anpassungen werden vorbereitet"
 
-#: bin/minios-image-compose:1658
+#: bin/minios-image-compose:1669
 msgid "Kernel arguments contain syntax unsafe for GRUB or SYSLINUX"
 msgstr "Kernel-Parameter enthalten Syntax, die für GRUB oder SYSLINUX unsicher ist"
 
-#: bin/minios-image-compose:1661
+#: bin/minios-image-compose:1672
 msgid "Invalid kernel argument validation result"
 msgstr "Ungültiges Ergebnis bei der Überprüfung der Kernel-Parameter"
 
-#: bin/minios-image-compose:1664
+#: bin/minios-image-compose:1675
 msgid "Kernel argument UTF-8 bytes/SHA256:"
 msgstr "Kernel-Parameter UTF-8 Bytes/SHA256:"
 
-#: bin/minios-image-compose:1669
+#: bin/minios-image-compose:1680
 msgid "Cannot create a private boot background snapshot"
 msgstr "Privater Boot-Hintergrund-Snapshot kann nicht erstellt werden"
 
-#: bin/minios-image-compose:1675
+#: bin/minios-image-compose:1686
 msgid "Boot background is not a supported PNG"
 msgstr "Boot-Hintergrund ist kein unterstütztes PNG"
 
-#: bin/minios-image-compose:1678
+#: bin/minios-image-compose:1689
 msgid "Invalid boot background validation result"
 msgstr "Ungültiges Ergebnis bei der Überprüfung des Boot-Hintergrunds"
 
-#: bin/minios-image-compose:1705
+#: bin/minios-image-compose:1716
 msgid "Cannot bind boot background targets to immutable intent"
 msgstr "Boot-Hintergrund-Ziele können nicht an eine unveränderliche Absicht gebunden werden"
 
-#: bin/minios-image-compose:1709
+#: bin/minios-image-compose:1720
 msgid "Invalid boot background target identity"
 msgstr "Ungültige Identität des Boot-Hintergrund-Ziels"
 
-#: bin/minios-image-compose:1712
+#: bin/minios-image-compose:1723
 msgid "Boot background dimensions/bytes/SHA256:"
 msgstr "Boot-Hintergrund Abmessungen/Bytes/SHA256:"
 
-#: bin/minios-image-compose:1716
+#: bin/minios-image-compose:1727
 msgid "No safe numeric order remains for an image overlay module"
 msgstr "Für ein Image-Overlay-Modul bleibt keine sichere numerische Reihenfolge übrig"
 
-#: bin/minios-image-compose:1729
+#: bin/minios-image-compose:1740
 msgid "Overlay directory could not be snapshotted safely"
 msgstr "Overlay-Verzeichnis konnte nicht sicher als Snapshot gespeichert werden"
 
-#: bin/minios-image-compose:1732
+#: bin/minios-image-compose:1743
 msgid "Invalid overlay snapshot result"
 msgstr "Ungültiges Overlay-Snapshot-Ergebnis"
 
-#: bin/minios-image-compose:1739
+#: bin/minios-image-compose:1750
 msgid "Failed to create image overlay module"
 msgstr "Image-Overlay-Modul konnte nicht erstellt werden"
 
-#: bin/minios-image-compose:1742
+#: bin/minios-image-compose:1753
 msgid "Image overlay builder did not create a nonempty regular module"
 msgstr "Der Image-Overlay-Builder hat kein nicht-leeres reguläres Modul erzeugt"
 
-#: bin/minios-image-compose:1744
+#: bin/minios-image-compose:1755
 msgid "Image overlay module is not valid SquashFS"
 msgstr "Image-Overlay-Modul ist kein gültiges SquashFS"
 
-#: bin/minios-image-compose:1749
+#: bin/minios-image-compose:1760
 msgid "Image overlay module does not match the captured input manifest"
 msgstr "Image-Overlay-Modul stimmt nicht mit dem erfassten Eingabe-Manifest überein"
 
-#: bin/minios-image-compose:1753
+#: bin/minios-image-compose:1763
+msgid "Cannot release verified image overlay workspace"
+msgstr "Verifizierter Image-Overlay-Arbeitsbereich kann nicht freigegeben werden"
+
+#: bin/minios-image-compose:1766
 msgid "Cannot bind image overlay module to immutable intent"
 msgstr "Image-Overlay-Modul kann nicht an eine unveränderliche Absicht gebunden werden"
 
-#: bin/minios-image-compose:1757
+#: bin/minios-image-compose:1770
 msgid "Invalid image overlay module identity"
 msgstr "Ungültige Identität des Image-Overlay-Moduls"
 
-#: bin/minios-image-compose:1762
+#: bin/minios-image-compose:1775
 msgid "Image overlay order/entries/input bytes/fingerprint:"
 msgstr "Image-Overlay Reihenfolge/Einträge/Eingabe-Bytes/Fingerabdruck:"
 
-#: bin/minios-image-compose:1767
+#: bin/minios-image-compose:1780
 msgid "No safe numeric order remains for a last-loaded capture module"
 msgstr "Für ein zuletzt geladenes Capture-Modul bleibt keine sichere numerische Reihenfolge übrig"
 
-#: bin/minios-image-compose:1774
+#: bin/minios-image-compose:1787
 msgid "Capturing writable session changes"
 msgstr "Änderungen der beschreibbaren Sitzung werden erfasst"
 
-#: bin/minios-image-compose:1780
+#: bin/minios-image-compose:1793
 msgid "Cannot make a private copy of the session selection"
 msgstr "Private Kopie der Sitzungs-Auswahl kann nicht erstellt werden"
 
-#: bin/minios-image-compose:1784
+#: bin/minios-image-compose:1797
 msgid "Cannot hash the session selection"
 msgstr "Die Sitzungs-Auswahl kann nicht gehasht werden"
 
-#: bin/minios-image-compose:1786
+#: bin/minios-image-compose:1799
 msgid "Invalid session selection hash result"
 msgstr "Ungültiges Ergebnis des Sitzungs-Auswahl-Hashs"
 
-#: bin/minios-image-compose:1789
+#: bin/minios-image-compose:1802
 msgid "Invalid session selection digest"
 msgstr "Ungültiger Sitzungs-Auswahl-Digest"
 
-#: bin/minios-image-compose:1790
+#: bin/minios-image-compose:1803
 msgid "Session selection SHA256:"
 msgstr "Sitzungs-Auswahl SHA256:"
 
-#: bin/minios-image-compose:1816
+#: bin/minios-image-compose:1829
 msgid "Failed to capture writable session changes"
 msgstr "Fehler beim Erfassen der beschreibbaren Sitzungsänderungen"
 
-#: bin/minios-image-compose:1820
+#: bin/minios-image-compose:1833
 msgid "savechanges did not create a nonempty regular capture module"
 msgstr "savechanges hat kein nicht-leeres reguläres Capture-Modul erstellt"
 
-#: bin/minios-image-compose:1822
+#: bin/minios-image-compose:1835
 msgid "Captured session module is not valid SquashFS"
 msgstr "Erfasstes Sitzungsmodul ist kein gültiges SquashFS"
 
-#: bin/minios-image-compose:1826
+#: bin/minios-image-compose:1839
 msgid "Captured session module failed full SquashFS listing verification"
 msgstr "Erfasstes Sitzungsmodul hat die vollständige SquashFS-Listenüberprüfung nicht bestanden"
 
-#: bin/minios-image-compose:1836
+#: bin/minios-image-compose:1849
 msgid "Cannot validate privileged capture metadata or create report"
 msgstr "Privilegierte Capture-Metadaten können nicht validiert oder Bericht erstellt werden"
 
-#: bin/minios-image-compose:1839
+#: bin/minios-image-compose:1852
 msgid "Invalid capture report values"
 msgstr "Ungültige Werte im Capture-Bericht"
 
-#: bin/minios-image-compose:1846
+#: bin/minios-image-compose:1859
 msgid "Session capture profile:"
 msgstr "Sitzungs-Capture-Profil:"
 
-#: bin/minios-image-compose:1847
+#: bin/minios-image-compose:1860
 msgid "Session capture union backend:"
 msgstr "Sitzungs-Capture-Union-Backend:"
 
-#: bin/minios-image-compose:1848
+#: bin/minios-image-compose:1861
 msgid "Session capture source fingerprint:"
 msgstr "Sitzungs-Capture-Quell-Fingerabdruck:"
 
-#: bin/minios-image-compose:1849
+#: bin/minios-image-compose:1862
 msgid "Session capture boot ID:"
 msgstr "Sitzungs-Capture-Boot-ID:"
 
-#: bin/minios-image-compose:1851
+#: bin/minios-image-compose:1864
 msgid "Session capture base module fingerprint:"
 msgstr "Sitzungs-Capture-Basismodul-Fingerabdruck:"
 
-#: bin/minios-image-compose:1853
+#: bin/minios-image-compose:1866
 msgid "Session capture has no reliable base module fingerprint"
 msgstr "Sitzungs-Capture hat keinen zuverlässigen Basismodul-Fingerabdruck"
 
-#: bin/minios-image-compose:1855
+#: bin/minios-image-compose:1868
 msgid "Session capture module order:"
 msgstr "Sitzungs-Capture-Modul-Reihenfolge:"
 
-#: bin/minios-image-compose:1856
+#: bin/minios-image-compose:1869
 msgid "Session capture module target:"
 msgstr "Sitzungs-Capture-Modul-Ziel:"
 
-#: bin/minios-image-compose:1857
+#: bin/minios-image-compose:1870
 msgid "Session capture module size:"
 msgstr "Sitzungs-Capture-Modulgröße:"
 
-#: bin/minios-image-compose:1858
+#: bin/minios-image-compose:1871
 msgid "Session capture module SHA256:"
 msgstr "Sitzungs-Capture-Modul SHA256:"
 
-#: bin/minios-image-compose:1951
+#: bin/minios-image-compose:1964
 msgid "No translations found; using source menu for:"
 msgstr "Keine Übersetzungen gefunden; Quellmenü wird verwendet für:"
 
-#: bin/minios-image-compose:1955
+#: bin/minios-image-compose:1968
 msgid "GRUB menu template not found:"
 msgstr "GRUB-Menüvorlage nicht gefunden:"
 
-#: bin/minios-image-compose:1995
+#: bin/minios-image-compose:2008
 msgid "Preparing boot files and menu configuration"
 msgstr "Boot-Dateien und Menü-Konfiguration werden vorbereitet"
 
-#: bin/minios-image-compose:1997
+#: bin/minios-image-compose:2010
 msgid "Cannot create temporary boot directory"
 msgstr "Temporäres Boot-Verzeichnis kann nicht erstellt werden"
 
-#: bin/minios-image-compose:2008
+#: bin/minios-image-compose:2021
 msgid "Cannot copy the BIOS boot image into temporary storage"
 msgstr "BIOS-Boot-Image kann nicht in den temporären Speicher kopiert werden"
 
-#: bin/minios-image-compose:2014
+#: bin/minios-image-compose:2027
 msgid "Using multilingual menu"
 msgstr "Mehrsprachiges Menü wird verwendet"
 
-#: bin/minios-image-compose:2018
+#: bin/minios-image-compose:2031
 msgid "Exclusion removes the selected multilingual GRUB menu"
 msgstr "Ausschluss entfernt das ausgewählte mehrsprachige GRUB-Menü"
 
-#: bin/minios-image-compose:2026 bin/minios-image-compose:2045
+#: bin/minios-image-compose:2039 bin/minios-image-compose:2058
 msgid "Selected GRUB menu is missing or excluded"
 msgstr "Ausgewähltes GRUB-Menü fehlt oder wurde ausgeschlossen"
 
-#: bin/minios-image-compose:2033
+#: bin/minios-image-compose:2046
 msgid "Exclusion removes the selected multilingual SYSLINUX menu"
 msgstr "Ausschluss entfernt das ausgewählte mehrsprachige SYSLINUX-Menü"
 
-#: bin/minios-image-compose:2037 bin/minios-image-compose:2068
+#: bin/minios-image-compose:2050 bin/minios-image-compose:2081
 msgid "Selected SYSLINUX menu is missing or excluded"
 msgstr "Ausgewähltes SYSLINUX-Menü fehlt oder wurde ausgeschlossen"
 
-#: bin/minios-image-compose:2043
+#: bin/minios-image-compose:2056
 msgid "Configuring localized menu for:"
 msgstr "Lokales Menü wird konfiguriert für:"
 
-#: bin/minios-image-compose:2049
+#: bin/minios-image-compose:2062
 msgid "Cannot create temporary GRUB configuration"
 msgstr "Temporäre GRUB-Konfiguration kann nicht erstellt werden"
 
-#: bin/minios-image-compose:2060
+#: bin/minios-image-compose:2073
 msgid "Exclusion removes the selected localized SYSLINUX menu"
 msgstr "Ausschluss entfernt das ausgewählte lokalisierte SYSLINUX-Menü"
 
-#: bin/minios-image-compose:2098
+#: bin/minios-image-compose:2111
 msgid "SYSLINUX configuration is not a provable GRUB chainloader"
 msgstr "SYSLINUX-Konfiguration ist kein nachweisbarer GRUB-Chainloader"
 
-#: bin/minios-image-compose:2104
+#: bin/minios-image-compose:2117
 msgid "No effective boot configuration is available for customization"
 msgstr "Keine effektive Boot-Konfiguration zur Anpassung verfügbar"
 
-#: bin/minios-image-compose:2112
+#: bin/minios-image-compose:2125
 msgid "Effective boot configuration cannot represent the requested customization"
 msgstr "Effektive Boot-Konfiguration kann die gewünschte Anpassung nicht abbilden"
 
-#: bin/minios-image-compose:2116
+#: bin/minios-image-compose:2129
 msgid "Invalid customized boot config mapping"
 msgstr "Ungültige Zuordnung der angepassten Boot-Konfiguration"
 
-#: bin/minios-image-compose:2123
+#: bin/minios-image-compose:2136
 msgid "Cannot bind boot customization plan to immutable intent"
 msgstr "Boot-Anpassungsplan kann nicht an unveränderliche Absicht gebunden werden"
 
-#: bin/minios-image-compose:2127
+#: bin/minios-image-compose:2140
 msgid "Invalid boot customization plan identity"
 msgstr "Ungültige Identität des Boot-Anpassungsplans"
 
-#: bin/minios-image-compose:2133
+#: bin/minios-image-compose:2146
 msgid "Cannot bind boot config targets to immutable intent"
 msgstr "Boot-Konfigurationsziele können nicht an unveränderliche Absicht gebunden werden"
 
-#: bin/minios-image-compose:2137
+#: bin/minios-image-compose:2150
 msgid "Invalid boot config target identity"
 msgstr "Ungültige Identität des Boot-Konfigurationsziels"
 
-#: bin/minios-image-compose:2141
+#: bin/minios-image-compose:2154
 msgid "Boot timeout seconds:"
 msgstr "Boot-Timeout in Sekunden:"
 
-#: bin/minios-image-compose:2142
+#: bin/minios-image-compose:2155
 msgid "Default MiniOS session:"
 msgstr "Standard-MiniOS-Sitzung:"
 
-#: bin/minios-image-compose:2143
+#: bin/minios-image-compose:2156
 msgid "Boot menu entries customized"
 msgstr "Boot-Menüeinträge angepasst"
 
-#: bin/minios-image-compose:2153
+#: bin/minios-image-compose:2166
 msgid "Cannot generate image customization report"
 msgstr "Bericht zur Image-Anpassung kann nicht erstellt werden"
 
-#: bin/minios-image-compose:2194
+#: bin/minios-image-compose:2207
 msgid "Cannot create Ventoy compatibility symbolic links"
 msgstr "Symbolische Links für Ventoy-Kompatibilität können nicht erstellt werden"
 
-#: bin/minios-image-compose:2208
+#: bin/minios-image-compose:2221
 msgid "Created Ventoy compatibility symlinks in ISO"
 msgstr "Ventoy-Kompatibilitäts-Symlinks im ISO erstellt"
 
-#: bin/minios-image-compose:2215
+#: bin/minios-image-compose:2231
+msgid "Cannot prepare retained same-filesystem ISO output"
+msgstr "Vorbereitung der beibehaltenen ISO-Ausgabe auf demselben Dateisystem fehlgeschlagen"
+
+#: bin/minios-image-compose:2234
+msgid "Invalid retained output state"
+msgstr "Ungültiger Zustand der beibehaltenen Ausgabe"
+
+#: bin/minios-image-compose:2243
+msgid "Cannot retain output parent directory"
+msgstr "Übergeordnetes Ausgabeverzeichnis kann nicht beibehalten werden"
+
+#: bin/minios-image-compose:2245
+msgid "Cannot retain private ISO directory"
+msgstr "Privates ISO-Verzeichnis kann nicht beibehalten werden"
+
+#: bin/minios-image-compose:2249
+msgid "Retained ISO output identity check failed"
+msgstr "Identitätsprüfung der beibehaltenen ISO-Ausgabe fehlgeschlagen"
+
+#: bin/minios-image-compose:2257
 msgid "Cannot determine input size:"
 msgstr "Eingabegröße kann nicht ermittelt werden:"
 
-#: bin/minios-image-compose:2217
+#: bin/minios-image-compose:2259
 msgid "Invalid input size reported for:"
 msgstr "Ungültige Eingabegröße gemeldet für:"
 
-#: bin/minios-image-compose:2223
+#: bin/minios-image-compose:2265
 msgid "Cannot estimate private input snapshot space"
 msgstr "Privater Snapshot-Speicherplatz für Eingabe kann nicht geschätzt werden"
 
-#: bin/minios-image-compose:2227
+#: bin/minios-image-compose:2269
 msgid "Invalid private input snapshot space estimate"
 msgstr "Ungültige Schätzung für privaten Snapshot-Speicherplatz der Eingabe"
 
-#: bin/minios-image-compose:2230
+#: bin/minios-image-compose:2272
 msgid "Cannot determine free space in output directory:"
 msgstr "Freier Speicherplatz im Ausgabeverzeichnis kann nicht ermittelt werden:"
 
-#: bin/minios-image-compose:2233
+#: bin/minios-image-compose:2275
 msgid "Invalid free-space information for output directory"
 msgstr "Ungültige Freispeicher-Informationen für Ausgabeverzeichnis"
 
-#: bin/minios-image-compose:2239
+#: bin/minios-image-compose:2281
 msgid "Insufficient free space; bytes available/required:"
 msgstr "Nicht genügend freier Speicherplatz; Bytes verfügbar/erforderlich:"
 
-#: bin/minios-image-compose:2242
+#: bin/minios-image-compose:2284
 msgid "Creating and formatting temporary persistence image"
 msgstr "Temporäres Persistenz-Image wird erstellt und formatiert"
 
-#: bin/minios-image-compose:2245
+#: bin/minios-image-compose:2287
 msgid "Cannot create secure persistence image"
 msgstr "Sicheres Persistenz-Image kann nicht erstellt werden"
 
-#: bin/minios-image-compose:2247
+#: bin/minios-image-compose:2289
 msgid "Creating temporary persistence image"
 msgstr "Temporäres Persistenz-Image wird erstellt"
 
-#: bin/minios-image-compose:2249
+#: bin/minios-image-compose:2291
 msgid "Failed to create persistence image"
 msgstr "Persistenz-Image konnte nicht erstellt werden"
 
-#: bin/minios-image-compose:2251
+#: bin/minios-image-compose:2293
 msgid "Formatting persistence image"
 msgstr "Persistenz-Image wird formatiert"
 
-#: bin/minios-image-compose:2253
+#: bin/minios-image-compose:2295
 msgid "Failed to format persistence image"
 msgstr "Persistenz-Image konnte nicht formatiert werden"
 
-#: bin/minios-image-compose:2273
+#: bin/minios-image-compose:2315
 msgid "Cannot create stable private snapshots of ISO inputs"
 msgstr "Stabile private Snapshots der ISO-Eingaben können nicht erstellt werden"
 
-#: bin/minios-image-compose:2276
+#: bin/minios-image-compose:2318
 msgid "Invalid input snapshot mapping"
 msgstr "Ungültige Snapshot-Zuordnung für Eingabe"
 
-#: bin/minios-image-compose:2287
+#: bin/minios-image-compose:2329
 msgid "Final ISO input has no stable private snapshot"
 msgstr "Letzte ISO-Eingabe hat keinen stabilen privaten Snapshot"
 
-#: bin/minios-image-compose:2309
+#: bin/minios-image-compose:2351
 msgid "A source, configuration, manifest, or module input changed before ISO creation"
 msgstr "Eine Quelle, Konfiguration, ein Manifest oder Moduleingabe wurde vor der ISO-Erstellung geändert"
 
-#: bin/minios-image-compose:2317
+#: bin/minios-image-compose:2359
 msgid "Cannot hash the original build manifest"
 msgstr "Original-Build-Manifest kann nicht gehasht werden"
 
-#: bin/minios-image-compose:2319
+#: bin/minios-image-compose:2361
 msgid "Invalid build manifest hash result"
 msgstr "Ungültiges Hash-Ergebnis für Build-Manifest"
 
-#: bin/minios-image-compose:2348
+#: bin/minios-image-compose:2390
 msgid "Generating ISO image"
 msgstr "ISO-Image wird erzeugt"
 
-#: bin/minios-image-compose:2350
+#: bin/minios-image-compose:2392
 msgid "Failed to create ISO image"
 msgstr "ISO-Image konnte nicht erstellt werden"
 
-#: bin/minios-image-compose:2353
+#: bin/minios-image-compose:2395
 msgid "ISO writer did not create a nonempty regular private output file"
 msgstr "ISO-Writer hat keine nicht-leere reguläre private Ausgabedatei erstellt"
 
-#: bin/minios-image-compose:2356
+#: bin/minios-image-compose:2398
 msgid "A source, configuration, manifest, or module input changed during ISO creation"
 msgstr "Eine Quelle, Konfiguration, ein Manifest oder Moduleingabe wurde während der ISO-Erstellung geändert"
 
-#: bin/minios-image-compose:2359
+#: bin/minios-image-compose:2401
 msgid "Verifying ISO structure and boot records"
 msgstr "ISO-Struktur und Boot-Records werden überprüft"
 
-#: bin/minios-image-compose:2364
+#: bin/minios-image-compose:2406
 msgid "Failed to read ISO boot and volume reports"
 msgstr "ISO-Boot- und Volume-Berichte konnten nicht gelesen werden"
 
-#: bin/minios-image-compose:2369
+#: bin/minios-image-compose:2411
 msgid "ISO boot reports do not describe bootable BIOS, UEFI, and system-area data"
 msgstr "ISO-Boot-Berichte beschreiben keine bootfähigen BIOS-, UEFI- und Systembereichsdaten"
 
-#: bin/minios-image-compose:2372
+#: bin/minios-image-compose:2414
 msgid "ISO volume label does not match the requested label"
 msgstr "ISO-Volume-Label stimmt nicht mit dem angeforderten Label überein"
 
-#: bin/minios-image-compose:2376
+#: bin/minios-image-compose:2418
 msgid "Failed to read ISO filesystem tree"
 msgstr "ISO-Dateisystembaum konnte nicht gelesen werden"
 
-#: bin/minios-image-compose:2388
+#: bin/minios-image-compose:2430
 msgid "ISO verification found a missing grafted path:"
 msgstr "Bei der ISO-Überprüfung wurde ein fehlender eingehängter Pfad gefunden:"
 
-#: bin/minios-image-compose:2393
+#: bin/minios-image-compose:2435
 msgid "ISO verification found a missing required path:"
 msgstr "Bei der ISO-Überprüfung wurde ein fehlender erforderlicher Pfad gefunden:"
 
-#: bin/minios-image-compose:2400
+#: bin/minios-image-compose:2442
 msgid "Cannot create customization verification directory"
 msgstr "Verzeichnis zur Überprüfung der Anpassung kann nicht erstellt werden"
 
-#: bin/minios-image-compose:2438
+#: bin/minios-image-compose:2480
 msgid "Failed to extract embedded customization verification inputs"
 msgstr "Extrahieren der eingebetteten Anpassungsüberprüfungs-Eingaben fehlgeschlagen"
 
-#: bin/minios-image-compose:2443
+#: bin/minios-image-compose:2485
 msgid "Embedded customization verification produced an unsafe or empty file"
 msgstr "Eingebettete Anpassungsüberprüfung hat eine unsichere oder leere Datei erzeugt"
 
-#: bin/minios-image-compose:2457
+#: bin/minios-image-compose:2499
 msgid "Embedded customization bytes or digest report failed verification"
 msgstr "Eingebettete Anpassungs-Bytes oder Digest-Bericht haben die Überprüfung nicht bestanden"
 
-#: bin/minios-image-compose:2461
-msgid "Embedded image overlay has an invalid SquashFS superblock"
-msgstr "Eingebettetes Image-Overlay hat einen ungültigen SquashFS-Superblock"
-
-#: bin/minios-image-compose:2466
-msgid "Embedded image overlay does not match the captured input manifest"
-msgstr "Das eingebettete Bild-Overlay stimmt nicht mit dem erfassten Eingabemanifest überein"
-
-#: bin/minios-image-compose:2473
+#: bin/minios-image-compose:2505
 msgid "Cannot create embedded verification directory"
 msgstr "Das eingebettete Verzeichnis für die Verifizierung kann nicht erstellt werden"
 
-#: bin/minios-image-compose:2488
+#: bin/minios-image-compose:2520
 msgid "Failed to extract embedded capture verification inputs"
 msgstr "Die eingebetteten Eingaben zur Verifizierung der Erfassung konnten nicht extrahiert werden"
 
-#: bin/minios-image-compose:2493
+#: bin/minios-image-compose:2525
 msgid "Embedded capture verification produced an unsafe or empty file"
 msgstr "Die eingebettete Erfassungsverifizierung hat eine unsichere oder leere Datei erzeugt"
 
-#: bin/minios-image-compose:2498
+#: bin/minios-image-compose:2530
 msgid "Embedded capture bytes or digest report failed verification"
 msgstr "Die eingebetteten Erfassungs-Bytes oder der Digest-Bericht haben die Verifizierung nicht bestanden"
 
-#: bin/minios-image-compose:2501
+#: bin/minios-image-compose:2533
 msgid "Embedded capture module has an invalid SquashFS superblock"
 msgstr "Das eingebettete Erfassungsmodul enthält einen ungültigen SquashFS-Superblock"
 
-#: bin/minios-image-compose:2506
+#: bin/minios-image-compose:2538
 msgid "Embedded capture module failed SquashFS listing verification"
 msgstr "Das eingebettete Erfassungsmodul hat die SquashFS-Verzeichnisüberprüfung nicht bestanden"
 
-#: bin/minios-image-compose:2512
-msgid "Cannot hash verified private ISO"
-msgstr "Der verifizierte private ISO kann nicht gehasht werden"
-
-#: bin/minios-image-compose:2515
-msgid "Invalid private ISO hash result"
-msgstr "Ungültiges Hash-Ergebnis für private ISO"
-
-#: bin/minios-image-compose:2521
+#: bin/minios-image-compose:2546
 msgid "Atomic ISO publication failed because an output path identity changed"
 msgstr "Die atomare ISO-Veröffentlichung ist fehlgeschlagen, weil sich die Identität des Ausgabepfads geändert hat"
 
-#: bin/minios-image-compose:2524
+#: bin/minios-image-compose:2549
 msgid "ISO build completed successfully"
 msgstr "ISO-Erstellung erfolgreich abgeschlossen"
 
-#: bin/minios-image-compose:2525
+#: bin/minios-image-compose:2550
 msgid "ISO successfully created:"
 msgstr "ISO erfolgreich erstellt:"
+
+#~ msgid "Embedded image overlay has an invalid SquashFS superblock"
+#~ msgstr "Eingebettetes Image-Overlay hat einen ungültigen SquashFS-Superblock"
+
+#~ msgid "Embedded image overlay does not match the captured input manifest"
+#~ msgstr "Das eingebettete Bild-Overlay stimmt nicht mit dem erfassten Eingabemanifest überein"
+
+#~ msgid "Cannot hash verified private ISO"
+#~ msgstr "Der verifizierte private ISO kann nicht gehasht werden"
+
+#~ msgid "Invalid private ISO hash result"
+#~ msgstr "Ungültiges Hash-Ergebnis für private ISO"

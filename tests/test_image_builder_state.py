@@ -1156,35 +1156,37 @@ def test_background_task_delivers_cancelled_outcome_without_using_result():
         outcomes.append(outcome)
         completed.set()
 
-    task = controller.BackgroundTask(worker, completion).start()
+    task = controller.BackgroundTask(
+        worker, completion,
+        dispatcher=lambda callback, *args: callback(*args)).start()
     assert started.wait(1)
     assert task.cancel()
     release.set()
     assert completed.wait(2)
     assert outcomes[0].cancelled is True
-    assert outcomes[0].result == 'stale-result'
+    assert outcomes[0].result is None
     assert task.state == 'cancelled'
 
 
-def test_background_task_cancels_result_queued_for_dispatch():
+def test_background_task_delivers_success_queued_for_dispatch():
     queued = []
     outcomes = []
 
-    def dispatcher(callback, outcome):
-        queued.append((callback, outcome))
+    def dispatcher(callback, *args):
+        queued.append((callback, args))
 
     task = controller.BackgroundTask(
         lambda _token: 'queued-result', outcomes.append,
         dispatcher=dispatcher).start()
     assert task.wait(1)
-    assert task.state == 'finished'
-    assert task.cancel()
+    assert task.state == 'success'
+    assert task.cancel() is False
 
-    callback, outcome = queued.pop()
-    callback(outcome)
-    assert outcomes[0].cancelled is True
+    callback, (delivered_callback, args) = queued.pop()
+    callback(delivered_callback, args)
+    assert outcomes[0].cancelled is False
     assert outcomes[0].result == 'queued-result'
-    assert task.state == 'cancelled'
+    assert task.state == 'success'
 
 
 def test_cancellable_command_runner_kills_process_group():
@@ -1263,6 +1265,13 @@ def test_cancellable_runner_kills_child_after_group_leader_exits(tmp_path):
             try:
                 os.kill(child_pid, 0)
             except ProcessLookupError:
+                break
+            try:
+                with open('/proc/{}/stat'.format(child_pid), 'r') as handle:
+                    process_state = handle.read().split()[2]
+            except (OSError, IndexError):
+                break
+            if process_state == 'Z':
                 break
             time.sleep(0.02)
         else:
