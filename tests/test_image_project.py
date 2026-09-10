@@ -3229,6 +3229,43 @@ def test_resolve_device_mountpoint_unescapes_spaced_mountpoint(tmp_path):
         '/dev/loop3', mounts_path=str(mounts)) == '/media/My Disc'
 
 
+def test_resolve_device_mountpoint_falls_back_to_mountinfo_identity(
+        monkeypatch, tmp_path):
+    mounts = tmp_path / 'mounts'
+    mounts.write_text(
+        'MINIOS_SOURCE /run/media/user/MiniOS iso9660 ro 0 0\n')
+    mountinfo = tmp_path / 'mountinfo'
+    mountinfo.write_text(
+        '36 25 7:42 / /run/media/user/MiniOS ro,nosuid,nodev - '
+        'iso9660 MINIOS_SOURCE ro\n')
+    real_stat = backend.os.stat
+
+    def fake_stat(path, *args, **kwargs):
+        if path == '/dev/loop42':
+            return SimpleNamespace(
+                st_mode=stat.S_IFBLK, st_rdev=os.makedev(7, 42))
+        return real_stat(path, *args, **kwargs)
+
+    monkeypatch.setattr(backend.os, 'stat', fake_stat)
+
+    assert backend.resolve_device_mountpoint(
+        '/dev/loop42', mounts_path=str(mounts),
+        mountinfo_path=str(mountinfo)) == '/run/media/user/MiniOS'
+
+
+def test_loop_device_mount_candidates_include_numbered_partitions(tmp_path):
+    sys_block = tmp_path / 'sys-block'
+    for name in ('loop6', 'loop6p10', 'loop6p2', 'loop7p1', 'sda1'):
+        (sys_block / name).mkdir(parents=True)
+
+    assert backend.loop_device_mount_candidates(
+        '/dev/loop6', sys_block_root=str(sys_block),
+        dev_root='/devices') == (
+            '/dev/loop6', '/devices/loop6p2', '/devices/loop6p10')
+    assert backend.loop_device_mount_candidates(
+        '/dev/sr0', sys_block_root=str(sys_block)) == ('/dev/sr0',)
+
+
 def test_find_loop_backing_device_matches_backing_file(tmp_path):
     iso = tmp_path / 'image.iso'
     iso.write_bytes(b'iso-bytes')

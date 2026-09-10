@@ -1,3 +1,12 @@
+minios-image-builder (1.0.12) unstable; urgency=medium
+
+  * Reuse an existing mounted ISO loop device and support partitioned loop
+    devices when resolving image mounts.
+  * Report mount failures with actionable udisks diagnostics and cover the
+    mountinfo fallback in regression tests.
+
+ -- crims0n <crims0n@minios.dev>  Thu, 10 Sep 2026 16:16:47 +0300
+
 minios-image-builder (1.0.11) unstable; urgency=medium
 
   * Keep session capture bound to every original base module when optional

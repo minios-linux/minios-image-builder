@@ -1525,6 +1525,23 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             if not iso_path or not os.path.isfile(iso_path):
                 raise RuntimeError(_('Choose a readable MiniOS ISO file.'))
             loops_before = set(backend.find_loop_backing_devices(iso_path))
+            # A live system booted from an ISO stored on disk already has that
+            # exact file attached to a read-only loop device. Reuse its mounted
+            # filesystem instead of asking udisks to create and mount a second
+            # loop for the same image. The application takes no ownership of
+            # pre-existing loop or mount state.
+            for existing_loop in sorted(loops_before):
+                for existing_device in backend.loop_device_mount_candidates(
+                        existing_loop):
+                    existing_mount = backend.resolve_device_mountpoint(
+                        existing_device)
+                    if existing_mount and os.path.isdir(existing_mount):
+                        return {
+                            'mount_path': existing_mount,
+                            'block_device': None,
+                            'loop_device': None,
+                            'media_category': mode,
+                        }
             returncode, _out, _err = runner([
                 udisks, 'loop-setup', '-r', '-f', iso_path,
                 '--no-user-interaction'])
@@ -1538,28 +1555,47 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
                 raise RuntimeError(
                     _('Could not set up a read-only loop device for the ISO.'))
             loop_device = created_loops[0]
-            block_device = loop_device
+            mount_candidates = backend.loop_device_mount_candidates(loop_device)
         else:
             if not device:
                 raise RuntimeError(_('Choose an optical drive.'))
-            block_device = device
-        returncode, _out, _err = runner(
-            [udisks, 'mount', '-b', block_device, '--no-user-interaction'])
-        mounted_now = returncode == 0
-        mount_path = backend.resolve_device_mountpoint(block_device)
-        if not mount_path or not os.path.isdir(mount_path):
-            self._unmount_medium({
-                'block_device': block_device if mounted_now else None,
-                'loop_device': loop_device})
-            raise RuntimeError(
-                _('The medium mounted but its mount point could not be '
-                  'resolved.'))
-        return {
-            'mount_path': mount_path,
-            'block_device': block_device if mounted_now else None,
-            'loop_device': loop_device,
-            'media_category': mode,
-        }
+            mount_candidates = (device,)
+
+        mount_errors = []
+        for block_device in mount_candidates:
+            returncode, _out, _err = runner(
+                [udisks, 'mount', '-b', block_device,
+                 '--no-user-interaction'])
+            mounted_now = returncode == 0
+            mount_path = backend.resolve_device_mountpoint(block_device)
+            if mount_path and os.path.isdir(mount_path):
+                return {
+                    'mount_path': mount_path,
+                    'block_device': block_device if mounted_now else None,
+                    'loop_device': loop_device,
+                    'media_category': mode,
+                }
+            if mounted_now:
+                self._unmount_medium({
+                    'block_device': block_device, 'loop_device': None})
+            if returncode != 0:
+                if isinstance(_err, bytes):
+                    error_text = _err[:4096].decode('utf-8', 'replace')
+                else:
+                    error_text = str(_err or '')[:4096]
+                error_text = ' '.join(error_text.split())
+                if not error_text:
+                    error_text = 'udisksctl mount exited with status {}.'.format(
+                        returncode)
+                mount_errors.append('{}: {}'.format(
+                    block_device, error_text))
+
+        self._unmount_medium({
+            'block_device': None, 'loop_device': loop_device})
+        if mount_errors:
+            raise RuntimeError(mount_errors[-1])
+        raise RuntimeError(
+            _('The medium mounted but its mount point could not be resolved.'))
 
     def _unmount_medium(self, ownership):
         """Best-effort bounded unmount of a medium this application mounted."""

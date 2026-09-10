@@ -879,6 +879,38 @@ def test_launcher_augments_rootless_path_and_preserves_existing_entries():
     assert 'Usage: minios-image-builder' in completed.stdout
 
 
+def test_mount_medium_reuses_preexisting_mounted_iso_loop(
+        monkeypatch, tmp_path):
+    iso = tmp_path / 'image.iso'
+    iso.write_bytes(b'x')
+    mount_dir = tmp_path / 'mounted-iso'
+    mount_dir.mkdir()
+    window = SimpleNamespace(
+        _udisksctl_path=lambda: '/usr/bin/udisksctl',
+        _unmount_medium=lambda ownership: None)
+    calls = []
+
+    monkeypatch.setattr(
+        ui.backend, 'find_loop_backing_devices',
+        lambda path: ('/dev/loop2', '/dev/loop7'))
+    monkeypatch.setattr(
+        ui.backend, 'loop_device_mount_candidates',
+        lambda device: ((device, device + 'p1')
+                        if device == '/dev/loop7' else (device,)))
+    monkeypatch.setattr(
+        ui.backend, 'resolve_device_mountpoint',
+        lambda device: str(mount_dir) if device == '/dev/loop7p1' else None)
+
+    ownership = ui.ImageBuilderWindow._mount_medium(
+        window, lambda argv: calls.append(list(argv)),
+        'iso', str(iso), None)
+
+    assert ownership == {
+        'mount_path': str(mount_dir), 'block_device': None,
+        'loop_device': None, 'media_category': 'iso'}
+    assert calls == []
+
+
 def test_mount_medium_records_ownership_for_iso_loop(monkeypatch, tmp_path):
     iso = tmp_path / 'image.iso'
     iso.write_bytes(b'x')
@@ -896,8 +928,9 @@ def test_mount_medium_records_ownership_for_iso_loop(monkeypatch, tmp_path):
     loop_scans = iter((('/dev/loop2',), ('/dev/loop2', '/dev/loop5')))
     monkeypatch.setattr(ui.backend, 'find_loop_backing_devices',
                         lambda path: next(loop_scans))
-    monkeypatch.setattr(ui.backend, 'resolve_device_mountpoint',
-                        lambda device: str(mount_dir))
+    monkeypatch.setattr(
+        ui.backend, 'resolve_device_mountpoint',
+        lambda device: str(mount_dir) if device == '/dev/loop5' else None)
 
     ownership = ui.ImageBuilderWindow._mount_medium(
         window, runner, 'iso', str(iso), None)
@@ -909,6 +942,48 @@ def test_mount_medium_records_ownership_for_iso_loop(monkeypatch, tmp_path):
         '/usr/bin/udisksctl', 'loop-setup', '-r', '-f']
     assert ['/usr/bin/udisksctl', 'mount', '-b', '/dev/loop5',
             '--no-user-interaction'] in calls
+
+
+def test_mount_medium_uses_iso_partition_when_hybrid_loop_is_not_mountable(
+        monkeypatch, tmp_path):
+    iso = tmp_path / 'image.iso'
+    iso.write_bytes(b'x')
+    mount_dir = tmp_path / 'mnt'
+    mount_dir.mkdir()
+    window = SimpleNamespace(
+        _udisksctl_path=lambda: '/usr/bin/udisksctl',
+        _unmount_medium=lambda ownership: None)
+    calls = []
+    loop_scans = iter(((), ('/dev/loop6',)))
+    monkeypatch.setattr(
+        ui.backend, 'find_loop_backing_devices',
+        lambda path: next(loop_scans))
+    monkeypatch.setattr(
+        ui.backend, 'loop_device_mount_candidates',
+        lambda device: ('/dev/loop6', '/dev/loop6p1', '/dev/loop6p2'))
+    monkeypatch.setattr(
+        ui.backend, 'resolve_device_mountpoint',
+        lambda device: str(mount_dir) if device == '/dev/loop6p1' else None)
+
+    def runner(argv):
+        calls.append(list(argv))
+        if 'loop-setup' in argv:
+            return (0, '', '')
+        if '/dev/loop6' in argv:
+            return (1, '', 'not a mountable filesystem')
+        return (0, '', '')
+
+    ownership = ui.ImageBuilderWindow._mount_medium(
+        window, runner, 'iso', str(iso), None)
+
+    assert ownership == {
+        'mount_path': str(mount_dir), 'block_device': '/dev/loop6p1',
+        'loop_device': '/dev/loop6', 'media_category': 'iso'}
+    assert ['/usr/bin/udisksctl', 'mount', '-b', '/dev/loop6',
+            '--no-user-interaction'] in calls
+    assert ['/usr/bin/udisksctl', 'mount', '-b', '/dev/loop6p1',
+            '--no-user-interaction'] in calls
+    assert not any('/dev/loop6p2' in call for call in calls)
 
 
 def test_mount_medium_does_not_own_preexisting_loop_after_setup_failure(
@@ -957,6 +1032,33 @@ def test_mount_medium_cleans_new_loop_after_ambiguous_setup(
             '--no-user-interaction'] in calls
     assert ['/usr/bin/udisksctl', 'loop-delete', '-b', '/dev/loop5',
             '--no-user-interaction'] in calls
+
+
+def test_mount_medium_reports_udisks_mount_failure(monkeypatch, tmp_path):
+    iso = tmp_path / 'image.iso'
+    iso.write_bytes(b'x')
+    cleaned = []
+    window = SimpleNamespace(
+        _udisksctl_path=lambda: '/usr/bin/udisksctl',
+        _unmount_medium=lambda ownership: cleaned.append(ownership))
+    loop_scans = iter(((), ('/dev/loop5',)))
+    monkeypatch.setattr(
+        ui.backend, 'find_loop_backing_devices',
+        lambda path: next(loop_scans))
+    monkeypatch.setattr(
+        ui.backend, 'resolve_device_mountpoint', lambda device: None)
+
+    def runner(argv):
+        if 'loop-setup' in argv:
+            return (0, b'', b'')
+        return (1, b'', b'Error mounting /dev/loop5: device is busy\n')
+
+    with pytest.raises(RuntimeError, match='device is busy'):
+        ui.ImageBuilderWindow._mount_medium(
+            window, runner, 'iso', str(iso), None)
+
+    assert cleaned == [{
+        'block_device': None, 'loop_device': '/dev/loop5'}]
 
 
 def test_mount_medium_optical_disowns_preexisting_mount(monkeypatch, tmp_path):

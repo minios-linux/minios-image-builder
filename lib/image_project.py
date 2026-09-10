@@ -5064,12 +5064,15 @@ def _available_memory_bytes(meminfo_path):
     return None
 
 
-def resolve_device_mountpoint(device, mounts_path='/proc/mounts'):
+def resolve_device_mountpoint(device, mounts_path='/proc/mounts',
+                              mountinfo_path='/proc/self/mountinfo'):
     """Return the canonical mountpoint for a block device, or None.
 
-    The device is matched by canonical path against the mount table so that
-    human-readable udisks output is never parsed as state. The returned path is
-    absolute and normalized.
+    Prefer the traditional mount-table source path when it identifies the
+    device directly. Some live/persistence stacks expose a different source
+    name for the same block device, so fall back to the kernel major:minor
+    identity from mountinfo. Human-readable udisks output is never parsed as
+    state. The returned path is absolute and normalized.
     """
     if not device:
         return None
@@ -5086,7 +5089,48 @@ def resolve_device_mountpoint(device, mounts_path='/proc/mounts'):
             normalized = os.path.normpath(mountpoint)
             if os.path.isabs(normalized) and normalized != os.sep + os.sep:
                 return normalized
+
+    try:
+        device_stat = os.stat(device)
+    except OSError:
+        return None
+    if not stat.S_ISBLK(device_stat.st_mode):
+        return None
+    device_number = '{}:{}'.format(
+        os.major(device_stat.st_rdev), os.minor(device_stat.st_rdev))
+    for mounted_device, _root, mountpoint, _fstype, _options in (
+            _read_mountinfo(mountinfo_path)):
+        if mounted_device != device_number:
+            continue
+        normalized = os.path.normpath(mountpoint)
+        if os.path.isabs(normalized) and normalized != os.sep + os.sep:
+            return normalized
     return None
+
+
+def loop_device_mount_candidates(loop_device, sys_block_root='/sys/class/block',
+                                 dev_root='/dev'):
+    """Return a loop device followed by its numbered partition devices."""
+    if not loop_device:
+        return ()
+    try:
+        base = os.path.basename(os.path.realpath(loop_device))
+    except OSError:
+        base = os.path.basename(loop_device)
+    if not re.match(r'^loop[0-9]+$', base):
+        return (loop_device,)
+    try:
+        names = os.listdir(sys_block_root)
+    except OSError:
+        return (loop_device,)
+    pattern = re.compile(r'^{}p([0-9]+)$'.format(re.escape(base)))
+    partitions = []
+    for name in names:
+        match = pattern.match(name)
+        if match:
+            partitions.append((int(match.group(1)), os.path.join(dev_root, name)))
+    partitions.sort(key=lambda item: item[0])
+    return (loop_device,) + tuple(path for _number, path in partitions)
 
 
 def find_loop_backing_devices(backing_file, sys_block_root='/sys/class/block'):
@@ -9520,8 +9564,8 @@ __all__ = [
     'discover_active_external_modules', 'discover_running_minios',
     'discover_running_source', 'discover_mounted_source',
     'list_optical_devices', 'MOUNTED_SOURCE_BACKENDS',
-    'resolve_device_mountpoint', 'find_loop_backing_device',
-    'find_loop_backing_devices',
+    'resolve_device_mountpoint', 'loop_device_mount_candidates',
+    'find_loop_backing_device', 'find_loop_backing_devices',
     'grep_ere_validate', 'inspect_source_boot_menu', 'inspect_source_modules',
     'inspect_overlay_directory', 'load_image_project',
     'load_session_inventory', 'module_exclusion_regex', 'overlay_fingerprint',
