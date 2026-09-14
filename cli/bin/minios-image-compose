@@ -4,7 +4,7 @@
 
 set -Eeuo pipefail
 
-VERSION="1.0.12"
+VERSION="1.1.0"
 SYSTEMNAME="MiniOS"
 export TEXTDOMAIN="minios-image-compose"
 
@@ -84,6 +84,7 @@ declare -a GRAFT_DESTINATIONS=()
 declare -a GRAFT_POINTS=()
 declare -a REQUIRED_ISO_PATHS=()
 declare -a SOURCE_MODULE_PATHS=()
+declare -a CAPTURE_BASE_MODULE_INPUTS=()
 declare -a CAPTURE_BASE_MODULE_PATHS=()
 declare -a SOURCE_SYMLINK_DESTINATIONS=()
 declare -a SOURCE_SYMLINK_TARGETS=()
@@ -508,6 +509,15 @@ while (( $# > 0 )); do
         CAPTURE_COMPRESSION=${1#*=}
         shift
         ;;
+    --capture-base-module)
+        require_value "$1" "$#"
+        CAPTURE_BASE_MODULE_INPUTS+=("$2")
+        shift 2
+        ;;
+    --capture-base-module=*)
+        CAPTURE_BASE_MODULE_INPUTS+=("${1#*=}")
+        shift
+        ;;
     --boot-timeout)
         require_value "$1" "$#"
         BOOT_TIMEOUT_SET=true
@@ -648,6 +658,9 @@ if [[ $CAPTURE_CHANGES != selected && $CAPTURE_SELECTION_SET == true ]]; then
 fi
 if [[ -z $CAPTURE_CHANGES && $CAPTURE_COMPRESSION_SET == true ]]; then
     die 1 "$(gettext "--capture-compression requires --capture-changes")"
+fi
+if [[ -z $CAPTURE_CHANGES && ${#CAPTURE_BASE_MODULE_INPUTS[@]} -gt 0 ]]; then
+    die 1 "$(gettext "--capture-base-module requires --capture-changes")"
 fi
 case $CAPTURE_COMPRESSION in
 zstd | gzip | lzo | xz) ;;
@@ -970,6 +983,21 @@ for module_input in "${MODULE_INPUTS[@]}"; do
         die 3 "$(gettext "Additional module is not valid SquashFS:") $module_path"
     fi
     MODULES+=("$module_path")
+done
+
+declare -A CAPTURE_BASE_REAL_PATHS=()
+for capture_base_input in "${CAPTURE_BASE_MODULE_INPUTS[@]}"; do
+    validate_no_line_break "$(gettext "Capture base module path")" "$capture_base_input"
+    if ! capture_base_path=$(realpath -e -- "$capture_base_input"); then
+        die 3 "$(gettext "Cannot canonicalize capture base module:") $capture_base_input"
+    fi
+    [[ -n ${MODULE_REAL_PATHS[$capture_base_path]:-} ]] ||
+        die 3 "$(gettext "Capture base module must also be an added module:") $capture_base_path"
+    if [[ -n ${CAPTURE_BASE_REAL_PATHS[$capture_base_path]:-} ]]; then
+        die 3 "$(gettext "Capture base module was specified more than once:") $capture_base_path"
+    fi
+    CAPTURE_BASE_REAL_PATHS["$capture_base_path"]=1
+    CAPTURE_BASE_MODULE_PATHS+=("$capture_base_path")
 done
 
 if [[ $TARGET_OPTION_SET == false ]]; then

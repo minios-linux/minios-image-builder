@@ -1968,6 +1968,11 @@ class ProjectState(object):
         return all(not module.required or module.basename in selected
                    for module in self.source_info.modules)
 
+    def capture_source_status(self):
+        return image_project.session_capture_source_status(
+            self.source_info, self.selected_source_modules,
+            self.additional_module_paths)
+
     def content_ready(self):
         return bool(
             self.source_supported and self.source_modules(selected=True) and
@@ -1984,6 +1989,9 @@ class ProjectState(object):
                 self.capture_mode, self.capture_include_paths,
                 self.sensitive_capture_acknowledged,
                 self.capture_capability_status):
+            return False
+        if (self.capture_mode in image_project.SESSION_CAPTURE_MODES and
+                not self.capture_source_status()['available']):
             return False
         if not self.include_current_config:
             return False

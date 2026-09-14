@@ -23,7 +23,8 @@ def _module(path, relative_path, role='custom', required=False, size=1024):
         core=role == 'core', active=None)
 
 
-def _source(tmp_path, status=backend.SOURCE_SUPPORTED):
+def _source(tmp_path, status=backend.SOURCE_SUPPORTED, backend_name='livekit',
+            media_category='data'):
     if status != backend.SOURCE_SUPPORTED:
         return backend.SourceInfo(status)
     root = tmp_path / 'live-root'
@@ -37,8 +38,8 @@ def _source(tmp_path, status=backend.SOURCE_SUPPORTED):
                 role='desktop', size=8192),
     )
     return backend.SourceInfo(
-        status, backend='livekit', root_path=str(root),
-        source_path=str(source), media_category='data',
+        status, backend=backend_name, root_path=str(root),
+        source_path=str(source), media_category=media_category,
         fingerprint='{}:{}'.format(
             backend.SOURCE_FINGERPRINT_ALGORITHM, 'b' * 64),
         metadata={'architecture': 'amd64'}, modules=modules,
@@ -498,6 +499,65 @@ def test_capture_readiness_modes_acknowledgement_and_selection(tmp_path):
     state.set_capture_mode('selected')
     assert not state.defaults_ready()
     state.set_capture_paths(('opt/example',))
+    assert state.defaults_ready()
+
+
+def test_capture_source_policy_requires_running_source_and_all_modules(tmp_path):
+    state = _state(tmp_path, _source(tmp_path))
+    state.set_capture_capability_status(_capture_probe())
+    state.set_capture_mode('clean')
+
+    assert state.capture_source_status()['available']
+    assert state.defaults_ready()
+
+    assert state.set_source_module_selected('04-desktop-amd64.sb', False)
+    source_status = state.capture_source_status()
+    assert not source_status['available']
+    assert source_status['reason_codes'] == (
+        'capture_requires_all_source_modules',)
+    assert source_status['excluded_source_modules'] == (
+        '04-desktop-amd64.sb',)
+    assert not state.defaults_ready()
+
+    assert state.set_source_module_selected('04-desktop-amd64.sb', True)
+    assert state.capture_source_status()['available']
+    assert state.defaults_ready()
+
+    current = state.source_info
+    runtime_path = tmp_path / 'runtime' / '07-runtime-addon.sb'
+    runtime_module = backend.ModuleInfo(
+        path=str(runtime_path), relative_path=None, size=1024,
+        sha256='d' * 64, order_prefix=7, role='custom',
+        friendly_name='Runtime addon', description='Test runtime addon',
+        source_category='runtime-external', active=True)
+    running_with_external = backend.SourceInfo(
+        current.status, backend=current.backend, root_path=current.root_path,
+        source_path=current.source_path, media_category=current.media_category,
+        fingerprint=current.fingerprint,
+        fingerprint_algorithm=current.fingerprint_algorithm,
+        metadata=dict(current.metadata), modules=current.modules,
+        active_external_modules=(runtime_module,),
+        total_bytes=current.total_bytes,
+        non_module_bytes=current.non_module_bytes)
+    state.apply_source_info(running_with_external, adopt_reference=True)
+    source_status = state.capture_source_status()
+    assert source_status['reason_codes'] == (
+        'capture_requires_active_external_modules',)
+    assert not state.defaults_ready()
+    assert state.set_additional_module_selected(str(runtime_path), True)
+    assert state.capture_source_status()['available']
+    assert state.defaults_ready()
+
+    external = _source(
+        tmp_path, backend_name='iso', media_category='iso')
+    state.apply_source_info(external, adopt_reference=True)
+    source_status = state.capture_source_status()
+    assert not source_status['available']
+    assert source_status['reason_codes'] == (
+        'capture_external_source_unsupported',)
+    assert not state.defaults_ready()
+
+    state.set_capture_mode('custom')
     assert state.defaults_ready()
 
 

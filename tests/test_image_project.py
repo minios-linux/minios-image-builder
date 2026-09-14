@@ -2053,6 +2053,93 @@ def test_selected_capture_materializes_private_digest_bound_intent(tmp_path):
         backend.prepare_build_command(plan)
 
 
+def test_capture_rejects_excluded_running_source_module(tmp_path):
+    root, source, mounts, sys_block, release, info = _make_source(tmp_path)
+    project_dir = tmp_path / 'project'
+    project_dir.mkdir()
+    names = tuple(module.basename for module in info.modules[:-1])
+    project = backend.ImageProject(
+        project_base=str(project_dir), source_backend=info.backend,
+        source_root_path=info.root_path, source_path=info.source_path,
+        source_fingerprint=info.fingerprint,
+        selected_source_modules=names,
+        capture_mode='clean', output_path='out.iso')
+
+    plan = _plan(project, info, _config(project_dir))
+
+    assert not plan.buildable
+    assert 'capture_requires_all_source_modules' in _error_codes(plan)
+
+
+@pytest.mark.parametrize('media_category', ('iso', 'optical'))
+def test_capture_rejects_external_media_source(tmp_path, media_category):
+    root, source, mounts, sys_block, release, unused = _make_source(
+        tmp_path, backend_name=media_category, category='')
+    info = backend.discover_mounted_source(
+        str(root), media_category=media_category, mounts_path=str(mounts),
+        sys_block_root=str(sys_block), runtime_release_path=str(release))
+    assert info.supported
+    assert info.backend == media_category
+    project_dir = tmp_path / 'project'
+    project_dir.mkdir()
+    project = _project(
+        info, project_dir / 'out.iso', project_dir, capture_mode='clean')
+
+    plan = _plan(project, info, _config(project_dir))
+
+    assert not plan.buildable
+    assert 'capture_external_source_unsupported' in _error_codes(plan)
+
+    without_capture = _project(
+        info, project_dir / 'plain.iso', project_dir, capture_mode='custom')
+    plain_plan = _plan(without_capture, info, _config(project_dir))
+    assert plain_plan.buildable
+
+
+def test_capture_requires_and_binds_active_external_root_module(tmp_path):
+    root, source, mounts, sys_block, release, info = _make_source(tmp_path)
+    external_path = _fake_module(tmp_path / 'external' / '07-runtime-addon.sb')
+    external = backend.ModuleInfo(
+        path=str(external_path), relative_path=None,
+        size=external_path.stat().st_size,
+        sha256=backend.sha256_file(str(external_path)), order_prefix=7,
+        role='custom', friendly_name='Runtime addon', description='test',
+        source_category='runtime-external', active=True)
+    running = backend.SourceInfo(
+        info.status, backend=info.backend, root_path=info.root_path,
+        source_path=info.source_path, media_category=info.media_category,
+        fingerprint=info.fingerprint,
+        fingerprint_algorithm=info.fingerprint_algorithm,
+        metadata=dict(info.metadata), modules=info.modules,
+        active_external_modules=(external,), diagnostics=info.diagnostics,
+        collisions=info.collisions, total_bytes=info.total_bytes,
+        non_module_bytes=info.non_module_bytes,
+        input_manifest=info.input_manifest)
+    project_dir = tmp_path / 'project'
+    project_dir.mkdir()
+
+    omitted = _project(
+        running, project_dir / 'omitted.iso', project_dir,
+        capture_mode='clean')
+    omitted_plan = _plan(omitted, running, _config(project_dir))
+    assert not omitted_plan.buildable
+    assert 'capture_requires_active_external_modules' in _error_codes(
+        omitted_plan)
+
+    included = _project(
+        running, project_dir / 'included.iso', project_dir,
+        additional_module_paths=(str(external_path),), capture_mode='clean')
+    included_plan = _plan(included, running, _config(project_dir))
+    assert included_plan.buildable
+    option_index = included_plan.argv.index('--capture-base-module')
+    assert included_plan.argv[option_index + 1] == str(external_path)
+    assert '<capture-base-module-input>' in included_plan.display_argv
+    assert str(external_path) not in included_plan.display_argv
+    assert included_plan.manifest['capture'][
+        'expected_base_module_fingerprint'] == backend._base_module_fingerprint(
+            list(info.modules) + [external])
+
+
 def test_capture_order_is_dynamic_and_additional_module_is_not_base_binding(
         tmp_path):
     root, source, mounts, sys_block, release, info = _make_source(tmp_path)

@@ -2,13 +2,13 @@
 
 MiniOS Image Builder is a GTK3 workspace for customizing and remastering MiniOS. It uses the `minios-image-compose` backend to create a bootable ISO, structurally verifies the private result, and publishes it to the selected path only after verification succeeds.
 
-The application runs inside MiniOS and never source-builds MiniOS or modifies source media. The source can be the current session, a MiniOS ISO file, or an optical disc. ISO and optical-disc sources are mounted read-only through `udisksctl`. Session capture from external media is available only when its base-module fingerprint matches the running MiniOS session.
+The application runs inside MiniOS and never source-builds MiniOS or modifies source media. The source can be the current session, a MiniOS ISO file, or an optical disc. ISO and optical-disc sources are mounted read-only through `udisksctl`. Session changes belong only to the running-session source and are never available for a separately selected ISO file or optical disc.
 
 ## Workflow
 
 1. **Source** selects and fingerprints the current session, a MiniOS ISO file, or an optical disc without blocking the GTK main loop.
 2. **Content** shows every source module, keeps required core and kernel modules locked, and leaves active external modules opt-in.
-3. **Settings** configures output, allowlisted system defaults, boot behavior and appearance, an optional project filesystem layer, and optional writable-session capture. Expert controls stay collapsed by default.
+3. **Settings** configures output, allowlisted system defaults, boot behavior and appearance, an optional project filesystem layer, and optional writable-session capture. Session changes are available only for the running-session source, while every source module remains selected and every active external root module is included. Expert controls stay collapsed by default.
 4. **Review** creates a fresh secure build plan with module, tool, source, destination, customization, capture, privilege, scratch-space, and sensitive-state diagnostics without listing private input paths or values.
 5. **Build** revalidates inputs, runs `minios-image-compose`, structurally verifies the private ISO, customization report, filesystem overlay, and any captured session layer, and atomically publishes the verified output.
 

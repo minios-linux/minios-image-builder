@@ -208,6 +208,25 @@ DIAGNOSTIC_TRANSLATIONS = {
         _('Reusable changes only'),
         _('Clean capture uses a strict allowlist. It omits general system '
           'state, user data, identity files, logs, and caches.')),
+    'capture_external_source_unsupported': (
+        _('Session changes are unavailable for this source'),
+        _('Changes from the running MiniOS session cannot be combined with an '
+          'ISO image file or optical disc selected as a separate source. Use '
+          'the running session source, or build this image without session '
+          'changes.')),
+    'capture_requires_all_source_modules': (
+        _('Session changes require the complete running source'),
+        _('One or more source modules have been excluded. Keep every source '
+          'module from the running MiniOS system, or build the image without '
+          'session changes.')),
+    'capture_requires_active_external_modules': (
+        _('Session changes require all active root modules'),
+        _('One or more active external modules from the running MiniOS root '
+          'are not included. Include every active external module, or build '
+          'the image without session changes.')),
+    'capture_source_unavailable': (
+        _('Running source is unavailable for session changes'),
+        _('Refresh the running MiniOS source before including session changes.')),
     'source_session_capture_artifact': (
         _('Source already contains saved session changes'),
         _('The existing session layer is treated as part of the source, so you '
@@ -1367,7 +1386,8 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             probe_error = None
             try:
                 capabilities = backend.probe_required_tools(
-                    runner=runner, capture_requested=True)
+                    runner=runner,
+                    capture_requested=(mode not in backend.MOUNTED_SOURCE_BACKENDS))
             except Exception as error:
                 probe_error = str(error)
             token.checkpoint()
@@ -3305,13 +3325,17 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
     def _render_capture_controls(self):
         mode = self.state.capture_mode
         status = self.state.capture_capability_status
-        available = bool(status.get('available'))
+        tool_available = bool(status.get('available'))
+        source_status = self.state.capture_source_status()
+        source_available = bool(source_status.get('available'))
+        available = tool_available and source_available
         inventory_busy = self._operation in ('inventory', 'inventory-load')
         for name, button in self.capture_mode_buttons.items():
             button.set_sensitive(
                 not inventory_busy and
                 (name == backend.NO_SESSION_CAPTURE or available))
 
+        source_reasons = source_status.get('reason_codes', ())
         reasons = status.get('reason_codes', ())
         reason_messages = {
             'not-probed': _(
@@ -3330,7 +3354,12 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
                 'Non-root desktops also need a running polkit authentication '
                 'agent. Building without session changes remains fully available.'),
         }
-        if reasons:
+        if source_reasons:
+            self.capture_capability_warning.set_text(
+                ' '.join(diagnostic_display_text(reason, reason)[1]
+                         for reason in source_reasons))
+            self.capture_capability_warning.show()
+        elif reasons:
             self.capture_capability_warning.set_text(
                 ' '.join(reason_messages.get(reason, reason)
                          for reason in reasons))

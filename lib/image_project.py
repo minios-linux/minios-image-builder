@@ -143,6 +143,7 @@ COMPOSE_REQUIRED_OPTIONS = (
 COMPOSE_OPTIONAL_OPTIONS = ('--volume-label', '--exclude')
 COMPOSE_CAPTURE_OPTIONS = (
     '--capture-changes', '--capture-selection', '--capture-compression',
+    '--capture-base-module',
 )
 COMPOSE_CUSTOMIZATION_OPTIONS = (
     '--boot-timeout', '--default-boot', '--boot-menu-json', '--kernel-args',
@@ -3986,6 +3987,54 @@ def discover_mounted_source(mount_path, media_category='iso',
         subdirectories=('',), reuse_readonly_modules=True)
 
 
+def session_capture_source_status(source_info, selected_source_modules=(),
+                                  additional_module_paths=()):
+    """Return whether current-session changes can accompany this source.
+
+    Writable-session state belongs to the running MiniOS root. It is therefore
+    unrelated to an ISO/DVD selected as a separate source, and it cannot be
+    moved onto a composition that drops modules from the running root.
+    """
+    empty = {
+        'excluded_source_modules': (),
+        'excluded_active_external_modules': (),
+    }
+    if not isinstance(source_info, SourceInfo) or not source_info.supported:
+        result = dict(empty)
+        result.update({
+            'available': False,
+            'reason_codes': ('capture_source_unavailable',),
+        })
+        return result
+    if source_info.backend in MOUNTED_SOURCE_BACKENDS:
+        result = dict(empty)
+        result.update({
+            'available': False,
+            'reason_codes': ('capture_external_source_unsupported',),
+        })
+        return result
+    selected = set(selected_source_modules)
+    excluded = tuple(
+        module.basename for module in source_info.modules
+        if module.basename not in selected)
+    selected_additional = tuple(additional_module_paths)
+    excluded_external = tuple(
+        module.path for module in source_info.active_external_modules
+        if not any(_same_path(module.path, path)
+                   for path in selected_additional))
+    reasons = []
+    if excluded:
+        reasons.append('capture_requires_all_source_modules')
+    if excluded_external:
+        reasons.append('capture_requires_active_external_modules')
+    return {
+        'available': not reasons,
+        'reason_codes': tuple(reasons),
+        'excluded_source_modules': excluded,
+        'excluded_active_external_modules': excluded_external,
+    }
+
+
 class ImageProject(_Immutable):
     """Strict schema-v1 project resolved against an explicit base directory."""
 
@@ -5604,6 +5653,7 @@ def _redacted_build_argv(argv, additional_paths=()):
         '--boot-background': '<boot-background-input>',
         '--overlay-directory': '<overlay-directory-input>',
         '--capture-selection': '<private-capture-selection>',
+        '--capture-base-module': '<capture-base-module-input>',
     }
     additional_paths = frozenset(additional_paths)
     result = []
@@ -5869,6 +5919,31 @@ def create_build_plan(project, source_info=None,
                     errors, 'error', 'required_module_deselected',
                     'Required module is deselected: {}'.format(module.basename),
                     module.path)
+    if capture_requested:
+        capture_source_status = session_capture_source_status(
+            source_info, project.selected_source_modules,
+            project.additional_module_paths)
+        for reason in capture_source_status['reason_codes']:
+            if reason == 'capture_external_source_unsupported':
+                _add_diagnostic(
+                    errors, 'error', reason,
+                    'Session changes belong only to the running MiniOS system '
+                    'and cannot be combined with an ISO or optical-disc source.')
+            elif reason == 'capture_requires_all_source_modules':
+                _add_diagnostic(
+                    errors, 'error', reason,
+                    'Session changes require every source module from the '
+                    'running MiniOS system to remain selected.')
+            elif reason == 'capture_requires_active_external_modules':
+                _add_diagnostic(
+                    errors, 'error', reason,
+                    'Session changes require every active external module from '
+                    'the running MiniOS root to be included in the image.')
+            elif reason == 'capture_source_unavailable':
+                _add_diagnostic(
+                    errors, 'error', reason,
+                    'Session changes require an available running MiniOS source.')
+
     if not selected_modules:
         _add_diagnostic(
             errors, 'error', 'no_source_modules_selected',
@@ -6173,10 +6248,15 @@ def create_build_plan(project, source_info=None,
     capture_target = None
     capture_estimated_bytes = None
     capture_inventory_selected_count = None
+    capture_external_base_modules = []
     if capture_requested:
+        capture_external_base_modules = [
+            module for module in source_info.active_external_modules
+            if any(_same_path(module.path, path)
+                   for path in project.additional_module_paths)]
         capture_base_modules = [
             item for item in selected_modules
-            if _is_compose_source_module(item)]
+            if _is_compose_source_module(item)] + capture_external_base_modules
         if any(item.is_symlink for item in capture_base_modules):
             _add_diagnostic(
                 errors, 'error', 'capture_source_module_symlink_unsupported',
@@ -7078,6 +7158,8 @@ def create_build_plan(project, source_info=None,
         if capture_selection_path:
             argv.extend((
                 '--capture-selection', os.path.basename(capture_selection_path)))
+        for module in capture_external_base_modules:
+            argv.extend(('--capture-base-module', module.path))
     if adapter_regex:
         argv.extend(('--exclude', adapter_regex))
     argv.extend(item['path'] for item in additional)
@@ -9577,6 +9659,7 @@ __all__ = [
     'publish_verified_output', 'required_source_boot_files',
     'request_session_inventory_cancel', 'revalidate_build_plan_inputs',
     'compose_module_target', 'sha256_file',
+    'session_capture_source_status',
     'source_tree_fingerprint', 'source_tree_inventory',
     'validate_boot_menu_entries', 'validate_kernel_arguments',
     'validate_live_config_overrides',

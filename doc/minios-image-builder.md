@@ -41,7 +41,9 @@ collisions block continuation.
 **Settings**
 : Select output identity, allowlisted system defaults, boot behavior and PNG
   appearance, an optional root-relative project filesystem layer, and optional
-  session capture. Security, user-data, and expert kernel controls remain in
+  session capture. Session changes are available only for the running-session
+  source, while every source module remains selected and every active external
+  root module is included. Security, user-data, and expert kernel controls remain in
   compact expanders. Empty or Keep current values preserve source behavior.
   Inclusion of **/etc/live/config.conf** is currently required. Its bytes are
   read and copied verbatim, frozen during planning, and staged mode 0600 in the
@@ -151,8 +153,10 @@ package, guaranteed by an exact package dependency. Session capture additionally
 uses **savechanges** from **minios-tools** 1.5.0 or newer. **pkexec** is required;
 a desktop polkit agent is recommended for root-only current configurations and
 non-root session capture. **udisksctl** from **udisks2** is required for ISO-file
-and optical-disc sources. Capture is enabled only after a successful savechanges
-version probe. The launcher prefers distribution-owned **/usr/bin** tools over local shadows.
+and optical-disc sources. For the running-session source, capture is enabled only
+after a successful savechanges version probe, while every source module remains
+selected and every active external root module is included. The launcher prefers
+distribution-owned **/usr/bin** tools over local shadows.
 
 # PROJECTS
 

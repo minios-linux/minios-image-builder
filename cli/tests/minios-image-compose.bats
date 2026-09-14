@@ -667,6 +667,19 @@ assert_build_arg_pair() {
     [ ! -e "$OUTPUT" ]
 }
 
+@test "capture base modules require capture and must also be added modules" {
+    local runtime_module="$TEST_ROOT/07-runtime-addon.sb"
+    write_file "$runtime_module" runtime-addon
+
+    run_compose --capture-base-module "$runtime_module"
+    [ "$status" -ne 0 ]
+    assert_output_contains '--capture-base-module requires --capture-changes'
+
+    run_compose --capture-changes exact --capture-base-module "$runtime_module"
+    [ "$status" -ne 0 ]
+    assert_output_contains 'Capture base module must also be an added module'
+}
+
 @test "capture requires the exact-fidelity savechanges contract version" {
     SAVECHANGES_STUB_VERSION=1.2.9 run_compose --capture-changes exact
 

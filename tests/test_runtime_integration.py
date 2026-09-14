@@ -264,6 +264,18 @@ def test_custom_boot_menu_default_label_does_not_embed_entry_title():
     assert window.default_boot_combo.sensitive is False
 
 
+@pytest.mark.parametrize('code', (
+    'capture_external_source_unsupported',
+    'capture_requires_all_source_modules',
+    'capture_requires_active_external_modules',
+    'capture_source_unavailable',
+))
+def test_capture_source_policy_diagnostics_have_localized_text(code):
+    title, message = ui.diagnostic_display_text(code, 'backend detail')
+    assert title != code
+    assert message != 'backend detail'
+
+
 def test_unknown_diagnostic_preserves_backend_text():
     assert ui.diagnostic_display_text('future_code', 'Future message') == (
         'future_code', 'Future message')
