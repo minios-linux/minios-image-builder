@@ -12,7 +12,7 @@ La plantilla proporciona el comportamiento base de MiniOS. Luego se aplican los 
 
 ## Plantillas de sesión
 
-Resume utiliza perchdir=resume. New utiliza perchdir=new. Choose utiliza perchdir=ask.
+Resume utiliza perchdir=resume. New utiliza perchdir=setup. Choose utiliza perchdir=ask.
 Fresh no tiene selector de persistencia. Copiar a RAM utiliza toram.
 
 Puedes crear múltiples entradas a partir de la misma plantilla.

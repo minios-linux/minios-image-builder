@@ -12,7 +12,7 @@ O template fornece o comportamento base do MiniOS. Em seguida, são aplicados os
 
 ## Templates de sessão
 
-Resume usa perchdir=resume. New usa perchdir=new. Choose usa perchdir=ask.
+Resume usa perchdir=resume. New usa perchdir=setup. Choose usa perchdir=ask.
 Fresh não possui seletor de persistência. Copiar para RAM usa toram.
 
 Você pode criar várias entradas a partir do mesmo template.

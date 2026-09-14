@@ -12,7 +12,7 @@ Die Vorlage liefert das grundlegende MiniOS-Verhalten. Globale Experten-Kernel-A
 
 ## Sitzungsvorlagen
 
-Resume verwendet perchdir=resume. New verwendet perchdir=new. Choose verwendet perchdir=ask.
+Resume verwendet perchdir=resume. New verwendet perchdir=setup. Choose verwendet perchdir=ask.
 Fresh hat keinen Persistenzselektor. Kopieren in den RAM verwendet toram.
 
 Sie können mehrere Einträge aus derselben Vorlage erstellen.

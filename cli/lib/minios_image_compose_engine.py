@@ -743,7 +743,7 @@ GRUB_MODE_CLASSES_REVERSE = {
     "fresh": "live", "toram": "ram",
 }
 BOOT_MODE_SELECTORS = {
-    "resume": "perchdir=resume", "new": "perchdir=new",
+    "resume": "perchdir=resume", "new": "perchdir=setup",
     "choose": "perchdir=ask", "fresh": None, "toram": "toram",
 }
 BOOT_MODE_FALLBACK_TITLES = {
@@ -752,7 +752,8 @@ BOOT_MODE_FALLBACK_TITLES = {
     "toram": "Copy to RAM",
 }
 SESSION_SELECTOR_TOKENS = {
-    "perchdir=resume", "perchdir=new", "perchdir=ask", "toram",
+    "perchdir=resume", "perchdir=new", "perchdir=setup",
+    "perchdir=ask", "toram",
 }
 MANAGED_BOOT_ARGUMENT_FLAGS = {
     "text", "nomodeset", "automount", "nozram", "quiet", "debug",
@@ -848,7 +849,7 @@ def boot_semantic(arguments):
     modes = []
     if "perchdir=resume" in tokens:
         modes.append("resume")
-    if "perchdir=new" in tokens:
+    if "perchdir=new" in tokens or "perchdir=setup" in tokens:
         modes.append("new")
     if "perchdir=ask" in tokens:
         modes.append("choose")
@@ -858,6 +859,8 @@ def boot_semantic(arguments):
         fail("boot entry has conflicting MiniOS session arguments")
     if modes:
         return modes[0]
+    if any(token.startswith("perchdir=") for token in tokens):
+        return None
     if "boot=live" in tokens:
         return "fresh"
     return None
@@ -915,12 +918,19 @@ def managed_locale_argument(token):
 
 
 def kernel_arguments_for_base(arguments, base_mode, replace_managed=False,
-                              preserve_locale=False):
-    tokens = [token for token in arguments.split()
+                              preserve_locale=False,
+                              preserve_source_selector=False):
+    source_tokens = arguments.split()
+    selector = BOOT_MODE_SELECTORS[base_mode]
+    if preserve_source_selector and base_mode == "new":
+        if "perchdir=setup" in source_tokens:
+            selector = "perchdir=setup"
+        elif "perchdir=new" in source_tokens:
+            selector = "perchdir=new"
+    tokens = [token for token in source_tokens
               if token not in SESSION_SELECTOR_TOKENS and
               not (replace_managed and managed_boot_argument(token) and
                    not (preserve_locale and managed_locale_argument(token)))]
-    selector = BOOT_MODE_SELECTORS[base_mode]
     if selector:
         tokens.append(selector)
     return " ".join(tokens)
@@ -945,7 +955,8 @@ def rename_grub_menu_block(block, title):
 
 
 def set_grub_menu_block_mode(block, base_mode, replace_managed=False,
-                             preserve_locale=False):
+                             preserve_locale=False,
+                             preserve_source_selector=False):
     body, ending = line_body(block[0])
     target_class = GRUB_MODE_CLASSES_REVERSE[base_mode]
     replaced = [False]
@@ -972,7 +983,8 @@ def set_grub_menu_block_mode(block, base_mode, replace_managed=False,
         arguments = kernel_arguments_for_base(
             match.group(2) or "", base_mode,
             replace_managed=replace_managed,
-            preserve_locale=preserve_locale)
+            preserve_locale=preserve_locale,
+            preserve_source_selector=preserve_source_selector)
         block[index] = match.group(1) + (" " + arguments if arguments else "") + ending
         count += 1
     if count == 0:
@@ -1016,7 +1028,8 @@ def rename_syslinux_menu_block(block, title, menu_locale):
 
 def set_syslinux_menu_block_mode(block, base_mode, entry_id,
                                  replace_managed=False,
-                                 preserve_locale=False):
+                                 preserve_locale=False,
+                                 preserve_source_selector=False):
     label_count = 0
     append_count = 0
     output = []
@@ -1034,7 +1047,8 @@ def set_syslinux_menu_block_mode(block, base_mode, entry_id,
             arguments = kernel_arguments_for_base(
                 append_match.group(2) or "", base_mode,
                 replace_managed=replace_managed,
-                preserve_locale=preserve_locale)
+                preserve_locale=preserve_locale,
+                preserve_source_selector=preserve_source_selector)
             output.append(append_match.group(1) + (" " + arguments if arguments else "") + ending)
             append_count += 1
             continue
@@ -1086,7 +1100,8 @@ def rebuild_semantic_menu_blocks(lines, blocks, boot_menu, kind,
         if kind == "grub":
             block = set_grub_menu_block_mode(
                 block, base_mode, replace_managed=replace_managed,
-                preserve_locale=preserve_locale)
+                preserve_locale=preserve_locale,
+                preserve_source_selector=has_native_template)
             if item["title"]:
                 block = rename_grub_menu_block(block, item["title"])
             elif not has_native_template:
@@ -1096,7 +1111,8 @@ def rebuild_semantic_menu_blocks(lines, blocks, boot_menu, kind,
             block = set_syslinux_menu_block_mode(
                 block, base_mode, item["id"],
                 replace_managed=replace_managed,
-                preserve_locale=preserve_locale)
+                preserve_locale=preserve_locale,
+                preserve_source_selector=has_native_template)
             if item["title"]:
                 block = rename_syslinux_menu_block(block, item["title"], menu_locale)
             elif not has_native_template:

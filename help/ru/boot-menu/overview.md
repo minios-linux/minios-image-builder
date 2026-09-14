@@ -12,7 +12,7 @@
 
 ## Шаблоны сессий
 
-Resume использует perchdir=resume. New — perchdir=new. Choose — perchdir=ask.
+Resume использует perchdir=resume. New — perchdir=setup. Choose — perchdir=ask.
 Fresh не использует селектор постоянства. Копирование в RAM использует toram.
 
 Вы можете создавать несколько записей на основе одного шаблона.

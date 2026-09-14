@@ -78,9 +78,9 @@ write_file() {
 prepare_custom_boot_fixture() {
     mkdir -p "$SOURCE/boot/syslinux/lang"
     write_file "$SOURCE/boot/grub/grub.cfg" $'set default=0\nset timeout=10\nmenuentry "English" {\n  configfile /minios/boot/grub/main.cfg\n}'
-    write_file "$SOURCE/boot/grub/main.cfg" $'set default=0\nset timeout=10\nmenuentry "Translated resume" --class resume {\n  linux /minios/boot/vmlinuz-test boot=live quiet perchdir=resume\n}\nmenuentry "Translated new" --class new {\n  linux /minios/boot/vmlinuz-test boot=live quiet perchdir=new\n}\nmenuentry "Translated choose" --class switch {\n  linux /minios/boot/vmlinuz-test boot=live quiet perchdir=ask\n}\nmenuentry "Translated fresh" --class live {\n  linux /minios/boot/vmlinuz-test boot=live quiet\n}\nmenuentry "Translated RAM" --class ram {\n  linux /minios/boot/vmlinuz-test boot=live quiet toram\n}'
+    write_file "$SOURCE/boot/grub/main.cfg" $'set default=0\nset timeout=10\nmenuentry "Translated resume" --class resume {\n  linux /minios/boot/vmlinuz-test boot=live quiet perchdir=resume\n}\nmenuentry "Translated new" --class new {\n  linux /minios/boot/vmlinuz-test boot=live quiet perchdir=setup\n}\nmenuentry "Translated choose" --class switch {\n  linux /minios/boot/vmlinuz-test boot=live quiet perchdir=ask\n}\nmenuentry "Translated fresh" --class live {\n  linux /minios/boot/vmlinuz-test boot=live quiet\n}\nmenuentry "Translated RAM" --class ram {\n  linux /minios/boot/vmlinuz-test boot=live quiet toram\n}'
     write_file "$SOURCE/boot/syslinux/syslinux.cfg" $'PROMPT 0\nTIMEOUT 100\nLABEL en_US\nMENU LABEL English\nCONFIG lang/en_US.cfg\nLABEL ru_RU\nMENU LABEL Russian\nCONFIG lang/ru_RU.cfg'
-    write_file "$SOURCE/boot/syslinux/lang/en_US.cfg" $'TIMEOUT 100\nONTIMEOUT default\nLABEL default\nMENU DEFAULT\nMENU LABEL Translated resume\nKERNEL /minios/boot/vmlinuz-test\nAPPEND boot=live quiet perchdir=resume\nLABEL perch\nMENU LABEL Translated new\nKERNEL /minios/boot/vmlinuz-test\nAPPEND boot=live quiet perchdir=new\nLABEL asksession\nMENU LABEL Translated choose\nKERNEL /minios/boot/vmlinuz-test\nAPPEND boot=live quiet perchdir=ask\nLABEL live\nMENU LABEL Translated fresh\nKERNEL /minios/boot/vmlinuz-test\nAPPEND boot=live quiet\nLABEL toram\nMENU LABEL Translated RAM\nKERNEL /minios/boot/vmlinuz-test\nAPPEND boot=live quiet toram'
+    write_file "$SOURCE/boot/syslinux/lang/en_US.cfg" $'TIMEOUT 100\nONTIMEOUT default\nLABEL default\nMENU DEFAULT\nMENU LABEL Translated resume\nKERNEL /minios/boot/vmlinuz-test\nAPPEND boot=live quiet perchdir=resume\nLABEL perch\nMENU LABEL Translated new\nKERNEL /minios/boot/vmlinuz-test\nAPPEND boot=live quiet perchdir=setup\nLABEL asksession\nMENU LABEL Translated choose\nKERNEL /minios/boot/vmlinuz-test\nAPPEND boot=live quiet perchdir=ask\nLABEL live\nMENU LABEL Translated fresh\nKERNEL /minios/boot/vmlinuz-test\nAPPEND boot=live quiet\nLABEL toram\nMENU LABEL Translated RAM\nKERNEL /minios/boot/vmlinuz-test\nAPPEND boot=live quiet toram'
     cp "$SOURCE/boot/syslinux/lang/en_US.cfg" "$SOURCE/boot/syslinux/lang/ru_RU.cfg"
 }
 
@@ -782,6 +782,30 @@ assert sys.argv[2] not in open(sys.argv[1], encoding="utf-8").read()
         grep -Fqx "DEFAULT $expected_label" "$STATE/files/minios/boot/syslinux/lang/en_US.cfg"
         rm "$OUTPUT"
     done
+}
+
+@test "legacy perchdir=new session menus remain compatible" {
+    prepare_custom_boot_fixture
+    sed -i 's/perchdir=setup/perchdir=new/g' \
+        "$SOURCE/boot/grub/main.cfg" \
+        "$SOURCE/boot/syslinux/lang/en_US.cfg" \
+        "$SOURCE/boot/syslinux/lang/ru_RU.cfg"
+
+    run_compose --default-boot new
+
+    [ "$status" -eq 0 ]
+    grep -Fqx 'set default=1' "$STATE/files/minios/boot/grub/main.cfg"
+    grep -Fqx 'DEFAULT perch' "$STATE/files/minios/boot/syslinux/lang/en_US.cfg"
+
+    rm "$OUTPUT"
+    boot_menu='[{"id":"new","base_mode":"new","enabled":true,"default":true,"title":null,"kernel_args":"","kernel_args_schema":2}]'
+    run_compose --menu en_US --boot-menu-json "$boot_menu"
+
+    [ "$status" -eq 0 ]
+    grep -Fq 'perchdir=new' "$STATE/files/minios/boot/grub/main.cfg"
+    ! grep -Fq 'perchdir=setup' "$STATE/files/minios/boot/grub/main.cfg"
+    grep -Fq 'perchdir=new' "$STATE/files/minios/boot/syslinux/lang/en_US.cfg"
+    ! grep -Fq 'perchdir=setup' "$STATE/files/minios/boot/syslinux/lang/en_US.cfg"
 }
 
 @test "MiniOS SYSLINUX-GRUB chainloader delegates session customization to GRUB" {

@@ -4604,7 +4604,7 @@ def _five_entry_grub_payload():
     rows = ['set default=0\n', 'set timeout=10\n']
     details = (
         ('resume', 'resume', 'perchdir=resume'),
-        ('new', 'new', 'perchdir=new'),
+        ('new', 'new', 'perchdir=setup'),
         ('choose', 'switch', 'perchdir=ask'),
         ('fresh', 'live', 'boot=live'),
         ('toram', 'ram', 'toram'),
@@ -4623,7 +4623,7 @@ def _five_entry_syslinux_payload():
     rows = ['TIMEOUT 100\n', 'DEFAULT default\n']
     details = (
         ('default', 'Resume', 'perchdir=resume'),
-        ('perch', 'New', 'perchdir=new'),
+        ('perch', 'New', 'perchdir=setup'),
         ('asksession', 'Choose', 'perchdir=ask'),
         ('live', 'Fresh', 'boot=live'),
         ('toram', 'RAM', 'toram'),
@@ -4637,6 +4637,80 @@ def _five_entry_syslinux_payload():
             '\n',
         ))
     return ''.join(rows).encode('ascii')
+
+
+@pytest.mark.parametrize('mode,index,label', (
+    ('resume', 0, 'default'), ('new', 1, 'perch'),
+    ('choose', 2, 'asksession'), ('fresh', 3, 'live'),
+    ('toram', 4, 'toram'),
+))
+def test_default_session_settings_accept_current_setup_menus(mode, index, label):
+    grub, unused_refs, grub_session = backend._transform_grub_payload(
+        _five_entry_grub_payload(), None, mode, None)
+    assert grub_session is True
+    assert 'set default={}'.format(index) in grub.decode('utf-8')
+
+    syslinux, unused_refs, syslinux_session = backend._transform_syslinux_payload(
+        _five_entry_syslinux_payload(), None, mode, None,
+        menu_locale='en_US')
+    assert syslinux_session is True
+    assert 'DEFAULT {}'.format(label) in syslinux.decode('latin-1')
+
+
+def test_new_session_template_accepts_and_preserves_legacy_selector():
+    legacy_grub = _five_entry_grub_payload().replace(
+        b'perchdir=setup', b'perchdir=new')
+    legacy_syslinux = _five_entry_syslinux_payload().replace(
+        b'perchdir=setup', b'perchdir=new')
+    entries = [{
+        'id': 'new', 'base_mode': 'new', 'enabled': True,
+        'default': True, 'title': None, 'kernel_args': '',
+        'kernel_args_schema': 2,
+    }]
+    transformed, unused_refs, session = backend._transform_grub_payload(
+        legacy_grub, None, None, None, boot_menu_entries=entries)
+    text = transformed.decode('utf-8')
+    assert session is True
+    assert 'perchdir=new' in text
+    assert 'perchdir=setup' not in text
+
+    transformed, unused_refs, session = backend._transform_syslinux_payload(
+        legacy_syslinux, None, None, None, boot_menu_entries=entries,
+        menu_locale='en_US')
+    text = transformed.decode('latin-1')
+    assert session is True
+    assert 'perchdir=new' in text
+    assert 'perchdir=setup' not in text
+
+
+@pytest.mark.parametrize('menu_locale', backend.MENU_LOCALES)
+@pytest.mark.parametrize('mode', (None,) + backend.DEFAULT_BOOT_MODES)
+@pytest.mark.parametrize('timeout', (None, 0, 5, 300))
+def test_settings_boot_controls_do_not_block_current_minios_menu(
+        tmp_path, timeout, mode, menu_locale):
+    root, source, mounts, sys_block, release, unused_info = _make_source(tmp_path)
+    grub = _five_entry_grub_payload()
+    syslinux = _five_entry_syslinux_payload()
+    _write(source / 'boot' / 'grub' / 'grub.cfg', grub)
+    _write(source / 'boot' / 'grub' / 'grub.multilang.cfg', grub)
+    _write(source / 'boot' / 'syslinux' / 'syslinux.cfg', syslinux)
+    info = backend.discover_running_source(
+        roots=(('livekit', str(root)),), mounts_path=str(mounts),
+        sys_block_root=str(sys_block), runtime_release_path=str(release))
+    project_dir = tmp_path / 'project'
+    project_dir.mkdir()
+    project = _project(
+        info,
+        project_dir / '{}-{}-{}.iso'.format(
+            menu_locale, mode or 'preserve',
+            'preserve' if timeout is None else timeout),
+        project_dir, menu_locale=menu_locale,
+        boot_timeout=timeout, default_boot=mode)
+
+    plan = _plan(project, info, _config(project_dir))
+
+    assert 'boot_customization_graph_invalid' not in _error_codes(plan)
+    assert plan.buildable, [(item.code, item.message) for item in plan.errors]
 
 
 def test_custom_boot_menu_round_trips_and_validates_multilingual_titles(tmp_path):
@@ -4689,6 +4763,8 @@ def test_boot_menu_transform_creates_custom_entries_and_per_entry_parameters():
     assert text.count('Safe graphics') == 1
     assert 'nomodeset' in text
     assert 'toram=trim noload=firefox' in text
+    assert 'perchdir=setup' in text
+    assert 'perchdir=new' not in text
     assert text.count(' audit=1') == 5
     assert 'set default=0' in text
     assert 'set timeout=4' in text
@@ -4704,6 +4780,8 @@ def test_boot_menu_transform_creates_custom_entries_and_per_entry_parameters():
     assert 'MENU LABEL Safe graphics' in text
     assert 'nomodeset' in text
     assert 'toram=trim noload=firefox' in text
+    assert 'perchdir=setup' in text
+    assert 'perchdir=new' not in text
     assert 'DEFAULT ram-trim' in text
     assert 'TIMEOUT 40' in text
 

@@ -373,7 +373,7 @@ BOOT_MODE_DESCRIPTIONS = {
 
 BOOT_MODE_PARAMETERS = {
     'resume': 'perchdir=resume',
-    'new': 'perchdir=new',
+    'new': 'perchdir=setup',
     'choose': 'perchdir=ask',
     'fresh': _('no persistence selector'),
     'toram': 'toram',
@@ -383,7 +383,7 @@ BOOT_PARAMETER_SUGGESTIONS = (
     'text', 'automount', 'toram=full', 'toram=trim',
     'nozram', 'zramcomp=lzo', 'zramcomp=lzo-rle', 'zramcomp=lz4',
     'zramcomp=lz4hc', 'zramcomp=zstd', 'zramsize=',
-    'from=askdisk', 'perch', 'perchdir=resume', 'perchdir=new',
+    'from=askdisk', 'perch', 'perchdir=resume', 'perchdir=setup',
     'perchdir=ask', 'perchdir=', 'perchmode=native',
     'perchmode=dynfilefs', 'perchmode=raw', 'perchmode=luks',
     'perchmode=squashfs',

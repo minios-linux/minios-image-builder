@@ -4,7 +4,7 @@ Geben Sie die Parameter durch Leerzeichen getrennt ein. Die Autovervollständigu
 
 ## Sitzung und Persistenz
 
-Diese Optionen ermöglichen dauerhafte Änderungen, das Fortsetzen der letzten kompatiblen Sitzung, das Erstellen einer neuen Sitzung, eine Abfrage beim Start oder die direkte Auswahl einer nummerierten Sitzung: perch, perchdir=resume, perchdir=new, perchdir=ask und perchdir=NUMBER.
+Diese Optionen ermöglichen dauerhafte Änderungen, das Fortsetzen der letzten kompatiblen Sitzung, das Erstellen einer neuen Sitzung, eine Abfrage beim Start oder die direkte Auswahl einer nummerierten Sitzung: perch, perchdir=resume, perchdir=setup, perchdir=ask und perchdir=NUMBER.
 
 Speichermodi sind native, dynfilefs, raw, luks und squashfs. SquashFS kann eine vorhandene komprimierte Sitzung fortsetzen, aber das aktuelle initramfs kann keine neue erstellen. Containergrößen akzeptieren die Suffixe MB, GB oder TB. Der reservierte freie Speicherplatz wird in MiB gemessen; der Standardwert ist 256 und das Maximum beträgt 4096.
 

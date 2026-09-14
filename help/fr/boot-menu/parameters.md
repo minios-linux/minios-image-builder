@@ -6,7 +6,7 @@ Saisissez les paramètres en les séparant par des espaces. La saisie semi-autom
 
 Ces options permettent d'activer les modifications persistantes, de reprendre la dernière session compatible,
 de créer une nouvelle session, de demander au démarrage, ou de sélectionner directement une session numérotée :
-perch, perchdir=resume, perchdir=new, perchdir=ask, et perchdir=NUMBER.
+perch, perchdir=resume, perchdir=setup, perchdir=ask, et perchdir=NUMBER.
 
 Les modes de stockage sont native, dynfilefs, raw, luks, et squashfs. SquashFS peut
 reprendre une session compressée existante, mais l'initramfs actuel ne peut pas en créer une nouvelle. Les tailles de conteneur acceptent les suffixes MB, GB ou TB. L'espace libre réservé est mesuré en MiB ; sa valeur par défaut est 256 et son maximum est 4096.

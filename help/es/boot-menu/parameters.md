@@ -4,7 +4,7 @@ Escriba los parámetros separados por espacios. La función de autocompletado su
 
 ## Sesión y persistencia
 
-Estas opciones permiten cambios persistentes, reanudar la última sesión compatible, crear una nueva sesión, preguntar al inicio o seleccionar directamente una sesión numerada: perch, perchdir=resume, perchdir=new, perchdir=ask y perchdir=NUMBER.
+Estas opciones permiten cambios persistentes, reanudar la última sesión compatible, crear una nueva sesión, preguntar al inicio o seleccionar directamente una sesión numerada: perch, perchdir=resume, perchdir=setup, perchdir=ask y perchdir=NUMBER.
 
 Los modos de almacenamiento son native, dynfilefs, raw, luks y squashfs. SquashFS puede reanudar una sesión comprimida existente, pero el initramfs actual no puede crear una nueva. Los tamaños de los contenedores aceptan sufijos MB, GB o TB. El espacio libre reservado se mide en MiB; su valor predeterminado es 256 y el máximo es 4096.
 

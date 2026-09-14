@@ -6,7 +6,7 @@ Type parameters separated by spaces. Completion suggests common MiniOS and Linux
 
 These options enable persistent changes, resume the latest compatible session,
 create a new session, ask at startup, or select a numbered session directly:
-perch, perchdir=resume, perchdir=new, perchdir=ask, and perchdir=NUMBER.
+perch, perchdir=resume, perchdir=setup, perchdir=ask, and perchdir=NUMBER.
 
 Storage modes are native, dynfilefs, raw, luks, and squashfs. SquashFS can
 resume an existing compressed session, but the current initramfs cannot create

@@ -18,12 +18,12 @@
     },
     {
       "compiled": "de/boot-menu/overview.json",
-      "sha256": "912019ed5e82bf53f0fc161fc43df64d3383e20b93189e92b31f680b536aaa2d",
+      "sha256": "c4a2a9063613c8bedbcc02e2ecab00b5a8f8127c6c00ab529225958733e498cc",
       "source": "de/boot-menu/overview.md"
     },
     {
       "compiled": "de/boot-menu/parameters.json",
-      "sha256": "4ab66ef283e90a48d2cae5200463248c9ee749618c27316e46a807def6babf4d",
+      "sha256": "49651ff68483560a6210e1dc681df00d3db63328deb0958d7b8ecec40b5f135c",
       "source": "de/boot-menu/parameters.md"
     },
     {
@@ -53,12 +53,12 @@
     },
     {
       "compiled": "en/boot-menu/overview.json",
-      "sha256": "e6e221044ae306fab4dc24f60091db35d52656d78e12c8669be69e5f08999b1a",
+      "sha256": "79da85689cdc1ee7d941487ef06f28a74af3952c17a74a89fb95e6000b74d5ee",
       "source": "en/boot-menu/overview.md"
     },
     {
       "compiled": "en/boot-menu/parameters.json",
-      "sha256": "ace7eed6eb6c8d936d7f6ff22409952d2c4d84a34c0753b0ed2949b6225ff62f",
+      "sha256": "a45d4cc51bb4f054a5bf0abb98351cc108758329a5732666f52f2ecbf91e1256",
       "source": "en/boot-menu/parameters.md"
     },
     {
@@ -88,12 +88,12 @@
     },
     {
       "compiled": "es/boot-menu/overview.json",
-      "sha256": "fffda886050fa8dc89c131f03ba68d48a194f9bdf5271bd9b5e0e54c4cbe323a",
+      "sha256": "1b75aeb26dba8ad49f576db59c37c409fc26de3182497056693f3da8ebfb2581",
       "source": "es/boot-menu/overview.md"
     },
     {
       "compiled": "es/boot-menu/parameters.json",
-      "sha256": "e80095b2f9650d90711d34e9dd589a564956ef9ee6dc5c0d7337efc00443756c",
+      "sha256": "ef175f8f31e44b99795ccd7b09defa183ca5cacea9899ef345c6532fd06d645f",
       "source": "es/boot-menu/parameters.md"
     },
     {
@@ -123,12 +123,12 @@
     },
     {
       "compiled": "fr/boot-menu/overview.json",
-      "sha256": "78c5042dcde22755fd243a05190356fcb93cf93b9b7d47cc0578deb16475e48a",
+      "sha256": "3411f540d88b86ea20132049b4fa766b90539848f50cc3eb17aa44743492a75b",
       "source": "fr/boot-menu/overview.md"
     },
     {
       "compiled": "fr/boot-menu/parameters.json",
-      "sha256": "9ead7550d42ef02cc5e2be37787738216d37a72f1c2a8dd358d4e302cb38a1f8",
+      "sha256": "12701349e2cb61e866de8a91603e3846615568f7d543cad60ceaafe3089ce0d4",
       "source": "fr/boot-menu/parameters.md"
     },
     {
@@ -158,12 +158,12 @@
     },
     {
       "compiled": "id/boot-menu/overview.json",
-      "sha256": "10fcace50d948f984677e130aee94f87bf9469d51402417936d8ef719dc36c01",
+      "sha256": "65f9ba6c2bd352f5e53185d2a44977421c3f2565822cd3bd89f96bbbae073ce9",
       "source": "id/boot-menu/overview.md"
     },
     {
       "compiled": "id/boot-menu/parameters.json",
-      "sha256": "40f4419b4134b62b5bbdaa6d4ed679d7c81024e63cde86fb56f0154b5bea121d",
+      "sha256": "4df18cfd82d1788446057d0be56697850cef960af39ba91fc9c7803daeb5d753",
       "source": "id/boot-menu/parameters.md"
     },
     {
@@ -193,12 +193,12 @@
     },
     {
       "compiled": "it/boot-menu/overview.json",
-      "sha256": "40960726ef82411a3b2944788f9e311e2ded0c83207a4564073b1fdaa1c9d6e3",
+      "sha256": "247a2059a0c14faff288fc4e251075941fe2e112e525e20b13d8d6d6985a900a",
       "source": "it/boot-menu/overview.md"
     },
     {
       "compiled": "it/boot-menu/parameters.json",
-      "sha256": "27e49d7189c7b74a54d11dc9c78cf451cb8d217de4d4939df82b4f41569255f6",
+      "sha256": "f703981af1ed9fad66ad24c8a7629d83c0e38f601e3ea466fae1ad29b606589d",
       "source": "it/boot-menu/parameters.md"
     },
     {
@@ -228,12 +228,12 @@
     },
     {
       "compiled": "pt/boot-menu/overview.json",
-      "sha256": "da5f179839d938fd3e1a1ba3ab3d36980e4bffb24dd404c731678ef0b06813a0",
+      "sha256": "0f851693c6d8e99b8c91470d96c4866bd66bf4e4e093eb6cca0ce847b9462f20",
       "source": "pt/boot-menu/overview.md"
     },
     {
       "compiled": "pt/boot-menu/parameters.json",
-      "sha256": "f40f088a4cc754aa3a12e17c439cfc299e33bb7e63863b9f73327c826bc1c2e7",
+      "sha256": "7783fb82d9f1020ca1aa907d5de0031c272a088e613968dcbf06244762faceb8",
       "source": "pt/boot-menu/parameters.md"
     },
     {
@@ -263,12 +263,12 @@
     },
     {
       "compiled": "pt-BR/boot-menu/overview.json",
-      "sha256": "c36245138186043d90f9331117322cc94d960f25d41232572f71d51bc4d57e35",
+      "sha256": "4fe7c0634987322d8e4ea408e63f105ba9123f29e57a3a38782bc1f0ce5c9451",
       "source": "pt-BR/boot-menu/overview.md"
     },
     {
       "compiled": "pt-BR/boot-menu/parameters.json",
-      "sha256": "5ca740388f0cbed3658d9a5d6d6782ce55cf7f498c6aa34c51a44a3c1bcc2ef9",
+      "sha256": "381919a0617d1dc4e6ccdf9686192c68dd217e4dbcf9e3c589f862a0760b2fb5",
       "source": "pt-BR/boot-menu/parameters.md"
     },
     {
@@ -298,12 +298,12 @@
     },
     {
       "compiled": "ru/boot-menu/overview.json",
-      "sha256": "7e853f5e07010d3b7a8e99820d1a65349f51d14cac7db54f8ac6c7ffd2d1c54a",
+      "sha256": "c97284016b05a83d6ca5599ed61716a9396806e45a80b1d2f5d0b26adb4d68b3",
       "source": "ru/boot-menu/overview.md"
     },
     {
       "compiled": "ru/boot-menu/parameters.json",
-      "sha256": "0d669530cb65326cb6fef621600e5353e8de0e65dbf6ce75cfd5dbb1db716641",
+      "sha256": "eaf6bd10c49fe3188da49f93d22c2b3247bc07f3b939d72de6fe381866769065",
       "source": "ru/boot-menu/parameters.md"
     },
     {

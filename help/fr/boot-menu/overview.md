@@ -12,7 +12,7 @@ Le modèle fournit le comportement de base de MiniOS. Les arguments noyau expert
 
 ## Modèles de session
 
-Reprise utilise perchdir=resume. Nouveau utilise perchdir=new. Choisir utilise perchdir=ask. Neuf n’a pas de sélecteur de persistance. Copier en RAM utilise toram.
+Reprise utilise perchdir=resume. Nouveau utilise perchdir=setup. Choisir utilise perchdir=ask. Neuf n’a pas de sélecteur de persistance. Copier en RAM utilise toram.
 
 Vous pouvez créer plusieurs entrées à partir du même modèle.
 

@@ -14,7 +14,7 @@ for this entry. For repeated MiniOS key-value options, the last value wins.
 
 ## Session templates
 
-Resume uses perchdir=resume. New uses perchdir=new. Choose uses perchdir=ask.
+Resume uses perchdir=resume. New uses perchdir=setup. Choose uses perchdir=ask.
 Fresh has no persistence selector. Copy to RAM uses toram.
 
 You can create multiple entries from the same template.

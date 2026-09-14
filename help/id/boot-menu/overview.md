@@ -12,7 +12,7 @@ Template menyediakan perilaku dasar MiniOS. Argumen kernel global untuk pengguna
 
 ## Template sesi
 
-Resume menggunakan perchdir=resume. New menggunakan perchdir=new. Choose menggunakan perchdir=ask.
+Resume menggunakan perchdir=resume. New menggunakan perchdir=setup. Choose menggunakan perchdir=ask.
 Fresh tidak memiliki pemilih persistensi. Copy to RAM menggunakan toram.
 
 Anda dapat membuat beberapa entri dari template yang sama.

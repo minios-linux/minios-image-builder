@@ -12,7 +12,7 @@ Il template fornisce il comportamento base di MiniOS. Gli argomenti kernel globa
 
 ## Template di sessione
 
-Resume utilizza perchdir=resume. New utilizza perchdir=new. Choose utilizza perchdir=ask.
+Resume utilizza perchdir=resume. New utilizza perchdir=setup. Choose utilizza perchdir=ask.
 Fresh non ha selettore di persistenza. Copia in RAM utilizza toram.
 
 Puoi creare più voci dallo stesso template.

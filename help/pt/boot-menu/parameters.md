@@ -6,7 +6,7 @@ Digite os parâmetros separados por espaços. O preenchimento automático sugere
 
 Essas opções permitem alterações persistentes, retom a sessão compatível mais recente,
 criar uma nova sessão, perguntar na inicialização ou selecionar diretamente uma sessão numerada:
-perch, perchdir=resume, perchdir=new, perchdir=ask e perchdir=NUMBER.
+perch, perchdir=resume, perchdir=setup, perchdir=ask e perchdir=NUMBER.
 
 Os modos de armazenamento são native, dynfilefs, raw, luks e squashfs. SquashFS pode
 retomar uma sessão comprimida existente, mas o initramfs atual não pode criar

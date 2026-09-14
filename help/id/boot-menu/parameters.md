@@ -6,7 +6,7 @@ Ketik parameter yang dipisahkan dengan spasi. Fitur pelengkapan akan menyarankan
 
 Opsi-opsi ini memungkinkan perubahan yang persisten, melanjutkan sesi kompatibel terbaru,
 membuat sesi baru, menanyakan saat startup, atau memilih sesi bernomor secara langsung:
-perch, perchdir=resume, perchdir=new, perchdir=ask, dan perchdir=NUMBER.
+perch, perchdir=resume, perchdir=setup, perchdir=ask, dan perchdir=NUMBER.
 
 Mode penyimpanan adalah native, dynfilefs, raw, luks, dan squashfs. SquashFS dapat
 melanjutkan sesi terkompresi yang sudah ada, tetapi initramfs saat ini tidak dapat membuat

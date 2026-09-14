@@ -6,7 +6,7 @@ Inserisci i parametri separati da spazi. Il completamento suggerisce le opzioni 
 
 Queste opzioni abilitano le modifiche persistenti, riprendono l'ultima sessione compatibile,
 creano una nuova sessione, chiedono all'avvio o selezionano direttamente una sessione numerata:
-perch, perchdir=resume, perchdir=new, perchdir=ask e perchdir=NUMERO.
+perch, perchdir=resume, perchdir=setup, perchdir=ask e perchdir=NUMERO.
 
 Le modalità di archiviazione sono native, dynfilefs, raw, luks e squashfs. SquashFS può
 riprendere una sessione compressa esistente, ma l'attuale initramfs non può crearne una nuova.

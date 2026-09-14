@@ -1,3 +1,14 @@
+minios-image-builder (1.1.1) unstable; urgency=medium
+
+  * Generate new-session boot entries with perchdir=setup so users can choose
+    the persistence backend during startup.
+  * Preserve legacy perchdir=new selectors when customizing older MiniOS menus
+    and reject unrelated perchdir values as session templates.
+  * Refresh boot-menu help and regression coverage for current and legacy
+    session selectors.
+
+ -- crims0n <crims0n@minios.dev>  Mon, 14 Sep 2026 18:39:32 +0300
+
 minios-image-builder (1.1.0) unstable; urgency=medium
 
   * Restrict writable-session capture to the running-session source with every

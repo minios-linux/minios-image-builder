@@ -77,7 +77,7 @@ root-relative user-directory path.
 Boot controls preserve or set a 0-300 second timeout and can preserve the
 source menu/default or switch to the boot-menu constructor. The constructor
 starts from the five MiniOS session templates: resume (`perchdir=resume`), new
-(`perchdir=new`), choose (`perchdir=ask`), fresh (no persistence selector), and
+(`perchdir=setup`), choose (`perchdir=ask`), fresh (no persistence selector), and
 copy-to-RAM (`toram`). Existing entries can be hidden or reordered, and any
 template can be duplicated to create additional entries with a unique internal
 identifier and custom visible title. Each entry exposes typed controls for the
