@@ -384,6 +384,9 @@ def test_security_preset_apply_and_match_round_trip():
         def set_active_id(self, value):
             self.value = value
 
+        def set_sensitive(self, value):
+            self.sensitive = value
+
     widgets = dict((key, _Combo()) for key in ui.SECURITY_PROFILE_KEYS)
     overrides = {}
     window = SimpleNamespace(
@@ -429,14 +432,15 @@ def test_live_config_text_ui_mapping(key, text, expected):
 
 def test_boot_parameter_controls_parse_existing_project_arguments():
     settings = ui.parse_boot_parameters(
-        'perchmode=luks perchsize=8GB perchreserve=512 toram=trim '
+        'perchmode=raw perchencrypt=luks perchsize=8GB perchreserve=512 toram=trim '
         'load=00-04 noload=firefox text default_target=rescue nomodeset '
         'automount nozram zramcomp=zstd zramsize=2048 locales=ru_RU.UTF-8 '
         'timezone=Europe/Moscow keyboard-layouts=ru quiet debug '
         'from=askdisk custom-option=1')
 
     assert settings == {
-        'persistence_mode': 'luks',
+        'persistence_mode': 'raw',
+        'persistence_encryption': 'luks',
         'persistence_size': '8GB',
         'persistence_reserve': '512',
         'ram_copy': 'trim',
@@ -461,6 +465,7 @@ def test_boot_parameter_controls_compile_stable_legacy_kernel_args():
     settings = dict(ui.BOOT_PARAMETER_DEFAULTS)
     settings.update({
         'persistence_mode': 'dynfilefs',
+        'persistence_encryption': 'luks',
         'persistence_size': '16GB',
         'ram_copy': 'full',
         'skip_modules': 'firefox,libreoffice',
@@ -472,7 +477,7 @@ def test_boot_parameter_controls_compile_stable_legacy_kernel_args():
     })
 
     assert ui.compile_boot_parameters(settings) == (
-        'perchmode=dynfilefs perchsize=16GB toram=full '
+        'perchmode=dynfilefs perchencrypt=luks perchsize=16GB toram=full '
         'noload=firefox,libreoffice nomodeset zramcomp=lz4 '
         'locales=de_DE.UTF-8 quiet from=askdisk audit=1')
 
@@ -487,6 +492,14 @@ def test_unknown_typed_values_remain_in_expert_parameters():
     assert settings['extra'] == (
         'perchmode=future zramcomp=future default-target=future.target')
     assert ui.compile_boot_parameters(settings) == settings['extra']
+
+
+def test_standalone_luks_mode_is_not_a_typed_boot_option():
+    settings = ui.parse_boot_parameters('perchmode=luks perchsize=4GB')
+
+    assert settings['persistence_mode'] == 'keep'
+    assert settings['persistence_encryption'] == 'keep'
+    assert settings['extra'] == 'perchmode=luks'
 
 
 def test_squashfs_session_mode_round_trips_through_typed_controls():
@@ -519,9 +532,16 @@ def test_disabled_boot_options_make_dependent_fields_insensitive():
     class Choice:
         def __init__(self, value):
             self.value = value
+            self.sensitive = None
 
         def get_active_id(self):
             return self.value
+
+        def set_active_id(self, value):
+            self.value = value
+
+        def set_sensitive(self, value):
+            self.sensitive = value
 
     class Field:
         def __init__(self):
@@ -535,6 +555,7 @@ def test_disabled_boot_options_make_dependent_fields_insensitive():
     zram_size = Field()
     row = {'option_widgets': {
         'persistence_mode': Choice('squashfs'),
+        'persistence_encryption': Choice('luks'),
         'persistence_size': persistence_size,
         'zram': Choice('off'),
         'zram_compression': zram_compression,
@@ -544,6 +565,8 @@ def test_disabled_boot_options_make_dependent_fields_insensitive():
     ui.ImageBuilderWindow._refresh_boot_menu_option_dependencies(None, row)
 
     assert persistence_size.sensitive is False
+    assert row['option_widgets']['persistence_encryption'].sensitive is False
+    assert row['option_widgets']['persistence_encryption'].value == 'none'
     assert zram_compression.sensitive is False
     assert zram_size.sensitive is False
 
@@ -555,6 +578,12 @@ def test_enabled_boot_options_keep_dependent_fields_sensitive():
 
         def get_active_id(self):
             return self.value
+
+        def set_active_id(self, value):
+            self.value = value
+
+        def set_sensitive(self, value):
+            self.sensitive = value
 
     class Field:
         def __init__(self):
@@ -568,6 +597,7 @@ def test_enabled_boot_options_keep_dependent_fields_sensitive():
     zram_size = Field()
     row = {'option_widgets': {
         'persistence_mode': Choice('dynfilefs'),
+        'persistence_encryption': Choice('luks'),
         'persistence_size': persistence_size,
         'zram': Choice('keep'),
         'zram_compression': zram_compression,
@@ -577,6 +607,7 @@ def test_enabled_boot_options_keep_dependent_fields_sensitive():
     ui.ImageBuilderWindow._refresh_boot_menu_option_dependencies(None, row)
 
     assert persistence_size.sensitive is True
+    assert row['option_widgets']['persistence_encryption'].sensitive is True
     assert zram_compression.sensitive is True
     assert zram_size.sensitive is True
 

@@ -1,3 +1,12 @@
+minios-image-builder (1.2.0) unstable; urgency=medium
+
+  * Add DynBlk as a typed persistence backend and expose LUKS2 as a separate
+    creation-time encryption option in boot menu customization.
+  * Preserve legacy standalone-LUKS parameters only as opaque expert input and
+    refresh runtime parsing tests and translations for the normalized model.
+
+ -- crims0n <crims0n@minios.dev>  Wed, 16 Sep 2026 14:17:07 +0300
+
 minios-image-builder (1.1.1) unstable; urgency=medium
 
   * Generate new-session boot entries with perchdir=setup so users can choose

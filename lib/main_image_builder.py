@@ -385,15 +385,16 @@ BOOT_PARAMETER_SUGGESTIONS = (
     'zramcomp=lz4hc', 'zramcomp=zstd', 'zramsize=',
     'from=askdisk', 'perch', 'perchdir=resume', 'perchdir=setup',
     'perchdir=ask', 'perchdir=', 'perchmode=native',
-    'perchmode=dynfilefs', 'perchmode=raw', 'perchmode=luks',
+    'perchmode=dynfilefs', 'perchmode=dynblk', 'perchmode=raw',
     'perchmode=squashfs',
-    'perchsize=', 'perchreserve=', 'load=', 'noload=',
+    'perchencrypt=luks', 'perchsize=', 'perchreserve=', 'load=', 'noload=',
     'locales=', 'timezone=', 'keyboard-layouts=',
     'nomodeset', 'quiet', 'debug',
 )
 
 BOOT_PARAMETER_DEFAULTS = {
     'persistence_mode': 'keep',
+    'persistence_encryption': 'keep',
     'persistence_size': '',
     'persistence_reserve': '',
     'ram_copy': 'keep',
@@ -415,6 +416,7 @@ BOOT_PARAMETER_DEFAULTS = {
 
 _BOOT_PARAMETER_VALUE_KEYS = {
     'perchmode': 'persistence_mode',
+    'perchencrypt': 'persistence_encryption',
     'perchsize': 'persistence_size',
     'perchreserve': 'persistence_reserve',
     'load': 'load_modules',
@@ -429,7 +431,8 @@ _BOOT_PARAMETER_VALUE_KEYS = {
 }
 
 _BOOT_PARAMETER_ENUM_VALUES = {
-    'persistence_mode': ('native', 'dynfilefs', 'raw', 'luks', 'squashfs'),
+    'persistence_mode': ('native', 'dynfilefs', 'dynblk', 'raw', 'squashfs'),
+    'persistence_encryption': ('luks',),
     'zram_compression': ('lzo', 'lzo-rle', 'lz4', 'lz4hc', 'zstd'),
     'startup': ('graphical', 'graphical.target', 'multi-user',
                 'multi-user.target', 'rescue', 'rescue.target'),
@@ -481,6 +484,9 @@ def compile_boot_parameters(settings):
     tokens = []
     if values['persistence_mode'] != 'keep':
         tokens.append('perchmode={}'.format(values['persistence_mode']))
+    if (values['persistence_encryption'] == 'luks' and
+            values['persistence_mode'] in ('dynfilefs', 'dynblk', 'raw')):
+        tokens.append('perchencrypt={}'.format(values['persistence_encryption']))
     for name, key in (
             ('perchsize', 'persistence_size'),
             ('perchreserve', 'persistence_reserve')):
@@ -2856,14 +2862,19 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
                 ('keep', _('Automatic')),
                 ('native', _('Directory on ext4, XFS, Btrfs, etc.')),
                 ('dynfilefs', _('Expandable container')),
+                ('dynblk', _('Thin block storage')),
                 ('raw', _('Fixed-size image')),
-                ('luks', _('Encrypted container')),
                 ('squashfs', _('SquashFS session')))))
-        add_field(session_grid, 0, 1, _('Container size'), new_entry(
+        add_field(session_grid, 0, 1, _('Encryption'), new_combo(
+            'persistence_encryption', (
+                ('keep', _('Automatic')),
+                ('none', _('None')),
+                ('luks', _('LUKS2')))))
+        add_field(session_grid, 1, 0, _('Container size'), new_entry(
             'persistence_size', _('Automatic, or for example 8GB')))
-        add_field(session_grid, 1, 0, _('Free space to keep'), new_entry(
+        add_field(session_grid, 1, 1, _('Free space to keep'), new_entry(
             'persistence_reserve', _('Default: 256 MiB')))
-        add_field(session_grid, 1, 1, _('Copy to RAM'), new_combo(
+        add_field(session_grid, 2, 0, _('Copy to RAM'), new_combo(
             'ram_copy', (
                 ('keep', _('Template default')),
                 ('full', _('Entire system')),
@@ -3802,12 +3813,14 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         persistence = {
             'native': _('directory persistence'),
             'dynfilefs': _('expandable persistence'),
+            'dynblk': _('thin block persistence'),
             'raw': _('fixed-size persistence'),
-            'luks': _('encrypted persistence'),
             'squashfs': _('SquashFS session'),
         }.get(values['persistence_mode'])
         if persistence:
             details.append(persistence)
+        if values['persistence_encryption'] == 'luks':
+            details.append(_('LUKS2 encryption'))
         if values['persistence_size']:
             details.append(_('persistence size {size}').format(
                 size=values['persistence_size']))
@@ -3854,6 +3867,10 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         persistence_mode = widgets['persistence_mode'].get_active_id() or 'keep'
         widgets['persistence_size'].set_sensitive(
             persistence_mode not in ('native', 'squashfs'))
+        encryption_supported = persistence_mode in ('dynfilefs', 'dynblk', 'raw')
+        widgets['persistence_encryption'].set_sensitive(encryption_supported)
+        if not encryption_supported:
+            widgets['persistence_encryption'].set_active_id('none')
         zram_enabled = (widgets['zram'].get_active_id() or 'keep') != 'off'
         widgets['zram_compression'].set_sensitive(zram_enabled)
         widgets['zram_size'].set_sensitive(zram_enabled)
