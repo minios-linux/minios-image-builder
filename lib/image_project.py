@@ -405,6 +405,14 @@ def _fsync_directory(directory):
         os.close(descriptor)
 
 
+def _fsync_directory_descriptor(descriptor):
+    """Best-effort directory fsync for filesystems that do not support it."""
+    try:
+        os.fsync(descriptor)
+    except OSError:
+        pass
+
+
 def _mode_is_writable_directory(path):
     try:
         file_stat = os.stat(path)
@@ -9160,16 +9168,13 @@ def _allocate_publication_directory(output_directory_descriptor):
                 'cannot allocate private publication directory')
         descriptor = os.open(
             name, _directory_open_flags(), dir_fd=output_directory_descriptor)
-        os.fchmod(descriptor, 0o700)
         opened = os.fstat(descriptor)
         observed = _entry_metadata(output_directory_descriptor, name)
         if (observed is None or stat.S_ISLNK(observed.st_mode) or
                 not stat.S_ISDIR(opened.st_mode) or
-                stat.S_IMODE(opened.st_mode) != 0o700 or
-                _identity(observed) != _identity(opened) or
-                (hasattr(os, 'geteuid') and opened.st_uid != os.geteuid())):
+                _identity(observed) != _identity(opened)):
             raise OutputPublishError(
-                'private publication directory is unsafe')
+                'publication directory changed while it was being opened')
         return name, descriptor, _identity(opened)
     except Exception:
         if descriptor is not None:
@@ -9190,11 +9195,9 @@ def _cleanup_publication_directory(output_directory_descriptor, directory_name,
     try:
         observed = _entry_metadata(directory_descriptor, staging_name)
         if (observed is not None and not stat.S_ISLNK(observed.st_mode) and
-                stat.S_ISREG(observed.st_mode) and
-                (not hasattr(os, 'geteuid') or
-                 observed.st_uid == os.geteuid())):
+                stat.S_ISREG(observed.st_mode)):
             os.unlink(staging_name, dir_fd=directory_descriptor)
-        os.fsync(directory_descriptor)
+        _fsync_directory_descriptor(directory_descriptor)
         parent_entry = _entry_metadata(
             output_directory_descriptor, directory_name)
         if (parent_entry is not None and
@@ -9202,7 +9205,7 @@ def _cleanup_publication_directory(output_directory_descriptor, directory_name,
                 stat.S_ISDIR(parent_entry.st_mode) and
                 _identity(parent_entry) == tuple(expected_identity)):
             os.rmdir(directory_name, dir_fd=output_directory_descriptor)
-            os.fsync(output_directory_descriptor)
+            _fsync_directory_descriptor(output_directory_descriptor)
     except (OSError, ImageProjectError):
         pass
 
@@ -9228,13 +9231,13 @@ def _copy_verified_artifact_for_publication(
             flags |= os.O_CLOEXEC
         staging_descriptor = os.open(
             staging_name, flags, 0o600, dir_fd=publication_descriptor)
-        os.fchmod(staging_descriptor, 0o600)
         created = os.fstat(staging_descriptor)
-        if (not stat.S_ISREG(created.st_mode) or
-                stat.S_IMODE(created.st_mode) != 0o600 or
-                (hasattr(os, 'geteuid') and
-                 created.st_uid != os.geteuid())):
-            raise OutputPublishError('publication staging file is unsafe')
+        named_created = _entry_metadata(publication_descriptor, staging_name)
+        if (named_created is None or stat.S_ISLNK(named_created.st_mode) or
+                not stat.S_ISREG(created.st_mode) or
+                _identity(named_created) != _identity(created)):
+            raise OutputPublishError(
+                'publication staging file changed while it was being opened')
 
         digest = hashlib.sha256()
         offset = 0
@@ -9261,14 +9264,16 @@ def _copy_verified_artifact_for_publication(
                 _identity(named_stat) != _identity(copied_stat) or
                 _identity(copied_stat) != _identity(created) or
                 copied_stat.st_size != source_stat.st_size or
-                stat.S_IMODE(copied_stat.st_mode) != 0o600 or
                 digest.hexdigest() != expected_sha256):
             raise OutputPublishError(
                 'cross-filesystem publication copy failed verification')
 
-        # Keep the unpublished image private throughout the copy and hash
-        # verification. Apply its final mode only after the bytes are complete.
-        os.fchmod(staging_descriptor, stat.S_IMODE(source_stat.st_mode))
+        # Preserve the source mode where supported. FAT/exFAT and some FUSE
+        # filesystems do not implement Unix modes; publication must still work.
+        try:
+            os.fchmod(staging_descriptor, stat.S_IMODE(source_stat.st_mode))
+        except OSError:
+            pass
         os.fsync(staging_descriptor)
         ready_stat = os.fstat(staging_descriptor)
         named_stat = _entry_metadata(publication_descriptor, staging_name)
@@ -9291,13 +9296,33 @@ def _copy_verified_artifact_for_publication(
                 src_dir_fd=publication_descriptor,
                 dst_dir_fd=output_directory_descriptor)
         else:
-            os.link(
-                staging_name, target_basename,
-                src_dir_fd=publication_descriptor,
-                dst_dir_fd=output_directory_descriptor,
-                follow_symlinks=False)
-            os.unlink(staging_name, dir_fd=publication_descriptor)
-        os.fsync(output_directory_descriptor)
+            try:
+                os.link(
+                    staging_name, target_basename,
+                    src_dir_fd=publication_descriptor,
+                    dst_dir_fd=output_directory_descriptor,
+                    follow_symlinks=False)
+            except OSError as error:
+                unsupported_link_errors = {
+                    errno.EPERM, errno.EACCES, errno.EXDEV,
+                    getattr(errno, 'EOPNOTSUPP', errno.EPERM),
+                    getattr(errno, 'ENOTSUP', errno.EPERM),
+                    getattr(errno, 'ENOSYS', errno.EPERM),
+                }
+                if error.errno not in unsupported_link_errors:
+                    raise
+                # FAT/exFAT and some FUSE filesystems have no hard links.
+                # Re-check the no-overwrite expectation immediately before
+                # falling back to a same-filesystem rename.
+                _output_matches_expectation(
+                    plan, output_directory_descriptor)
+                os.rename(
+                    staging_name, target_basename,
+                    src_dir_fd=publication_descriptor,
+                    dst_dir_fd=output_directory_descriptor)
+            else:
+                os.unlink(staging_name, dir_fd=publication_descriptor)
+        _fsync_directory_descriptor(output_directory_descriptor)
         final_stat = _entry_metadata(
             output_directory_descriptor, target_basename)
         if (final_stat is None or stat.S_ISLNK(final_stat.st_mode) or
@@ -9421,14 +9446,20 @@ def publish_verified_output(plan, verification_result, runner=None,
                     follow_symlinks=False)
                 os.unlink(source_basename, dir_fd=job_descriptor)
         except OSError as error:
-            if error.errno != errno.EXDEV:
+            unsupported_link_errors = {
+                errno.EPERM, errno.EACCES, errno.EXDEV,
+                getattr(errno, 'EOPNOTSUPP', errno.EPERM),
+                getattr(errno, 'ENOTSUP', errno.EPERM),
+                getattr(errno, 'ENOSYS', errno.EPERM),
+            }
+            if error.errno not in unsupported_link_errors:
                 raise
             return _copy_verified_artifact_for_publication(
                 plan, artifact_descriptor, held_stat,
                 verification_result.sha256,
                 output_directory_descriptor)
         os.fsync(job_descriptor)
-        os.fsync(output_directory_descriptor)
+        _fsync_directory_descriptor(output_directory_descriptor)
         published = _entry_metadata(
             output_directory_descriptor, target_basename)
         if (published is None or stat.S_ISLNK(published.st_mode) or

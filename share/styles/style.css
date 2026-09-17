@@ -347,16 +347,6 @@ treeview.view {
     font-weight: 700;
 }
 
-progressbar trough {
-    min-height: 9px;
-    border-radius: 0;
-}
-
-progressbar progress {
-    min-height: 9px;
-    border-radius: 0;
-}
-
 .build-timeline {
     padding: 9px 12px;
     border-top: 1px solid alpha(@borders, 0.64);

@@ -385,7 +385,7 @@ BOOT_PARAMETER_SUGGESTIONS = (
     'zramcomp=lz4hc', 'zramcomp=zstd', 'zramsize=',
     'from=askdisk', 'perch', 'perchdir=resume', 'perchdir=setup',
     'perchdir=ask', 'perchdir=', 'perchmode=native',
-    'perchmode=dynfilefs', 'perchmode=dynblk', 'perchmode=raw',
+    'perchmode=dynfilefs', 'perchmode=dynblk', 'perchmode=vmdk', 'perchmode=raw',
     'perchmode=squashfs',
     'perchencrypt=luks', 'perchsize=', 'perchreserve=', 'load=', 'noload=',
     'locales=', 'timezone=', 'keyboard-layouts=',
@@ -431,7 +431,7 @@ _BOOT_PARAMETER_VALUE_KEYS = {
 }
 
 _BOOT_PARAMETER_ENUM_VALUES = {
-    'persistence_mode': ('native', 'dynfilefs', 'dynblk', 'raw', 'squashfs'),
+    'persistence_mode': ('native', 'dynfilefs', 'dynblk', 'vmdk', 'raw', 'squashfs'),
     'persistence_encryption': ('luks',),
     'zram_compression': ('lzo', 'lzo-rle', 'lz4', 'lz4hc', 'zstd'),
     'startup': ('graphical', 'graphical.target', 'multi-user',
@@ -485,7 +485,7 @@ def compile_boot_parameters(settings):
     if values['persistence_mode'] != 'keep':
         tokens.append('perchmode={}'.format(values['persistence_mode']))
     if (values['persistence_encryption'] == 'luks' and
-            values['persistence_mode'] in ('dynfilefs', 'dynblk', 'raw')):
+            values['persistence_mode'] in ('dynfilefs', 'dynblk', 'vmdk', 'raw')):
         tokens.append('perchencrypt={}'.format(values['persistence_encryption']))
     for name, key in (
             ('perchsize', 'persistence_size'),
@@ -2863,6 +2863,7 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
                 ('native', _('Directory on ext4, XFS, Btrfs, etc.')),
                 ('dynfilefs', _('Expandable container')),
                 ('dynblk', _('Thin block storage')),
+                ('vmdk', _('Split VMDK block storage')),
                 ('raw', _('Fixed-size image')),
                 ('squashfs', _('SquashFS session')))))
         add_field(session_grid, 0, 1, _('Encryption'), new_combo(
@@ -3814,6 +3815,7 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
             'native': _('directory persistence'),
             'dynfilefs': _('expandable persistence'),
             'dynblk': _('thin block persistence'),
+            'vmdk': _('split VMDK persistence'),
             'raw': _('fixed-size persistence'),
             'squashfs': _('SquashFS session'),
         }.get(values['persistence_mode'])
@@ -3867,7 +3869,7 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
         persistence_mode = widgets['persistence_mode'].get_active_id() or 'keep'
         widgets['persistence_size'].set_sensitive(
             persistence_mode not in ('native', 'squashfs'))
-        encryption_supported = persistence_mode in ('dynfilefs', 'dynblk', 'raw')
+        encryption_supported = persistence_mode in ('dynfilefs', 'dynblk', 'vmdk', 'raw')
         widgets['persistence_encryption'].set_sensitive(encryption_supported)
         if not encryption_supported:
             widgets['persistence_encryption'].set_active_id('none')

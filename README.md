@@ -1,5 +1,7 @@
 # MiniOS Image Builder
 
+## Overview
+
 MiniOS Image Builder is a GTK3 workspace for customizing and remastering MiniOS. It uses the `minios-image-compose` backend to create a bootable ISO, structurally verifies the private result, and publishes it to the selected path only after verification succeeds.
 
 The application runs inside MiniOS and never source-builds MiniOS or modifies source media. The source can be the current session, a MiniOS ISO file, or an optical disc. ISO and optical-disc sources are mounted read-only through `udisksctl`. Session changes belong only to the running-session source and are never available for a separately selected ISO file or optical disc.
@@ -73,22 +75,18 @@ The application and builds without session capture do not run with root privileg
 
 ## Context help
 
-Editable contextual-help sources live under `help/<locale>/`. They are Markdown
-authoring files only; the application package ships the generated parser-free
-`share/help/<locale>/*.json` documents. The shared Markdown compiler and its
-pinned npm dependencies belong to the sibling `minios-gui` repository. Refresh
-the bundle with:
+Editable contextual-help sources live under `help/<locale>/`. They are Markdown authoring files only; the application package ships the generated parser-free `share/help/<locale>/*.json` documents. The shared Markdown compiler and its pinned npm dependencies belong to the sibling `minios-gui` repository. Refresh the bundle with:
 
 ```sh
 ../minios-gui/tools/npm-ci.sh
 make compile-help
 ```
 
-The generated bundle is committed, so normal Debian package builds do not need
-Node.js, npm, Mermaid, or a browser. Mermaid blocks, if added later, are rendered
-to static SVG by the shared compiler during this refresh step.
+The generated bundle is committed, so normal Debian package builds do not need Node.js, npm, Mermaid, or a browser. Mermaid blocks, if added later, are rendered to static SVG by the shared compiler during this refresh step.
 
-## Testing
+## Development
+
+### Testing
 
 The core controller tests have no GTK dependency; the runtime suite also checks the GTK command runner and launcher:
 
@@ -108,7 +106,7 @@ Syntax and desktop metadata checks require `desktop-file-utils` and are availabl
 make check
 ```
 
-## Debian package
+### Building the Debian package
 
 ``` sh
 dpkg-buildpackage -b -uc -us

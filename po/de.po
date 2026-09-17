@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: minios-image-builder 1.1.1\n"
+"Project-Id-Version: minios-image-builder 1.3.0\n"
 "Report-Msgid-Bugs-To: support@minios.dev\n"
-"POT-Creation-Date: 2026-09-14 21:31+0300\n"
-"PO-Revision-Date: 2026-09-14 18:31+0000\n"
+"POT-Creation-Date: 2026-09-17 21:19+0300\n"
+"PO-Revision-Date: 2026-09-17 18:19+0000\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "Language: de\n"
@@ -324,8 +324,8 @@ msgid "French (fr_FR)"
 msgstr "Französisch (fr_FR)"
 
 #: lib/main_image_builder.py:289 lib/main_image_builder.py:1824
-#: lib/main_image_builder.py:2025 lib/main_image_builder.py:4820
-#: lib/main_image_builder.py:5127
+#: lib/main_image_builder.py:2025 lib/main_image_builder.py:4822
+#: lib/main_image_builder.py:5129
 msgid "Source"
 msgstr "Quelle"
 
@@ -337,7 +337,7 @@ msgstr "Inhalt"
 msgid "Settings"
 msgstr "Einstellungen"
 
-#: lib/main_image_builder.py:289 lib/main_image_builder.py:6148
+#: lib/main_image_builder.py:289 lib/main_image_builder.py:6150
 msgid "Review"
 msgstr "Überprüfen"
 
@@ -401,7 +401,7 @@ msgstr "Sitzungsänderungen nicht einbeziehen"
 msgid "Build from the selected source modules and current configuration only. Changes made after MiniOS started are ignored."
 msgstr "Erstellt nur aus den ausgewählten Quellmodulen und der aktuellen Konfiguration. Änderungen, die nach dem Start von MiniOS vorgenommen wurden, werden ignoriert."
 
-#: lib/main_image_builder.py:311 lib/main_image_builder.py:3394
+#: lib/main_image_builder.py:311 lib/main_image_builder.py:3395
 msgid "Recommended"
 msgstr "Empfohlen"
 
@@ -414,7 +414,7 @@ msgid "Include every writable change that can be captured from the current sessi
 msgstr "Bezieht alle beschreibbaren Änderungen aus der aktuellen Sitzung ein, die erfasst werden können. Dies kann Passwörter, Tokens, persönliche Dateien, Protokolle und maschinenspezifische Zustände umfassen."
 
 #: lib/main_image_builder.py:318 lib/main_image_builder.py:325
-#: lib/main_image_builder.py:331 lib/main_image_builder.py:3403
+#: lib/main_image_builder.py:331 lib/main_image_builder.py:3404
 msgid "Admin access"
 msgstr "Administratorzugriff"
 
@@ -538,7 +538,7 @@ msgstr "Hostname"
 msgid "Keep current hostname"
 msgstr "Aktuellen Hostnamen beibehalten"
 
-#: lib/main_image_builder.py:529 lib/main_image_builder.py:2931
+#: lib/main_image_builder.py:529 lib/main_image_builder.py:2932
 msgid "Timezone"
 msgstr "Zeitzone"
 
@@ -551,11 +551,11 @@ msgid "Enable services"
 msgstr "Dienste aktivieren"
 
 #: lib/main_image_builder.py:530 lib/main_image_builder.py:531
-#: lib/main_image_builder.py:2871 lib/main_image_builder.py:2891
-#: lib/main_image_builder.py:3479 lib/main_image_builder.py:3990
-#: lib/main_image_builder.py:4873 lib/main_image_builder.py:4909
-#: lib/main_image_builder.py:5141 lib/main_image_builder.py:5757
-#: lib/main_image_builder.py:5797
+#: lib/main_image_builder.py:2872 lib/main_image_builder.py:2892
+#: lib/main_image_builder.py:3480 lib/main_image_builder.py:3992
+#: lib/main_image_builder.py:4875 lib/main_image_builder.py:4911
+#: lib/main_image_builder.py:5143 lib/main_image_builder.py:5759
+#: lib/main_image_builder.py:5799
 msgid "None"
 msgstr "Keine"
 
@@ -747,7 +747,7 @@ msgstr "Passwort erforderlich"
 #: lib/main_image_builder.py:616 lib/main_image_builder.py:622
 #: lib/main_image_builder.py:627 lib/main_image_builder.py:632
 #: lib/main_image_builder.py:638 lib/main_image_builder.py:653
-#: lib/main_image_builder.py:2915
+#: lib/main_image_builder.py:2916
 msgid "Disabled"
 msgstr "Deaktiviert"
 
@@ -1016,14 +1016,14 @@ msgstr "Kein optisches Laufwerk erkannt"
 msgid "Choose a MiniOS ISO image"
 msgstr "Wählen Sie ein MiniOS-ISO-Image"
 
-#: lib/main_image_builder.py:1510 lib/main_image_builder.py:4655
+#: lib/main_image_builder.py:1510 lib/main_image_builder.py:4657
 msgid "ISO images (*.iso)"
 msgstr "ISO-Abbilder (*.iso)"
 
 #: lib/main_image_builder.py:1511 lib/main_image_builder.py:2192
-#: lib/main_image_builder.py:2218 lib/main_image_builder.py:4244
-#: lib/main_image_builder.py:4267 lib/main_image_builder.py:4274
-#: lib/main_image_builder.py:4657 lib/main_image_builder.py:4668
+#: lib/main_image_builder.py:2218 lib/main_image_builder.py:4246
+#: lib/main_image_builder.py:4269 lib/main_image_builder.py:4276
+#: lib/main_image_builder.py:4659 lib/main_image_builder.py:4670
 msgid "Choose"
 msgstr "Auswählen"
 
@@ -1101,25 +1101,25 @@ msgstr "MiniOS"
 
 #: lib/main_image_builder.py:1728 lib/main_image_builder.py:1735
 #: lib/main_image_builder.py:1740 lib/main_image_builder.py:1743
-#: lib/main_image_builder.py:4335 lib/main_image_builder.py:4819
-#: lib/main_image_builder.py:4821 lib/main_image_builder.py:4844
-#: lib/main_image_builder.py:4901 lib/main_image_builder.py:4940
-#: lib/main_image_builder.py:4949 lib/main_image_builder.py:4959
-#: lib/main_image_builder.py:4979 lib/main_image_builder.py:5007
-#: lib/main_image_builder.py:5017 lib/main_image_builder.py:5023
-#: lib/main_image_builder.py:5711 lib/main_image_builder.py:5713
-#: lib/main_image_builder.py:5773
+#: lib/main_image_builder.py:4337 lib/main_image_builder.py:4821
+#: lib/main_image_builder.py:4823 lib/main_image_builder.py:4846
+#: lib/main_image_builder.py:4903 lib/main_image_builder.py:4942
+#: lib/main_image_builder.py:4951 lib/main_image_builder.py:4961
+#: lib/main_image_builder.py:4981 lib/main_image_builder.py:5009
+#: lib/main_image_builder.py:5019 lib/main_image_builder.py:5025
+#: lib/main_image_builder.py:5713 lib/main_image_builder.py:5715
+#: lib/main_image_builder.py:5775
 msgid "Unknown"
 msgstr "Unbekannt"
 
-#: lib/main_image_builder.py:1730 lib/main_image_builder.py:3397
-#: lib/main_image_builder.py:4336 lib/main_image_builder.py:4351
-#: lib/main_image_builder.py:4820 lib/main_image_builder.py:4822
-#: lib/main_image_builder.py:4843 lib/main_image_builder.py:5150
-#: lib/main_image_builder.py:5151 lib/main_image_builder.py:5727
-#: lib/main_image_builder.py:5728 lib/main_image_builder.py:5737
-#: lib/main_image_builder.py:5741 lib/main_image_builder.py:5829
-#: lib/main_image_builder.py:5831 lib/main_image_builder.py:5832
+#: lib/main_image_builder.py:1730 lib/main_image_builder.py:3398
+#: lib/main_image_builder.py:4338 lib/main_image_builder.py:4353
+#: lib/main_image_builder.py:4822 lib/main_image_builder.py:4824
+#: lib/main_image_builder.py:4845 lib/main_image_builder.py:5152
+#: lib/main_image_builder.py:5153 lib/main_image_builder.py:5729
+#: lib/main_image_builder.py:5730 lib/main_image_builder.py:5739
+#: lib/main_image_builder.py:5743 lib/main_image_builder.py:5831
+#: lib/main_image_builder.py:5833 lib/main_image_builder.py:5834
 msgid "Unavailable"
 msgstr "Nicht verfügbar"
 
@@ -1139,7 +1139,7 @@ msgstr "BIOS + UEFI (GRUB2)"
 msgid "The open project targets a different source fingerprint. Review will block the build until the project matches the selected MiniOS source."
 msgstr "Das offene Projekt zielt auf einen anderen Quell-Fingerprint ab. Die Überprüfung blockiert den Build, bis das Projekt zur ausgewählten MiniOS-Quelle passt."
 
-#: lib/main_image_builder.py:1767 lib/main_image_builder.py:5084
+#: lib/main_image_builder.py:1767 lib/main_image_builder.py:5086
 msgid "Diagnostics"
 msgstr "Diagnose"
 
@@ -1238,7 +1238,7 @@ msgstr "{count} Module ausgewählt"
 msgid "Estimated input: {size}"
 msgstr "Geschätzte Eingabe: {size}"
 
-#: lib/main_image_builder.py:1913 lib/main_image_builder.py:4349
+#: lib/main_image_builder.py:1913 lib/main_image_builder.py:4351
 msgid "0 B"
 msgstr "0 B"
 
@@ -1342,7 +1342,7 @@ msgstr "Image-Identität"
 msgid "Boot menu locale"
 msgstr "Bootmenü-Sprache"
 
-#: lib/main_image_builder.py:2179 lib/main_image_builder.py:4845
+#: lib/main_image_builder.py:2179 lib/main_image_builder.py:4847
 msgid "MINIOS"
 msgstr "MINIOS"
 
@@ -1491,12 +1491,12 @@ msgid "Preserve source leaves the existing boot setting unchanged."
 msgstr "Quelle beibehalten lässt die bestehende Starteinstellung unverändert."
 
 #: lib/main_image_builder.py:2496 lib/main_image_builder.py:2514
-#: lib/main_image_builder.py:3259 lib/main_image_builder.py:3921
-#: lib/main_image_builder.py:4858 lib/main_image_builder.py:4865
-#: lib/main_image_builder.py:4903 lib/main_image_builder.py:4905
-#: lib/main_image_builder.py:4914 lib/main_image_builder.py:5762
-#: lib/main_image_builder.py:5782 lib/main_image_builder.py:5783
-#: lib/main_image_builder.py:5790 lib/main_image_builder.py:5795
+#: lib/main_image_builder.py:3260 lib/main_image_builder.py:3923
+#: lib/main_image_builder.py:4860 lib/main_image_builder.py:4867
+#: lib/main_image_builder.py:4905 lib/main_image_builder.py:4907
+#: lib/main_image_builder.py:4916 lib/main_image_builder.py:5764
+#: lib/main_image_builder.py:5784 lib/main_image_builder.py:5785
+#: lib/main_image_builder.py:5792 lib/main_image_builder.py:5797
 msgid "Preserve source"
 msgstr "Quelle beibehalten"
 
@@ -1504,13 +1504,13 @@ msgstr "Quelle beibehalten"
 msgid "seconds"
 msgstr "Sekunden"
 
-#: lib/main_image_builder.py:2512 lib/main_image_builder.py:4910
-#: lib/main_image_builder.py:5290
+#: lib/main_image_builder.py:2512 lib/main_image_builder.py:4912
+#: lib/main_image_builder.py:5292
 msgid "Boot timeout"
 msgstr "Start-Timeout"
 
-#: lib/main_image_builder.py:2521 lib/main_image_builder.py:4915
-#: lib/main_image_builder.py:5291
+#: lib/main_image_builder.py:2521 lib/main_image_builder.py:4917
+#: lib/main_image_builder.py:5293
 msgid "Default session"
 msgstr "Standardsitzung"
 
@@ -1522,8 +1522,8 @@ msgstr "PNG auswählen"
 msgid "Clear"
 msgstr "Leeren"
 
-#: lib/main_image_builder.py:2538 lib/main_image_builder.py:4918
-#: lib/main_image_builder.py:5294
+#: lib/main_image_builder.py:2538 lib/main_image_builder.py:4920
+#: lib/main_image_builder.py:5296
 msgid "Boot background"
 msgstr "Start-Hintergrund"
 
@@ -1547,8 +1547,8 @@ msgstr "Kernel-Parameter"
 msgid "Explain boot and kernel parameters"
 msgstr "Boot- und Kernel-Parameter erklären"
 
-#: lib/main_image_builder.py:2578 lib/main_image_builder.py:4919
-#: lib/main_image_builder.py:5295
+#: lib/main_image_builder.py:2578 lib/main_image_builder.py:4921
+#: lib/main_image_builder.py:5297
 msgid "Project filesystem layer"
 msgstr "Projektdateisystem-Layer"
 
@@ -1564,12 +1564,12 @@ msgstr "Vorhandene auswählen"
 msgid "Create project layer"
 msgstr "Projekt-Layer erstellen"
 
-#: lib/main_image_builder.py:2597 lib/main_image_builder.py:6224
+#: lib/main_image_builder.py:2597 lib/main_image_builder.py:6226
 msgid "Open"
 msgstr "Öffnen"
 
-#: lib/main_image_builder.py:2614 lib/main_image_builder.py:4916
-#: lib/main_image_builder.py:5292
+#: lib/main_image_builder.py:2614 lib/main_image_builder.py:4918
+#: lib/main_image_builder.py:5294
 msgid "Boot menu entries"
 msgstr "Boot-Menüeinträge"
 
@@ -1674,8 +1674,8 @@ msgstr "Sitzung und Speicher"
 msgid "Changes storage"
 msgstr "Änderungsspeicher"
 
-#: lib/main_image_builder.py:2862 lib/main_image_builder.py:2870
-#: lib/main_image_builder.py:2914 lib/main_image_builder.py:2918
+#: lib/main_image_builder.py:2862 lib/main_image_builder.py:2871
+#: lib/main_image_builder.py:2915 lib/main_image_builder.py:2919
 msgid "Automatic"
 msgstr "Automatisch"
 
@@ -1692,943 +1692,951 @@ msgid "Thin block storage"
 msgstr "Thin-Block-Speicher"
 
 #: lib/main_image_builder.py:2866
+msgid "Split VMDK block storage"
+msgstr "VMDK-Blockspeicher aufteilen"
+
+#: lib/main_image_builder.py:2867
 msgid "Fixed-size image"
 msgstr "Image mit fester Größe"
 
-#: lib/main_image_builder.py:2867 lib/main_image_builder.py:3818
+#: lib/main_image_builder.py:2868 lib/main_image_builder.py:3820
 msgid "SquashFS session"
 msgstr "SquashFS-Sitzung"
 
-#: lib/main_image_builder.py:2868
+#: lib/main_image_builder.py:2869
 msgid "Encryption"
 msgstr "Verschlüsselung"
 
-#: lib/main_image_builder.py:2872
+#: lib/main_image_builder.py:2873
 msgid "LUKS2"
 msgstr "LUKS2"
 
-#: lib/main_image_builder.py:2873
+#: lib/main_image_builder.py:2874
 msgid "Container size"
 msgstr "Containergröße"
 
-#: lib/main_image_builder.py:2874
+#: lib/main_image_builder.py:2875
 msgid "Automatic, or for example 8GB"
 msgstr "Automatisch oder z. B. 8GB"
 
-#: lib/main_image_builder.py:2875
+#: lib/main_image_builder.py:2876
 msgid "Free space to keep"
 msgstr "Freier Speicherplatz, der erhalten bleibt"
 
-#: lib/main_image_builder.py:2876
+#: lib/main_image_builder.py:2877
 msgid "Default: 256 MiB"
 msgstr "Standard: 256 MiB"
 
-#: lib/main_image_builder.py:2877
+#: lib/main_image_builder.py:2878
 msgid "Copy to RAM"
 msgstr "In RAM kopieren"
 
-#: lib/main_image_builder.py:2879
+#: lib/main_image_builder.py:2880
 msgid "Template default"
 msgstr "Vorlagen-Standard"
 
-#: lib/main_image_builder.py:2880
+#: lib/main_image_builder.py:2881
 msgid "Entire system"
 msgstr "Gesamtes System"
 
-#: lib/main_image_builder.py:2881
+#: lib/main_image_builder.py:2882
 msgid "Loaded modules only"
 msgstr "Nur geladene Module"
 
-#: lib/main_image_builder.py:2884
+#: lib/main_image_builder.py:2885
 msgid "System and modules"
 msgstr "System und Module"
 
-#: lib/main_image_builder.py:2887
+#: lib/main_image_builder.py:2888
 msgid "Load modules"
 msgstr "Module laden"
 
-#: lib/main_image_builder.py:2888
+#: lib/main_image_builder.py:2889
 msgid "All modules"
 msgstr "Alle Module"
 
-#: lib/main_image_builder.py:2890
+#: lib/main_image_builder.py:2891
 msgid "Skip modules"
 msgstr "Module überspringen"
 
-#: lib/main_image_builder.py:2892
+#: lib/main_image_builder.py:2893
 msgid "Startup environment"
 msgstr "Startumgebung"
 
-#: lib/main_image_builder.py:2894
+#: lib/main_image_builder.py:2895
 msgid "Image default"
 msgstr "Image-Standard"
 
-#: lib/main_image_builder.py:2895
+#: lib/main_image_builder.py:2896
 msgid "Graphical desktop"
 msgstr "Grafische Desktop-Oberfläche"
 
-#: lib/main_image_builder.py:2896
+#: lib/main_image_builder.py:2897
 msgid "Text console"
 msgstr "Textkonsole"
 
-#: lib/main_image_builder.py:2897
+#: lib/main_image_builder.py:2898
 msgid "Rescue mode"
 msgstr "Rettungsmodus"
 
-#: lib/main_image_builder.py:2898
+#: lib/main_image_builder.py:2899
 msgid "Graphics"
 msgstr "Grafik"
 
-#: lib/main_image_builder.py:2900
+#: lib/main_image_builder.py:2901
 msgid "Normal graphics"
 msgstr "Normale Grafik"
 
-#: lib/main_image_builder.py:2901
+#: lib/main_image_builder.py:2902
 msgid "Compatibility mode (nomodeset)"
 msgstr "Kompatibilitätsmodus (nomodeset)"
 
-#: lib/main_image_builder.py:2902
+#: lib/main_image_builder.py:2903
 msgid "Mount other disks automatically"
 msgstr "Andere Laufwerke automatisch einbinden"
 
-#: lib/main_image_builder.py:2909
+#: lib/main_image_builder.py:2910
 msgid "Memory"
 msgstr "Arbeitsspeicher"
 
-#: lib/main_image_builder.py:2912
+#: lib/main_image_builder.py:2913
 msgid "zRAM"
 msgstr "zRAM"
 
-#: lib/main_image_builder.py:2916 lib/main_image_builder.py:4974
+#: lib/main_image_builder.py:2917 lib/main_image_builder.py:4976
 msgid "Compression"
 msgstr "Komprimierung"
 
-#: lib/main_image_builder.py:2921
+#: lib/main_image_builder.py:2922
 msgid "zRAM size"
 msgstr "zRAM-Größe"
 
-#: lib/main_image_builder.py:2922
+#: lib/main_image_builder.py:2923
 msgid "Automatic, in MiB"
 msgstr "Automatisch, in MiB"
 
-#: lib/main_image_builder.py:2925
+#: lib/main_image_builder.py:2926
 msgid "Language for this entry"
 msgstr "Sprache für diesen Eintrag"
 
-#: lib/main_image_builder.py:2928
+#: lib/main_image_builder.py:2929
 msgid "Locale"
 msgstr "Locale"
 
-#: lib/main_image_builder.py:2929
+#: lib/main_image_builder.py:2930
 msgid "Image default, for example ru_RU.UTF-8"
 msgstr "Image-Standard, z. B. ru_RU.UTF-8"
 
-#: lib/main_image_builder.py:2932
+#: lib/main_image_builder.py:2933
 msgid "Image default, for example Europe/Moscow"
 msgstr "Image-Standard, z. B. Europe/Moscow"
 
-#: lib/main_image_builder.py:2934
+#: lib/main_image_builder.py:2935
 msgid "Keyboard layout"
 msgstr "Tastaturbelegung"
 
-#: lib/main_image_builder.py:2935
+#: lib/main_image_builder.py:2936
 msgid "Image default, for example us or ru"
 msgstr "Image-Standard, z. B. us oder ru"
 
-#: lib/main_image_builder.py:2939
+#: lib/main_image_builder.py:2940
 msgid "Diagnostics and advanced options"
 msgstr "Diagnose und erweiterte Optionen"
 
-#: lib/main_image_builder.py:2943
+#: lib/main_image_builder.py:2944
 msgid "Hide routine boot messages"
 msgstr "Boot-Meldungen ausblenden"
 
-#: lib/main_image_builder.py:2948
+#: lib/main_image_builder.py:2949
 msgid "Enable diagnostic logging"
 msgstr "Diagnoseprotokollierung aktivieren"
 
-#: lib/main_image_builder.py:2957 lib/main_image_builder.py:2973
+#: lib/main_image_builder.py:2958 lib/main_image_builder.py:2974
 msgid "Additional parameters"
 msgstr "Zusätzliche Parameter"
 
-#: lib/main_image_builder.py:2962
+#: lib/main_image_builder.py:2963
 msgid "Only options not available above"
 msgstr "Nur Optionen, die oben nicht verfügbar sind"
 
-#: lib/main_image_builder.py:2964
+#: lib/main_image_builder.py:2965
 msgid "Unrecognized options from existing projects are kept here"
 msgstr "Nicht erkannte Optionen aus bestehenden Projekten werden hier gespeichert"
 
-#: lib/main_image_builder.py:2975
+#: lib/main_image_builder.py:2976
 msgid "Explain boot parameters"
 msgstr "Boot-Parameter erklären"
 
-#: lib/main_image_builder.py:3024
+#: lib/main_image_builder.py:3025
 msgid "Session change inventory"
 msgstr "Sitzungsänderungs-Inventar"
 
-#: lib/main_image_builder.py:3025
+#: lib/main_image_builder.py:3026
 msgid "Analysis is never automatic. It asks savechanges for metadata-only inventory through pkexec when authorization is needed, then keeps the validated result in memory only."
 msgstr "Die Analyse erfolgt nie automatisch. Sie fordert savechanges bei Bedarf über pkexec für ein reines Metadaten-Inventar an, wenn eine Autorisierung nötig ist, und hält das validierte Ergebnis nur im Arbeitsspeicher."
 
-#: lib/main_image_builder.py:3031
+#: lib/main_image_builder.py:3032
 msgid "Analyze session changes"
 msgstr "Sitzungsänderungen analysieren"
 
-#: lib/main_image_builder.py:3042
+#: lib/main_image_builder.py:3043
 msgid "Cancel analysis"
 msgstr "Analyse abbrechen"
 
-#: lib/main_image_builder.py:3069
+#: lib/main_image_builder.py:3070
 msgid "Select analyzed changes"
 msgstr "Analysierte Änderungen auswählen"
 
-#: lib/main_image_builder.py:3070
+#: lib/main_image_builder.py:3071
 msgid "Paths are sensitive metadata. They are shown only in this in-memory selector and are never copied into Review or logs. A selected directory represents its descendants; savechanges enforces the final match."
 msgstr "Pfade sind sensible Metadaten. Sie werden nur in diesem Arbeitsspeicher-Auswahldialog angezeigt und niemals in Review oder Protokollen gespeichert. Ein ausgewähltes Verzeichnis steht für alle seine Unterverzeichnisse; savechanges erzwingt die finale Übereinstimmung."
 
-#: lib/main_image_builder.py:3078
+#: lib/main_image_builder.py:3079
 msgid "Filter inventory paths"
 msgstr "Inventar-Pfade filtern"
 
-#: lib/main_image_builder.py:3084
+#: lib/main_image_builder.py:3085
 msgid "All entries"
 msgstr "Alle Einträge"
 
-#: lib/main_image_builder.py:3086
+#: lib/main_image_builder.py:3087
 msgid "Recommended safe"
 msgstr "Empfohlen sicher"
 
-#: lib/main_image_builder.py:3094
+#: lib/main_image_builder.py:3095
 msgid "Clear selection"
 msgstr "Auswahl zurücksetzen"
 
-#: lib/main_image_builder.py:3107
+#: lib/main_image_builder.py:3108
 msgid "Advanced include/exclude rules"
 msgstr "Erweiterte Ein-/Ausschlussregeln"
 
-#: lib/main_image_builder.py:3113
+#: lib/main_image_builder.py:3114
 msgid "One normalized relative path per line. Exclusions are persisted project intent and override matching includes for that path and its descendants."
 msgstr "Ein normalisierter relativer Pfad pro Zeile. Ausschlüsse werden als Projektabsicht gespeichert und überschreiben übereinstimmende Einschlussregeln für diesen Pfad und seine Nachfolger."
 
-#: lib/main_image_builder.py:3122
+#: lib/main_image_builder.py:3123
 msgid "Include paths"
 msgstr "Pfade einbeziehen"
 
-#: lib/main_image_builder.py:3123
+#: lib/main_image_builder.py:3124
 msgid "Exclude paths"
 msgstr "Pfade ausschließen"
 
-#: lib/main_image_builder.py:3145
+#: lib/main_image_builder.py:3146
 msgid "Apply selection rules"
 msgstr "Auswahlregeln anwenden"
 
-#: lib/main_image_builder.py:3179
+#: lib/main_image_builder.py:3180
 msgid "Path"
 msgstr "Pfad"
 
-#: lib/main_image_builder.py:3189
+#: lib/main_image_builder.py:3190
 msgid "Category"
 msgstr "Kategorie"
 
-#: lib/main_image_builder.py:3190
+#: lib/main_image_builder.py:3191
 msgid "Type / size"
 msgstr "Typ / Größe"
 
-#: lib/main_image_builder.py:3199
+#: lib/main_image_builder.py:3200
 msgid "Sensitivity"
 msgstr "Sensitivität"
 
-#: lib/main_image_builder.py:3223
+#: lib/main_image_builder.py:3224
 msgid "Load more"
 msgstr "Mehr laden"
 
-#: lib/main_image_builder.py:3256
+#: lib/main_image_builder.py:3257
 #, python-brace-format
 msgid "Preserve source ({seconds} seconds)"
 msgstr "Quelle beibehalten ({seconds} Sekunden)"
 
-#: lib/main_image_builder.py:3282
+#: lib/main_image_builder.py:3283
 msgid "This project contains multiple exclusion expressions, which the provider cannot represent. Entering a new expression replaces them."
 msgstr "Dieses Projekt enthält mehrere Ausschlussausdrücke, die vom Provider nicht dargestellt werden können. Das Eingeben eines neuen Ausdrucks ersetzt diese."
 
-#: lib/main_image_builder.py:3353
+#: lib/main_image_builder.py:3354
 msgid "Checking savechanges and pkexec capture support…"
 msgstr "Überprüfe savechanges- und pkexec-Capture-Unterstützung…"
 
-#: lib/main_image_builder.py:3355
+#: lib/main_image_builder.py:3356
 msgid "Capture capability probing completed unsuccessfully. Upgrade minios-tools to 1.5.0 or newer, then refresh Source."
 msgstr "Die Überprüfung der Erfassungsfunktionen war nicht erfolgreich. Bitte minios-tools auf Version 1.5.0 oder neuer aktualisieren und dann die Quelle aktualisieren."
 
-#: lib/main_image_builder.py:3358
+#: lib/main_image_builder.py:3359
 msgid "Session capture needs trusted /usr/bin/savechanges from minios-tools 1.5.0 or newer."
 msgstr "Für die Sitzungserfassung wird ein vertrauenswürdiges /usr/bin/savechanges aus minios-tools 1.5.0 oder neuer benötigt."
 
-#: lib/main_image_builder.py:3361
+#: lib/main_image_builder.py:3362
 msgid "The installed savechanges version probe failed. Upgrade or reinstall minios-tools 1.5.0 or newer."
 msgstr "Die Prüfung der installierten savechanges-Version ist fehlgeschlagen. Aktualisieren oder installieren Sie minios-tools 1.5.0 oder neuer neu."
 
-#: lib/main_image_builder.py:3364
+#: lib/main_image_builder.py:3365
 msgid "Session capture needs root or trusted /usr/bin/pkexec. Non-root desktops also need a running polkit authentication agent. Building without session changes remains fully available."
 msgstr "Sitzungsaufzeichnung benötigt root oder vertrauenswürdiges /usr/bin/pkexec. Nicht-root-Desktops benötigen außerdem einen laufenden polkit-Authentifizierungsagenten. Das Bauen ohne Sitzungsänderungen bleibt uneingeschränkt verfügbar."
 
-#: lib/main_image_builder.py:3380
+#: lib/main_image_builder.py:3381
 msgid "Capture capability probing failed. Building without session changes remains available; refresh Source to retry."
 msgstr "Erkennung der Aufzeichnungsfähigkeit fehlgeschlagen. Das Bauen ohne Sitzungsänderungen bleibt verfügbar; Quelle aktualisieren, um es erneut zu versuchen."
 
-#: lib/main_image_builder.py:3400
+#: lib/main_image_builder.py:3401
 msgid "Ready"
 msgstr "Bereit"
 
-#: lib/main_image_builder.py:3430
+#: lib/main_image_builder.py:3431
 msgid "This option does not inspect or capture writable session changes."
 msgstr "Diese Option prüft oder erfasst keine beschreibbaren Sitzungsänderungen."
 
-#: lib/main_image_builder.py:3434
+#: lib/main_image_builder.py:3435
 msgid "No inventory is in memory. Include all session changes and Include reusable changes only can still be reviewed with an unknown estimate; Selected changes requires analysis before creating a selection."
 msgstr "Kein Inventar im Speicher. 'Alle Sitzungsänderungen einbeziehen' und 'Nur wiederverwendbare Änderungen einbeziehen' können weiterhin mit unbekannter Schätzung überprüft werden; 'Ausgewählte Änderungen' erfordert eine Analyse vor der Auswahl."
 
-#: lib/main_image_builder.py:3438
+#: lib/main_image_builder.py:3439
 msgid "A validated inventory is available in memory."
 msgstr "Ein validiertes Inventar ist im Arbeitsspeicher verfügbar."
 
-#: lib/main_image_builder.py:3465
+#: lib/main_image_builder.py:3466
 #, python-brace-format
 msgid "{category}: {count}"
 msgstr "{category}: {count}"
 
-#: lib/main_image_builder.py:3472
+#: lib/main_image_builder.py:3473
 #, python-brace-format
 msgid "{size} known; {count} file sizes unknown"
 msgstr "{size} bekannt; {count} Dateigrößen unbekannt"
 
-#: lib/main_image_builder.py:3476 lib/main_image_builder.py:4978
-#: lib/main_image_builder.py:5256
+#: lib/main_image_builder.py:3477 lib/main_image_builder.py:4980
+#: lib/main_image_builder.py:5258
 msgid "Union backend"
 msgstr "Union-Backend"
 
-#: lib/main_image_builder.py:3477
+#: lib/main_image_builder.py:3478
 msgid "Inventory entries"
 msgstr "Inventar-Einträge"
 
-#: lib/main_image_builder.py:3478
+#: lib/main_image_builder.py:3479
 msgid "Regular-file bytes"
 msgstr "Bytes regulärer Dateien"
 
-#: lib/main_image_builder.py:3479
+#: lib/main_image_builder.py:3480
 msgid "Categories"
 msgstr "Kategorien"
 
-#: lib/main_image_builder.py:3480
+#: lib/main_image_builder.py:3481
 msgid "Sensitive entries"
 msgstr "Sensible Einträge"
 
-#: lib/main_image_builder.py:3481
+#: lib/main_image_builder.py:3482
 msgid "Exact defaults"
 msgstr "Exakte Standardwerte"
 
-#: lib/main_image_builder.py:3482
+#: lib/main_image_builder.py:3483
 msgid "Reusable-change defaults"
 msgstr "Standardwerte für wiederverwendbare Änderungen"
 
-#: lib/main_image_builder.py:3485
+#: lib/main_image_builder.py:3486
 msgid "Filenames are sensitive metadata. This inventory is not saved in the project and remains in memory only."
 msgstr "Dateinamen sind sensible Metadaten. Dieses Inventar wird nicht im Projekt gespeichert und bleibt nur im Arbeitsspeicher."
 
-#: lib/main_image_builder.py:3516
+#: lib/main_image_builder.py:3517
 msgid "unknown size"
 msgstr "unbekannte Größe"
 
-#: lib/main_image_builder.py:3517
+#: lib/main_image_builder.py:3518
 #, python-brace-format
 msgid "{kind}, {size}"
 msgstr "{kind}, {size}"
 
-#: lib/main_image_builder.py:3548
+#: lib/main_image_builder.py:3549
 #, python-brace-format
 msgid "Loaded project selection: {includes} include paths and {excludes} exclude paths. Paths remain private; analyze to compare them with this session."
 msgstr "Geladene Projektauswahl: {includes} Einschluss-Pfade und {excludes} Ausschluss-Pfade. Pfade bleiben privat; analysieren Sie, um sie mit dieser Sitzung zu vergleichen."
 
-#: lib/main_image_builder.py:3554
+#: lib/main_image_builder.py:3555
 msgid "Analyze session changes, then select at least one eligible path. Sensitive entries are never preselected."
 msgstr "Analysieren Sie die Sitzungsänderungen und wählen Sie dann mindestens einen berechtigten Pfad aus. Sensible Einträge werden nie vorausgewählt."
 
-#: lib/main_image_builder.py:3558
+#: lib/main_image_builder.py:3559
 #, python-brace-format
 msgid "{count} include paths selected; {excludes} loaded exclude paths. Sensitive entries are never selected automatically."
 msgstr "{count} Einschluss-Pfade ausgewählt; {excludes} geladene Ausschluss-Pfade. Sensible Einträge werden nie automatisch ausgewählt."
 
-#: lib/main_image_builder.py:3566
+#: lib/main_image_builder.py:3567
 msgid "No runtime inventory is displayed. Loaded selection rules remain editable above."
 msgstr "Es wird kein Laufzeit-Inventar angezeigt. Geladene Auswahlregeln bleiben oben bearbeitbar."
 
-#: lib/main_image_builder.py:3575
+#: lib/main_image_builder.py:3576
 #, python-brace-format
 msgid "Showing the capped {displayed} of {matched} matching entries ({total} total). Refine the search to inspect other rows."
 msgstr "Es werden die begrenzten {displayed} von {matched} passenden Einträgen angezeigt ({total} insgesamt). Verfeinern Sie die Suche, um weitere Zeilen zu prüfen."
 
-#: lib/main_image_builder.py:3580
+#: lib/main_image_builder.py:3581
 #, python-brace-format
 msgid "Showing {displayed} of {matched} matching entries ({total} total)."
 msgstr "Es werden {displayed} von {matched} passenden Einträgen angezeigt ({total} insgesamt)."
 
-#: lib/main_image_builder.py:3631
+#: lib/main_image_builder.py:3632
 msgid "EXCLUDED"
 msgstr "AUSGESCHLOSSEN"
 
-#: lib/main_image_builder.py:3632
+#: lib/main_image_builder.py:3633
 msgid "SENSITIVE"
 msgstr "SENSITIV"
 
-#: lib/main_image_builder.py:3679
+#: lib/main_image_builder.py:3680
 #, python-brace-format
 msgid "Customization value is invalid: {error}"
 msgstr "Anpassungswert ist ungültig: {error}"
 
-#: lib/main_image_builder.py:3814
+#: lib/main_image_builder.py:3815
 msgid "directory persistence"
 msgstr "Verzeichnis-Persistenz"
 
-#: lib/main_image_builder.py:3815
+#: lib/main_image_builder.py:3816
 msgid "expandable persistence"
 msgstr "Erweiterbare Persistenz"
 
-#: lib/main_image_builder.py:3816
+#: lib/main_image_builder.py:3817
 msgid "thin block persistence"
 msgstr "Thin-Block-Persistenz"
 
-#: lib/main_image_builder.py:3817
+#: lib/main_image_builder.py:3818
+msgid "split VMDK persistence"
+msgstr "VMDK-Persistenz aufteilen"
+
+#: lib/main_image_builder.py:3819
 msgid "fixed-size persistence"
 msgstr "Feste Persistenzgröße"
 
-#: lib/main_image_builder.py:3823
+#: lib/main_image_builder.py:3825
 msgid "LUKS2 encryption"
 msgstr "LUKS2-Verschlüsselung"
 
-#: lib/main_image_builder.py:3825
+#: lib/main_image_builder.py:3827
 #, python-brace-format
 msgid "persistence size {size}"
 msgstr "Persistenzgröße {size}"
 
-#: lib/main_image_builder.py:3828
+#: lib/main_image_builder.py:3830
 msgid "entire system in RAM"
 msgstr "Gesamtes System im RAM"
 
-#: lib/main_image_builder.py:3830
+#: lib/main_image_builder.py:3832
 msgid "loaded modules in RAM"
 msgstr "Geladene Module im RAM"
 
-#: lib/main_image_builder.py:3832
+#: lib/main_image_builder.py:3834
 msgid "module filter"
 msgstr "Modulfilter"
 
-#: lib/main_image_builder.py:3834
+#: lib/main_image_builder.py:3836
 msgid "text console"
 msgstr "Textkonsole"
 
-#: lib/main_image_builder.py:3836
+#: lib/main_image_builder.py:3838
 msgid "graphical desktop"
 msgstr "grafische Desktop-Umgebung"
 
-#: lib/main_image_builder.py:3838
+#: lib/main_image_builder.py:3840
 msgid "rescue mode"
 msgstr "Rettungsmodus"
 
-#: lib/main_image_builder.py:3840
+#: lib/main_image_builder.py:3842
 msgid "compatible graphics"
 msgstr "Kompatible Grafik"
 
-#: lib/main_image_builder.py:3842
+#: lib/main_image_builder.py:3844
 msgid "automatic disk mounting"
 msgstr "Automatisches Einbinden von Laufwerken"
 
-#: lib/main_image_builder.py:3844
+#: lib/main_image_builder.py:3846
 msgid "zRAM disabled"
 msgstr "zRAM deaktiviert"
 
-#: lib/main_image_builder.py:3847
+#: lib/main_image_builder.py:3849
 msgid "custom zRAM"
 msgstr "benutzerdefiniertes zRAM"
 
-#: lib/main_image_builder.py:3849
+#: lib/main_image_builder.py:3851
 msgid "custom language settings"
 msgstr "benutzerdefinierte Spracheinstellungen"
 
-#: lib/main_image_builder.py:3851
+#: lib/main_image_builder.py:3853
 msgid "quiet boot"
 msgstr "stiller Start"
 
-#: lib/main_image_builder.py:3853
+#: lib/main_image_builder.py:3855
 msgid "diagnostic logging"
 msgstr "Diagnoseprotokollierung"
 
-#: lib/main_image_builder.py:3855
+#: lib/main_image_builder.py:3857
 msgid "additional expert options"
 msgstr "zusätzliche Expertenoptionen"
 
-#: lib/main_image_builder.py:3857
+#: lib/main_image_builder.py:3859
 msgid "Uses the template defaults."
 msgstr "Verwendet die Standardwerte der Vorlage."
 
-#: lib/main_image_builder.py:3883
+#: lib/main_image_builder.py:3885
 msgid "Multilingual custom entry names must use ASCII because native SYSLINUX language menus use different encodings."
 msgstr "Mehrsprachige benutzerdefinierte Eintragsnamen müssen ASCII verwenden, da native SYSLINUX-Sprachmenüs unterschiedliche Codierungen nutzen."
 
-#: lib/main_image_builder.py:3897
+#: lib/main_image_builder.py:3899
 msgid "A custom entry name cannot be represented by the selected native SYSLINUX menu encoding."
 msgstr "Ein benutzerdefinierter Eintragsname kann mit der gewählten nativen SYSLINUX-Menücodierung nicht dargestellt werden."
 
-#: lib/main_image_builder.py:3910 tests/test_runtime_integration.py:262
+#: lib/main_image_builder.py:3912 tests/test_runtime_integration.py:262
 msgid "Set in menu constructor"
 msgstr "Im Menü-Konstruktor festgelegt"
 
-#: lib/main_image_builder.py:3925
+#: lib/main_image_builder.py:3927
 #, python-brace-format
 msgid "Preserve source ({title})"
 msgstr "Quelle beibehalten ({title})"
 
-#: lib/main_image_builder.py:3981
+#: lib/main_image_builder.py:3983
 msgid "The source menu is currently preserved. Changing an entry, its order, or its parameters creates a custom menu."
 msgstr "Das Quellmenü wird derzeit beibehalten. Änderungen an einem Eintrag, dessen Reihenfolge oder Parametern erstellen ein benutzerdefiniertes Menü."
 
-#: lib/main_image_builder.py:3992
+#: lib/main_image_builder.py:3994
 #, python-brace-format
 msgid "{total} entries, {shown} shown. Default: {default}."
 msgstr "{total} Einträge, {shown} angezeigt. Standard: {default}."
 
-#: lib/main_image_builder.py:4041
+#: lib/main_image_builder.py:4043
 msgid "At least one boot menu entry must remain enabled."
 msgstr "Mindestens ein Bootmenü-Eintrag muss aktiviert bleiben."
 
-#: lib/main_image_builder.py:4099 lib/main_image_builder.py:4129
+#: lib/main_image_builder.py:4101 lib/main_image_builder.py:4131
 msgid "The boot menu already has 32 entries."
 msgstr "Das Bootmenü enthält bereits 32 Einträge."
 
-#: lib/main_image_builder.py:4242
+#: lib/main_image_builder.py:4244
 msgid "Choose boot background PNG"
 msgstr "Boot-Hintergrund-PNG auswählen"
 
-#: lib/main_image_builder.py:4243
+#: lib/main_image_builder.py:4245
 msgid "PNG images (*.png)"
 msgstr "PNG-Bilder (*.png)"
 
-#: lib/main_image_builder.py:4251
+#: lib/main_image_builder.py:4253
 msgid "The boot background could not be used."
 msgstr "Der Boot-Hintergrund konnte nicht verwendet werden."
 
-#: lib/main_image_builder.py:4266
+#: lib/main_image_builder.py:4268
 msgid "Choose the project directory"
 msgstr "Projektverzeichnis auswählen"
 
-#: lib/main_image_builder.py:4273
+#: lib/main_image_builder.py:4275
 msgid "Choose an existing project filesystem layer"
 msgstr "Vorhandene Projekt-Dateisystemebene auswählen"
 
-#: lib/main_image_builder.py:4281
+#: lib/main_image_builder.py:4283
 msgid "The project filesystem layer could not be used."
 msgstr "Die Projekt-Dateisystemebene konnte nicht verwendet werden."
 
-#: lib/main_image_builder.py:4297
+#: lib/main_image_builder.py:4299
 msgid "The project filesystem layer could not be created."
 msgstr "Die Projekt-Dateisystemebene konnte nicht erstellt werden."
 
-#: lib/main_image_builder.py:4316
+#: lib/main_image_builder.py:4318
 msgid "The directory could not be opened."
 msgstr "Das Verzeichnis konnte nicht geöffnet werden."
 
-#: lib/main_image_builder.py:4331
+#: lib/main_image_builder.py:4333
 #, python-brace-format
 msgid "{name} · {width}×{height} · {size} · SHA-256 {digest}"
 msgstr "{name} · {width}×{height} · {size} · SHA-256 {digest}"
 
-#: lib/main_image_builder.py:4338
+#: lib/main_image_builder.py:4340
 msgid "Preserve source background"
 msgstr "Quellhintergrund beibehalten"
 
-#: lib/main_image_builder.py:4345 lib/main_image_builder.py:4867
+#: lib/main_image_builder.py:4347 lib/main_image_builder.py:4869
 #, python-brace-format
 msgid "{name} · {entries} entries · {size} · fingerprint {fingerprint}"
 msgstr "{name} · {entries} Einträge · {size} · Fingerabdruck {fingerprint}"
 
-#: lib/main_image_builder.py:4353
+#: lib/main_image_builder.py:4355
 msgid "No project filesystem layer"
 msgstr "Keine Projekt-Dateisystemebene"
 
-#: lib/main_image_builder.py:4423
+#: lib/main_image_builder.py:4425
 #, python-brace-format
 msgid "Selection rules were not applied: {error}"
 msgstr "Auswahlregeln wurden nicht angewendet: {error}"
 
-#: lib/main_image_builder.py:4427
+#: lib/main_image_builder.py:4429
 msgid "Selection rules are valid and applied."
 msgstr "Auswahlregeln sind gültig und wurden angewendet."
 
-#: lib/main_image_builder.py:4448
+#: lib/main_image_builder.py:4450
 msgid "This row is blocked by an exclusion rule. Remove or edit that rule above before selecting the row."
 msgstr "Diese Zeile ist durch eine Ausschlussregel blockiert. Entfernen oder bearbeiten Sie die Regel oben, bevor Sie die Zeile auswählen."
 
-#: lib/main_image_builder.py:4471
+#: lib/main_image_builder.py:4473
 #, python-brace-format
 msgid "The selection could not be changed: {error}"
 msgstr "Die Auswahl konnte nicht geändert werden: {error}"
 
-#: lib/main_image_builder.py:4499
+#: lib/main_image_builder.py:4501
 msgid "Could not prepare a private inventory analysis. Refresh Source and verify minios-tools installation."
 msgstr "Eine private Inventaranalyse konnte nicht vorbereitet werden. Quelle aktualisieren und minios-tools-Installation überprüfen."
 
-#: lib/main_image_builder.py:4509
+#: lib/main_image_builder.py:4511
 msgid "Analyzing metadata only. An authorization prompt may appear; inventory content and output paths are not logged."
 msgstr "Nur Metadaten werden analysiert. Eine Autorisierungsabfrage kann erscheinen; Inventarinhalte und Ausgabepfade werden nicht protokolliert."
 
-#: lib/main_image_builder.py:4537
+#: lib/main_image_builder.py:4539
 #, python-brace-format
 msgid "Cancellation reported an error: {error}. Process signalling was attempted as a fallback."
 msgstr "Bei der Abbruchmeldung ist ein Fehler aufgetreten: {error}. Als Fallback wurde ein Prozess-Signal versucht."
 
-#: lib/main_image_builder.py:4541
+#: lib/main_image_builder.py:4543
 msgid "Cancelling analysis and waiting for privileged cleanup."
 msgstr "Analyse wird abgebrochen und auf privilegierte Bereinigung gewartet."
 
-#: lib/main_image_builder.py:4557 lib/main_image_builder.py:4606
+#: lib/main_image_builder.py:4559 lib/main_image_builder.py:4608
 msgid "Session analysis was cancelled; no inventory was kept."
 msgstr "Sitzungsanalyse wurde abgebrochen; kein Inventar wurde behalten."
 
-#: lib/main_image_builder.py:4561
+#: lib/main_image_builder.py:4563
 msgid "Session analysis failed or authorization was declined. No inventory content was logged or retained."
 msgstr "Sitzungsanalyse fehlgeschlagen oder Autorisierung abgelehnt. Es wurden keine Inventarinhalte protokolliert oder gespeichert."
 
-#: lib/main_image_builder.py:4566
+#: lib/main_image_builder.py:4568
 msgid "Analysis stopped, but the private workspace could not be removed safely. It was left untouched."
 msgstr "Analyse gestoppt, aber der private Arbeitsbereich konnte nicht sicher entfernt werden. Er wurde unverändert belassen."
 
-#: lib/main_image_builder.py:4577
+#: lib/main_image_builder.py:4579
 msgid "Validating the private inventory and removing its temporary workspace…"
 msgstr "Der private Bestand wird validiert und sein temporärer Arbeitsbereich entfernt…"
 
-#: lib/main_image_builder.py:4611
+#: lib/main_image_builder.py:4613
 msgid "The inventory failed validation or its private workspace could not be removed safely. No inventory was kept."
 msgstr "Die Validierung des Bestands ist fehlgeschlagen oder der private Arbeitsbereich konnte nicht sicher entfernt werden. Kein Bestand wurde übernommen."
 
-#: lib/main_image_builder.py:4621
+#: lib/main_image_builder.py:4623
 msgid "Analysis complete. The validated metadata inventory is held in memory only."
 msgstr "Analyse abgeschlossen. Das validierte Metadaten-Inventar wird nur im Arbeitsspeicher gehalten."
 
-#: lib/main_image_builder.py:4654 tests/test_runtime_integration.py:140
+#: lib/main_image_builder.py:4656 tests/test_runtime_integration.py:140
 msgid "Choose output image"
 msgstr "Ausgabe-Image auswählen"
 
-#: lib/main_image_builder.py:4667
+#: lib/main_image_builder.py:4669
 msgid "Choose temporary work directory"
 msgstr "Temporäres Arbeitsverzeichnis auswählen"
 
-#: lib/main_image_builder.py:4675
+#: lib/main_image_builder.py:4677
 msgid "STEP 4 OF 5"
 msgstr "SCHRITT 4 VON 5"
 
-#: lib/main_image_builder.py:4675
+#: lib/main_image_builder.py:4677
 msgid "Review the resolved build plan"
 msgstr "Überprüfen Sie den aufgelösten Build-Plan"
 
-#: lib/main_image_builder.py:4676
+#: lib/main_image_builder.py:4678
 msgid "Review re-hashes inputs, checks provider capabilities and disk space, and allocates a private job only when the plan is buildable."
 msgstr "Die Überprüfung berechnet Hashes neu, prüft Anbieterfunktionen und Speicherplatz und reserviert einen privaten Auftrag nur, wenn der Plan gebaut werden kann."
 
-#: lib/main_image_builder.py:4722
+#: lib/main_image_builder.py:4724
 msgid "Resolving and validating the build plan…"
 msgstr "Build-Plan wird aufgelöst und validiert…"
 
-#: lib/main_image_builder.py:4792
+#: lib/main_image_builder.py:4794
 msgid "The build plan could not be created."
 msgstr "Der Build-Plan konnte nicht erstellt werden."
 
-#: lib/main_image_builder.py:4805
+#: lib/main_image_builder.py:4807
 msgid "Ready to build"
 msgstr "Bereit zum Bauen"
 
-#: lib/main_image_builder.py:4806
+#: lib/main_image_builder.py:4808
 msgid "All mandatory checks passed. Build will revalidate every effective input immediately before execution."
 msgstr "Alle Pflichtprüfungen bestanden. Der Build wird alle relevanten Eingaben unmittelbar vor der Ausführung erneut validieren."
 
-#: lib/main_image_builder.py:4810
+#: lib/main_image_builder.py:4812
 msgid "Build is blocked"
 msgstr "Build ist blockiert"
 
-#: lib/main_image_builder.py:4811
+#: lib/main_image_builder.py:4813
 #, python-brace-format
 msgid "Resolve the {count} blocking issue(s) listed below. Each issue has a button that opens the step where you can fix it."
 msgstr "Beheben Sie die {count} unten aufgeführten Blockierungsprobleme. Jedes Problem hat eine Schaltfläche, die den Schritt zum Beheben öffnet."
 
-#: lib/main_image_builder.py:4816
+#: lib/main_image_builder.py:4818
 msgid "Source summary"
 msgstr "Quellenübersicht"
 
-#: lib/main_image_builder.py:4819
+#: lib/main_image_builder.py:4821
 msgid "Initramfs"
 msgstr "Initramfs"
 
-#: lib/main_image_builder.py:4821
+#: lib/main_image_builder.py:4823
 msgid "Bootloader"
 msgstr "Bootloader"
 
-#: lib/main_image_builder.py:4822 lib/main_image_builder.py:5128
+#: lib/main_image_builder.py:4824 lib/main_image_builder.py:5130
 msgid "Fingerprint"
 msgstr "Fingerprint"
 
-#: lib/main_image_builder.py:4826
+#: lib/main_image_builder.py:4828
 msgid "Composition"
 msgstr "Komposition"
 
-#: lib/main_image_builder.py:4828
+#: lib/main_image_builder.py:4830
 msgid "Selected source modules"
 msgstr "Ausgewählte Quellmodule"
 
-#: lib/main_image_builder.py:4832
+#: lib/main_image_builder.py:4834
 msgid "Deselected source modules"
 msgstr "Abgewählte Quellmodule"
 
-#: lib/main_image_builder.py:4836
+#: lib/main_image_builder.py:4838
 msgid "Additional modules"
 msgstr "Zusätzliche Module"
 
-#: lib/main_image_builder.py:4840
+#: lib/main_image_builder.py:4842
 msgid "Output and defaults"
 msgstr "Ausgabe und Standardwerte"
 
-#: lib/main_image_builder.py:4843 lib/main_image_builder.py:5127
+#: lib/main_image_builder.py:4845 lib/main_image_builder.py:5129
 msgid "Output"
 msgstr "Ausgabe"
 
-#: lib/main_image_builder.py:4844
+#: lib/main_image_builder.py:4846
 msgid "Boot menu"
 msgstr "Boot-Menü"
 
-#: lib/main_image_builder.py:4845
+#: lib/main_image_builder.py:4847
 msgid "Volume label"
 msgstr "Volume-Label"
 
-#: lib/main_image_builder.py:4856 lib/main_image_builder.py:5788
+#: lib/main_image_builder.py:4858 lib/main_image_builder.py:5790
 #, python-brace-format
 msgid "{count} bytes · SHA-256 {digest}"
 msgstr "{count} Bytes · SHA-256 {digest}"
 
-#: lib/main_image_builder.py:4860
+#: lib/main_image_builder.py:4862
 #, python-brace-format
 msgid "{name} · {width}×{height} · SHA-256 {digest}"
 msgstr "{name} · {width}×{height} · SHA-256 {digest}"
 
-#: lib/main_image_builder.py:4889
+#: lib/main_image_builder.py:4891
 #, python-brace-format
 msgid "{count} entries · order: {order}"
 msgstr "{count} Einträge · Reihenfolge: {order}"
 
-#: lib/main_image_builder.py:4892
+#: lib/main_image_builder.py:4894
 #, python-brace-format
 msgid " · {count} custom"
 msgstr " · {count} benutzerdefiniert"
 
-#: lib/main_image_builder.py:4895
+#: lib/main_image_builder.py:4897
 #, python-brace-format
 msgid " · {count} with entry parameters"
 msgstr " · {count} mit Eintragsparametern"
 
-#: lib/main_image_builder.py:4906
+#: lib/main_image_builder.py:4908
 msgid "Image customization"
 msgstr "Image-Anpassung"
 
-#: lib/main_image_builder.py:4908 lib/main_image_builder.py:5289
+#: lib/main_image_builder.py:4910 lib/main_image_builder.py:5291
 msgid "Configuration override keys"
 msgstr "Konfigurations-Override-Keys"
 
-#: lib/main_image_builder.py:4911 lib/main_image_builder.py:5759
+#: lib/main_image_builder.py:4913 lib/main_image_builder.py:5761
 #, python-brace-format
 msgid "{seconds} seconds"
 msgstr "{seconds} Sekunden"
 
-#: lib/main_image_builder.py:4917 lib/main_image_builder.py:5293
+#: lib/main_image_builder.py:4919 lib/main_image_builder.py:5295
 msgid "Kernel arguments"
 msgstr "Kernel-Parameter"
 
-#: lib/main_image_builder.py:4920
+#: lib/main_image_builder.py:4922
 msgid "Customization privilege"
 msgstr "Anpassungsberechtigung"
 
-#: lib/main_image_builder.py:4921
+#: lib/main_image_builder.py:4923
 msgid "Rootless; only optional session capture may request savechanges authorization"
 msgstr "Rootless; nur optionale Sitzungsaufzeichnung kann eine Savechanges-Autorisierung anfordern"
 
-#: lib/main_image_builder.py:4934
+#: lib/main_image_builder.py:4936
 msgid "Direct capture as EUID 0; minios-image-compose remains within the current root process"
 msgstr "Direktes Erfassen als EUID 0; minios-image-compose bleibt im aktuellen Root-Prozess"
 
-#: lib/main_image_builder.py:4938
+#: lib/main_image_builder.py:4940
 msgid "pkexec authorizes trusted savechanges only; minios-image-compose remains unprivileged"
 msgstr "pkexec autorisiert ausschließlich vertrauenswürdige savechanges; minios-image-compose bleibt ohne erhöhte Rechte"
 
-#: lib/main_image_builder.py:4942
+#: lib/main_image_builder.py:4944
 #, python-brace-format
 msgid "{count} entries provided"
 msgstr "{count} Einträge bereitgestellt"
 
-#: lib/main_image_builder.py:4945
+#: lib/main_image_builder.py:4947
 msgid "Not provided; estimate is unknown"
 msgstr "Nicht bereitgestellt; Schätzung unbekannt"
 
-#: lib/main_image_builder.py:4953 lib/main_image_builder.py:5721
+#: lib/main_image_builder.py:4955 lib/main_image_builder.py:5723
 #, python-brace-format
 msgid "{includes} include paths, {excludes} exclude paths"
 msgstr "{includes} Include-Pfade, {excludes} Exclude-Pfade"
 
-#: lib/main_image_builder.py:4961 lib/main_image_builder.py:4964
-#: lib/main_image_builder.py:4966 lib/main_image_builder.py:4968
-#: lib/main_image_builder.py:4979 lib/main_image_builder.py:5730
-#: lib/main_image_builder.py:5731 lib/main_image_builder.py:5800
-#: lib/main_image_builder.py:5802 lib/main_image_builder.py:5805
+#: lib/main_image_builder.py:4963 lib/main_image_builder.py:4966
+#: lib/main_image_builder.py:4968 lib/main_image_builder.py:4970
+#: lib/main_image_builder.py:4981 lib/main_image_builder.py:5732
+#: lib/main_image_builder.py:5733 lib/main_image_builder.py:5802
+#: lib/main_image_builder.py:5804 lib/main_image_builder.py:5807
 msgid "Not applicable"
 msgstr "Nicht zutreffend"
 
-#: lib/main_image_builder.py:4963
+#: lib/main_image_builder.py:4965
 msgid "No session-capture authorization"
 msgstr "Keine Berechtigung zur Sitzungsaufnahme"
 
-#: lib/main_image_builder.py:4965
+#: lib/main_image_builder.py:4967
 msgid "Not requested"
 msgstr "Nicht angefordert"
 
-#: lib/main_image_builder.py:4969
+#: lib/main_image_builder.py:4971
 msgid "Session capture"
 msgstr "Sitzungsaufzeichnung"
 
-#: lib/main_image_builder.py:4971
+#: lib/main_image_builder.py:4973
 msgid "Mode"
 msgstr "Modus"
 
-#: lib/main_image_builder.py:4973
+#: lib/main_image_builder.py:4975
 msgid "Capture authorization"
 msgstr "Erfassungsgenehmigung"
 
-#: lib/main_image_builder.py:4975 lib/main_image_builder.py:5257
+#: lib/main_image_builder.py:4977 lib/main_image_builder.py:5259
 msgid "Selection count"
 msgstr "Anzahl der Auswahlen"
 
-#: lib/main_image_builder.py:4976
+#: lib/main_image_builder.py:4978
 msgid "Selection SHA-256"
 msgstr "SHA-256 der Auswahl"
 
-#: lib/main_image_builder.py:4977
+#: lib/main_image_builder.py:4979
 msgid "Session inventory"
 msgstr "Sitzungsinventar"
 
-#: lib/main_image_builder.py:4980
+#: lib/main_image_builder.py:4982
 msgid "Estimated capture size"
 msgstr "Geschätzte Erfassungsgröße"
 
-#: lib/main_image_builder.py:4984
+#: lib/main_image_builder.py:4986
 msgid "Include all session changes is union-provider-specific and may preserve sensitive writable state. The explicit acknowledgement is stored in the project and remains in effect until revoked."
 msgstr "Das Einbeziehen aller Sitzungsänderungen ist spezifisch für den jeweiligen Union-Provider und kann sensible, beschreibbare Zustände bewahren. Die ausdrückliche Bestätigung wird im Projekt gespeichert und bleibt wirksam, bis sie widerrufen wird."
 
-#: lib/main_image_builder.py:4993
+#: lib/main_image_builder.py:4995
 msgid "Include reusable changes only uses a strict allowlist and intentionally omits broad state. It is not a guarantee that an image is shareable."
 msgstr "Nur wiederverwendbare Änderungen einbeziehen verwendet eine strikte Positivliste und lässt absichtlich umfassende Zustände aus. Es ist keine Garantie dafür, dass ein Image teilbar ist."
 
-#: lib/main_image_builder.py:5001
+#: lib/main_image_builder.py:5003
 msgid "Size and free space"
 msgstr "Größe und freier Speicherplatz"
 
-#: lib/main_image_builder.py:5003
+#: lib/main_image_builder.py:5005
 msgid "Persistent disk"
 msgstr "Persistente Festplatte"
 
-#: lib/main_image_builder.py:5004
+#: lib/main_image_builder.py:5006
 msgid "RAM-backed (tmpfs)"
 msgstr "RAM-basiert (tmpfs)"
 
-#: lib/main_image_builder.py:5005
+#: lib/main_image_builder.py:5007
 msgid "Live overlay"
 msgstr "Live-Overlay"
 
-#: lib/main_image_builder.py:5006
+#: lib/main_image_builder.py:5008
 msgid "Removable media"
 msgstr "Wechselmedium"
 
-#: lib/main_image_builder.py:5010
+#: lib/main_image_builder.py:5012
 msgid "Estimated input size"
 msgstr "Geschätzte Eingabegröße"
 
-#: lib/main_image_builder.py:5012
+#: lib/main_image_builder.py:5014
 msgid "Required destination space"
 msgstr "Erforderlicher Speicherplatz am Ziel"
 
-#: lib/main_image_builder.py:5014
+#: lib/main_image_builder.py:5016
 msgid "Available destination space"
 msgstr "Verfügbarer Speicherplatz am Ziel"
 
-#: lib/main_image_builder.py:5016
+#: lib/main_image_builder.py:5018
 msgid "Destination storage type"
 msgstr "Ziel-Speichertyp"
 
-#: lib/main_image_builder.py:5018
+#: lib/main_image_builder.py:5020
 msgid "Required temporary space"
 msgstr "Erforderlicher temporärer Speicherplatz"
 
-#: lib/main_image_builder.py:5020
+#: lib/main_image_builder.py:5022
 msgid "Available temporary space"
 msgstr "Verfügbarer temporärer Speicherplatz"
 
-#: lib/main_image_builder.py:5022
+#: lib/main_image_builder.py:5024
 msgid "Temporary storage type"
 msgstr "Temporärer Speichertyp"
 
-#: lib/main_image_builder.py:5026
+#: lib/main_image_builder.py:5028
 msgid "Peak RAM use"
 msgstr "Maximale RAM-Nutzung"
 
-#: lib/main_image_builder.py:5028
+#: lib/main_image_builder.py:5030
 msgid "Available memory"
 msgstr "Verfügbarer Arbeitsspeicher"
 
-#: lib/main_image_builder.py:5037
+#: lib/main_image_builder.py:5039
 #, python-brace-format
 msgid "The selected temporary directory is in RAM. The build may use up to {size} of memory for temporary files. To avoid this, return to Settings and choose a directory on disk-backed storage with Unix permissions, such as ext4, XFS, or Btrfs."
 msgstr "Das ausgewählte temporäre Verzeichnis befindet sich in RAM. Der Build kann bis zu {size} Speicher für temporäre Dateien verwenden. Um dies zu vermeiden, gehen Sie zu den Einstellungen zurück und wählen Sie ein Verzeichnis auf festplattenbasiertem Speicher mit Unix-Berechtigungen wie ext4, XFS oder Btrfs."
 
-#: lib/main_image_builder.py:5044
+#: lib/main_image_builder.py:5046
 msgid "The selected temporary directory is on persistent storage. Temporary build files will not use tmpfs capacity."
 msgstr "Das ausgewählte temporäre Verzeichnis befindet sich auf persistentem Speicher. Temporäre Build-Dateien nutzen nicht die Kapazität von tmpfs."
 
-#: lib/main_image_builder.py:5048
+#: lib/main_image_builder.py:5050
 msgid "The selected temporary directory is on the live writable layer. It can consume RAM or changes storage. To keep build files outside that layer, use /tmp when it is tmpfs, or disk-backed storage with Unix permissions such as ext4, XFS, or Btrfs."
 msgstr "Das ausgewählte temporäre Verzeichnis befindet sich auf der aktiven beschreibbaren Ebene. Es kann RAM oder Änderungs-Speicher belegen. Um Build-Dateien außerhalb dieser Ebene zu halten, verwenden Sie /tmp, wenn es sich um tmpfs handelt, oder festplattenbasierten Speicher mit Unix-Berechtigungen wie ext4, XFS oder Btrfs."
 
-#: lib/main_image_builder.py:5055
+#: lib/main_image_builder.py:5057
 #, python-brace-format
 msgid "Image Builder could not identify this storage type. Keep it mounted until the build finishes and make sure it has at least {size} free."
 msgstr "Image Builder konnte diesen Speichertyp nicht identifizieren. Lassen Sie ihn bis zum Ende des Builds eingehängt und stellen Sie sicher, dass mindestens {size} frei ist."
 
-#: lib/main_image_builder.py:5065
+#: lib/main_image_builder.py:5067
 msgid "Blocking issues"
 msgstr "Blockierende Probleme"
 
-#: lib/main_image_builder.py:5070
+#: lib/main_image_builder.py:5072
 msgid "Warnings"
 msgstr "Warnungen"
 
-#: lib/main_image_builder.py:5077
+#: lib/main_image_builder.py:5079
 msgid "The minios-image-compose backend is missing. Reinstall the minios-image-compose package that matches this application version."
 msgstr "Das minios-image-compose-Backend fehlt. Installieren Sie das minios-image-compose-Paket neu, das zu dieser Anwendungsversion passt."
 
-#: lib/main_image_builder.py:5086
+#: lib/main_image_builder.py:5088
 msgid "No warnings or blocking issues."
 msgstr "Keine Warnungen oder blockierenden Probleme."
 
-#: lib/main_image_builder.py:5091
+#: lib/main_image_builder.py:5093
 msgid "Review existing output"
 msgstr "Vorhandene Ausgabe überprüfen"
 
-#: lib/main_image_builder.py:5164
+#: lib/main_image_builder.py:5166
 msgid "Replace the existing output image?"
 msgstr "Vorhandenes Ausgabebild ersetzen?"
 
-#: lib/main_image_builder.py:5165
+#: lib/main_image_builder.py:5167
 #, python-brace-format
 msgid ""
 "The backend will bind this exact existing file into a new plan and will refuse publication if it changes.\n"
@@ -2639,244 +2647,244 @@ msgstr ""
 "\n"
 "{path}"
 
-#: lib/main_image_builder.py:5168
+#: lib/main_image_builder.py:5170
 msgid "Replace"
 msgstr "Ersetzen"
 
-#: lib/main_image_builder.py:5180
+#: lib/main_image_builder.py:5182
 msgid "STEP 5 OF 5"
 msgstr "SCHRITT 5 VON 5"
 
-#: lib/main_image_builder.py:5180
+#: lib/main_image_builder.py:5182
 msgid "Build and verify the image"
 msgstr "Abbild erstellen und verifizieren"
 
-#: lib/main_image_builder.py:5181
+#: lib/main_image_builder.py:5183
 msgid "The image is first created in a private job directory, then structurally verified, and only then published atomically to the final path."
 msgstr "Das Abbild wird zunächst in einem privaten Job-Verzeichnis erstellt, dann strukturell überprüft und erst anschließend atomar an den endgültigen Pfad veröffentlicht."
 
-#: lib/main_image_builder.py:5200 lib/main_image_builder.py:5532
+#: lib/main_image_builder.py:5202 lib/main_image_builder.py:5534
 msgid "Created"
 msgstr "Erstellt"
 
-#: lib/main_image_builder.py:5201 lib/main_image_builder.py:5574
-#: lib/main_image_builder.py:5597
+#: lib/main_image_builder.py:5203 lib/main_image_builder.py:5576
+#: lib/main_image_builder.py:5599
 msgid "Structurally verified"
 msgstr "Strukturell verifiziert"
 
-#: lib/main_image_builder.py:5202
+#: lib/main_image_builder.py:5204
 msgid "Published safely"
 msgstr "Sicher veröffentlicht"
 
-#: lib/main_image_builder.py:5229
+#: lib/main_image_builder.py:5231
 msgid "Final path"
 msgstr "Endgültiger Pfad"
 
-#: lib/main_image_builder.py:5230
+#: lib/main_image_builder.py:5232
 msgid "Size"
 msgstr "Größe"
 
-#: lib/main_image_builder.py:5231
+#: lib/main_image_builder.py:5233
 msgid "SHA-256"
 msgstr "SHA-256"
 
-#: lib/main_image_builder.py:5246
+#: lib/main_image_builder.py:5248
 msgid "Verified session capture"
 msgstr "Verifizierte Sitzungsaufnahme"
 
-#: lib/main_image_builder.py:5255
+#: lib/main_image_builder.py:5257
 msgid "Profile"
 msgstr "Profil"
 
-#: lib/main_image_builder.py:5258
+#: lib/main_image_builder.py:5260
 msgid "Selection digest"
 msgstr "Auswahl-Hashwert"
 
-#: lib/main_image_builder.py:5259
+#: lib/main_image_builder.py:5261
 msgid "Capture layer"
 msgstr "Erfassungsschicht"
 
-#: lib/main_image_builder.py:5260
+#: lib/main_image_builder.py:5262
 msgid "Capture layer size"
 msgstr "Größe der Erfassungsschicht"
 
-#: lib/main_image_builder.py:5261
+#: lib/main_image_builder.py:5263
 msgid "Capture layer SHA-256"
 msgstr "SHA-256 der Erfassungsschicht"
 
-#: lib/main_image_builder.py:5280
+#: lib/main_image_builder.py:5282
 msgid "Verified image customization"
 msgstr "Verifizierte Image-Anpassung"
 
-#: lib/main_image_builder.py:5296
+#: lib/main_image_builder.py:5298
 msgid "Overlay layer size"
 msgstr "Größe der Overlay-Schicht"
 
-#: lib/main_image_builder.py:5297
+#: lib/main_image_builder.py:5299
 msgid "Overlay layer SHA-256"
 msgstr "SHA-256 der Overlay-Schicht"
 
-#: lib/main_image_builder.py:5298
+#: lib/main_image_builder.py:5300
 msgid "Overlay input fingerprint"
 msgstr "Eingabefingerprint überlagern"
 
-#: lib/main_image_builder.py:5322 lib/main_image_builder.py:6204
+#: lib/main_image_builder.py:5324 lib/main_image_builder.py:6206
 msgid "Open containing folder"
 msgstr "Enthaltenden Ordner öffnen"
 
-#: lib/main_image_builder.py:5330 lib/main_image_builder.py:6201
+#: lib/main_image_builder.py:5332 lib/main_image_builder.py:6203
 msgid "New image project"
 msgstr "Neues Image-Projekt"
 
-#: lib/main_image_builder.py:5346
+#: lib/main_image_builder.py:5348
 msgid "Technical details"
 msgstr "Technische Details"
 
-#: lib/main_image_builder.py:5353
+#: lib/main_image_builder.py:5355
 msgid "Waiting to build"
 msgstr "Warten auf Build"
 
-#: lib/main_image_builder.py:5396
+#: lib/main_image_builder.py:5398
 msgid "Revalidating inputs"
 msgstr "Eingaben werden erneut validiert"
 
-#: lib/main_image_builder.py:5398
+#: lib/main_image_builder.py:5400
 msgid "Every source, module, and configuration digest is being checked again before execution."
 msgstr "Jede Quelle, jedes Modul und jeder Konfigurations-Hash wird vor der Ausführung erneut geprüft."
 
-#: lib/main_image_builder.py:5423 lib/main_image_builder.py:5437
-#: lib/main_image_builder.py:5526
+#: lib/main_image_builder.py:5425 lib/main_image_builder.py:5439
+#: lib/main_image_builder.py:5528
 msgid "Build failed"
 msgstr "Build fehlgeschlagen"
 
-#: lib/main_image_builder.py:5424
+#: lib/main_image_builder.py:5426
 #, python-brace-format
 msgid "Input revalidation failed: {error}"
 msgstr "Eingabe-Revalidierung fehlgeschlagen: {error}"
 
-#: lib/main_image_builder.py:5438
+#: lib/main_image_builder.py:5440
 msgid "The backend did not return a plain minios-image-compose command. Privilege escalation is permitted only inside the trusted session-capture boundary."
 msgstr "Das Backend hat keinen einfachen minios-image-compose-Befehl zurückgegeben. Rechteerhöhung ist nur innerhalb der vertrauenswürdigen Session-Capture-Grenze erlaubt."
 
-#: lib/main_image_builder.py:5443
+#: lib/main_image_builder.py:5445
 msgid "Starting image build"
 msgstr "Image-Build wird gestartet"
 
-#: lib/main_image_builder.py:5507
+#: lib/main_image_builder.py:5509
 msgid "Building image"
 msgstr "Image wird gebaut"
 
-#: lib/main_image_builder.py:5534
+#: lib/main_image_builder.py:5536
 msgid "The private image was created. Structural verification is running before publication."
 msgstr "Das private Image wurde erstellt. Die Strukturüberprüfung läuft vor der Veröffentlichung."
 
-#: lib/main_image_builder.py:5561 lib/main_image_builder.py:5569
+#: lib/main_image_builder.py:5563 lib/main_image_builder.py:5571
 msgid "Verification failed"
 msgstr "Verifizierung fehlgeschlagen"
 
-#: lib/main_image_builder.py:5562
+#: lib/main_image_builder.py:5564
 #, python-brace-format
 msgid "Structural verification could not run: {error}"
 msgstr "Strukturüberprüfung konnte nicht ausgeführt werden: {error}"
 
-#: lib/main_image_builder.py:5570
+#: lib/main_image_builder.py:5572
 msgid "An image was created, but it did not pass structural verification."
 msgstr "Ein Image wurde erstellt, hat aber die Strukturüberprüfung nicht bestanden."
 
-#: lib/main_image_builder.py:5576
+#: lib/main_image_builder.py:5578
 msgid "All required image paths and boot records were verified. Safe publication is next."
 msgstr "Alle erforderlichen Image-Pfade und Boot-Records wurden verifiziert. Die sichere Veröffentlichung folgt als Nächstes."
 
-#: lib/main_image_builder.py:5614
+#: lib/main_image_builder.py:5616
 msgid "Publication failed"
 msgstr "Veröffentlichung fehlgeschlagen"
 
-#: lib/main_image_builder.py:5615
+#: lib/main_image_builder.py:5617
 #, python-brace-format
 msgid "The verified image could not be published safely: {error}"
 msgstr "Das verifizierte Image konnte nicht sicher veröffentlicht werden: {error}"
 
-#: lib/main_image_builder.py:5624
+#: lib/main_image_builder.py:5626
 msgid "Image ready"
 msgstr "Image bereit"
 
-#: lib/main_image_builder.py:5626
+#: lib/main_image_builder.py:5628
 msgid "The structurally verified image was published safely."
 msgstr "Das strukturell verifizierte Image wurde sicher veröffentlicht."
 
-#: lib/main_image_builder.py:5643
+#: lib/main_image_builder.py:5645
 msgid "Cancelled"
 msgstr "Abgebrochen"
 
-#: lib/main_image_builder.py:5647
+#: lib/main_image_builder.py:5649
 msgid "The build was cancelled and private partial output was cleaned up."
 msgstr "Der Build wurde abgebrochen und private Zwischenergebnisse wurden bereinigt."
 
-#: lib/main_image_builder.py:5651
+#: lib/main_image_builder.py:5653
 msgid "The build was cancelled, but private files could not be removed safely. Review the cleanup warning."
 msgstr "Der Build wurde abgebrochen, aber private Dateien konnten nicht sicher entfernt werden. Prüfen Sie die Bereinigungswarnung."
 
-#: lib/main_image_builder.py:5654
+#: lib/main_image_builder.py:5656
 msgid "Build cancelled"
 msgstr "Build abgebrochen"
 
-#: lib/main_image_builder.py:5657
+#: lib/main_image_builder.py:5659
 msgid "No image was published. You can return to Review and try again."
 msgstr "Kein Image wurde veröffentlicht. Sie können zur Überprüfung zurückkehren und es erneut versuchen."
 
-#: lib/main_image_builder.py:5698
+#: lib/main_image_builder.py:5700
 msgid "Verified image published"
 msgstr "Verifiziertes Image veröffentlicht"
 
-#: lib/main_image_builder.py:5701
+#: lib/main_image_builder.py:5703
 msgid "The final image passed structural verification and is ready at the selected path."
 msgstr "Das finale Image hat die Strukturüberprüfung bestanden und ist am gewählten Pfad bereit."
 
-#: lib/main_image_builder.py:5774
+#: lib/main_image_builder.py:5776
 #, python-brace-format
 msgid "{count} enabled: {entries}"
 msgstr "{count} aktiviert: {entries}"
 
-#: lib/main_image_builder.py:5792
+#: lib/main_image_builder.py:5794
 #, python-brace-format
 msgid "{name} · SHA-256 {digest}"
 msgstr "{name} · SHA-256 {digest}"
 
-#: lib/main_image_builder.py:5814
+#: lib/main_image_builder.py:5816
 msgid "Boot test available externally. A compatible VM provider was detected; Image Builder does not invoke it."
 msgstr "Boot-Test extern verfügbar. Ein kompatibler VM-Anbieter wurde erkannt; Image Builder startet ihn nicht."
 
-#: lib/main_image_builder.py:5852
+#: lib/main_image_builder.py:5854
 msgid "Cancelling"
 msgstr "Abbrechen läuft"
 
-#: lib/main_image_builder.py:5854
+#: lib/main_image_builder.py:5856
 msgid "Waiting for the current safe checkpoint. Hashing may finish its current pass before cancellation completes."
 msgstr "Warten auf den aktuellen sicheren Checkpoint. Das Hashing kann seinen aktuellen Durchlauf vor Abschluss der Stornierung beenden."
 
-#: lib/main_image_builder.py:5915
+#: lib/main_image_builder.py:5917
 #, python-brace-format
 msgid "Fix in {step}"
 msgstr "Im Schritt {step} beheben"
 
-#: lib/main_image_builder.py:5918
+#: lib/main_image_builder.py:5920
 #, python-brace-format
 msgid "Go to the {step} step to resolve this issue."
 msgstr "Wechseln Sie zum Schritt {step}, um dieses Problem zu beheben."
 
-#: lib/main_image_builder.py:5929
+#: lib/main_image_builder.py:5931
 msgid "Unknown path"
 msgstr "Unbekannter Pfad"
 
-#: lib/main_image_builder.py:5934 lib/main_image_builder.py:5937
+#: lib/main_image_builder.py:5936 lib/main_image_builder.py:5939
 msgid "Cleanup warning:"
 msgstr "Bereinigungswarnung:"
 
-#: lib/main_image_builder.py:5940
+#: lib/main_image_builder.py:5942
 msgid "Private build files were left in place."
 msgstr "Private Build-Dateien wurden nicht entfernt."
 
-#: lib/main_image_builder.py:5941
+#: lib/main_image_builder.py:5943
 #, python-brace-format
 msgid ""
 "The job directory failed identity-safe cleanup. Inspect it manually; Image Builder did not remove an untrusted path.\n"
@@ -2887,95 +2895,95 @@ msgstr ""
 "\n"
 "{detail}"
 
-#: lib/main_image_builder.py:6052
+#: lib/main_image_builder.py:6054
 msgid "Unsaved changes"
 msgstr "Ungespeicherte Änderungen"
 
-#: lib/main_image_builder.py:6054
+#: lib/main_image_builder.py:6056
 msgid "New project - Unsaved"
 msgstr "Neues Projekt – ungespeichert"
 
-#: lib/main_image_builder.py:6129 lib/main_image_builder.py:6140
+#: lib/main_image_builder.py:6131 lib/main_image_builder.py:6142
 msgid "Continue"
 msgstr "Fortfahren"
 
-#: lib/main_image_builder.py:6133
+#: lib/main_image_builder.py:6135
 msgid "Inspecting source…"
 msgstr "Quelle wird geprüft…"
 
-#: lib/main_image_builder.py:6136
+#: lib/main_image_builder.py:6138
 msgid "Select a supported MiniOS source to continue."
 msgstr "Wählen Sie eine unterstützte MiniOS-Quelle, um fortzufahren."
 
-#: lib/main_image_builder.py:6144
+#: lib/main_image_builder.py:6146
 msgid "Resolve module collisions to continue."
 msgstr "Beheben Sie Modulkonflikte, um fortzufahren."
 
-#: lib/main_image_builder.py:6153
+#: lib/main_image_builder.py:6155
 msgid "Session analysis is running…"
 msgstr "Sitzungsanalyse läuft…"
 
-#: lib/main_image_builder.py:6156
+#: lib/main_image_builder.py:6158
 msgid "The loaded project omits required current configuration; Review is blocked."
 msgstr "Das geladene Projekt enthält nicht die erforderliche aktuelle Konfiguration; Überprüfung ist gesperrt."
 
-#: lib/main_image_builder.py:6161
+#: lib/main_image_builder.py:6163
 msgid "Correct the invalid customization setting to continue."
 msgstr "Korrigieren Sie die ungültige Anpassungseinstellung, um fortzufahren."
 
-#: lib/main_image_builder.py:6165
+#: lib/main_image_builder.py:6167
 msgid "Acknowledge the sensitivity of including all session changes to continue."
 msgstr "Bestätigen Sie die Sensibilität beim Einbeziehen aller Sitzungsänderungen, um fortzufahren."
 
-#: lib/main_image_builder.py:6169
+#: lib/main_image_builder.py:6171
 msgid "Analyze and select at least one session path."
 msgstr "Analysieren und wählen Sie mindestens einen Sitzungspfad aus."
 
-#: lib/main_image_builder.py:6172
+#: lib/main_image_builder.py:6174
 msgid "Complete the required output and capture settings."
 msgstr "Vervollständigen Sie die erforderlichen Ausgabe- und Aufnahmeeinstellungen."
 
-#: lib/main_image_builder.py:6176
+#: lib/main_image_builder.py:6178
 msgid "Build image"
 msgstr "Image erstellen"
 
-#: lib/main_image_builder.py:6181
+#: lib/main_image_builder.py:6183
 msgid "Planning…"
 msgstr "Planung…"
 
-#: lib/main_image_builder.py:6184
+#: lib/main_image_builder.py:6186
 msgid "Build remains disabled while blockers are present."
 msgstr "Erstellen bleibt deaktiviert, solange Blocker vorhanden sind."
 
-#: lib/main_image_builder.py:6191
+#: lib/main_image_builder.py:6193
 msgid "Cancel"
 msgstr "Abbrechen"
 
-#: lib/main_image_builder.py:6198
+#: lib/main_image_builder.py:6200
 msgid "Do not remove the destination while this operation is running."
 msgstr "Entfernen Sie das Ziel nicht, während dieser Vorgang läuft."
 
-#: lib/main_image_builder.py:6208
+#: lib/main_image_builder.py:6210
 msgid "Image published successfully."
 msgstr "Image erfolgreich veröffentlicht."
 
-#: lib/main_image_builder.py:6210
+#: lib/main_image_builder.py:6212
 msgid "Return to Review"
 msgstr "Zurück zur Überprüfung"
 
-#: lib/main_image_builder.py:6222
+#: lib/main_image_builder.py:6224
 msgid "Open image project"
 msgstr "Image-Projekt öffnen"
 
-#: lib/main_image_builder.py:6223 lib/main_image_builder.py:6267
+#: lib/main_image_builder.py:6225 lib/main_image_builder.py:6269
 msgid "JSON image projects (*.json)"
 msgstr "JSON-Image-Projekte (*.json)"
 
-#: lib/main_image_builder.py:6231
+#: lib/main_image_builder.py:6233
 msgid "Could not open this image project."
 msgstr "Dieses Image-Projekt konnte nicht geöffnet werden."
 
-#: lib/main_image_builder.py:6232
+#: lib/main_image_builder.py:6234
 #, python-brace-format
 msgid ""
 "{error}\n"
@@ -2986,51 +2994,51 @@ msgstr ""
 "\n"
 "Wählen Sie ein JSON-Projekt aus, das mit MiniOS erstellt wurde. Die Datei wurde nicht geändert."
 
-#: lib/main_image_builder.py:6266
+#: lib/main_image_builder.py:6268
 msgid "Save image project"
 msgstr "Image-Projekt speichern"
 
-#: lib/main_image_builder.py:6269
+#: lib/main_image_builder.py:6271
 msgid "Save"
 msgstr "Speichern"
 
-#: lib/main_image_builder.py:6284
+#: lib/main_image_builder.py:6286
 msgid "Wait for a supported MiniOS source before saving."
 msgstr "Warten Sie auf eine unterstützte MiniOS-Quelle, bevor Sie speichern."
 
-#: lib/main_image_builder.py:6288 lib/main_image_builder.py:6292
+#: lib/main_image_builder.py:6290 lib/main_image_builder.py:6294
 msgid "The image project could not be saved."
 msgstr "Das Image-Projekt konnte nicht gespeichert werden."
 
-#: lib/main_image_builder.py:6340
+#: lib/main_image_builder.py:6342
 msgid "Discard changes?"
 msgstr "Änderungen verwerfen?"
 
-#: lib/main_image_builder.py:6341
+#: lib/main_image_builder.py:6343
 msgid "Unsaved changes in the current project will be lost."
 msgstr "Nicht gespeicherte Änderungen im aktuellen Projekt gehen verloren."
 
-#: lib/main_image_builder.py:6343
+#: lib/main_image_builder.py:6345
 msgid "Discard changes"
 msgstr "Änderungen verwerfen"
 
-#: lib/main_image_builder.py:6365
+#: lib/main_image_builder.py:6367
 msgid "The containing folder is no longer available."
 msgstr "Der enthaltene Ordner ist nicht mehr verfügbar."
 
-#: lib/main_image_builder.py:6373
+#: lib/main_image_builder.py:6375
 msgid "Could not open the containing folder."
 msgstr "Der enthaltene Ordner konnte nicht geöffnet werden."
 
-#: lib/main_image_builder.py:6386
+#: lib/main_image_builder.py:6388
 msgid "Stop the current operation and close?"
 msgstr "Aktuellen Vorgang stoppen und schließen?"
 
-#: lib/main_image_builder.py:6387
+#: lib/main_image_builder.py:6389
 msgid "Image Builder will cancel subprocesses immediately. Pure Python hashing may finish its current pass before the safe cleanup point; publication already in progress will complete atomically."
 msgstr "Image Builder bricht Unterprozesse sofort ab. Reines Python-Hashing kann seinen aktuellen Durchlauf vor dem sicheren Bereinigungspunkt beenden; eine bereits laufende Veröffentlichung wird atomar abgeschlossen."
 
-#: lib/main_image_builder.py:6392
+#: lib/main_image_builder.py:6394
 msgid "Stop and close"
 msgstr "Stoppen und schließen"
 
@@ -3049,9 +3057,3 @@ msgstr "Die aktuelle MiniOS-Konfiguration für den Image Builder lesen"
 #: share/polkit-1/actions/org.minios.imagebuilder.read-live-config.policy:18
 msgid "Authentication is required to read the current MiniOS configuration"
 msgstr "Zum Lesen der aktuellen MiniOS-Konfiguration ist eine Authentifizierung erforderlich"
-
-#~ msgid "Encrypted container"
-#~ msgstr "Verschlüsselter Container"
-
-#~ msgid "encrypted persistence"
-#~ msgstr "Verschlüsselte Persistenz"

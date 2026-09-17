@@ -4293,6 +4293,45 @@ def test_publish_falls_back_to_copy_when_link_reports_exdev(
     assert os.path.exists(plan.partial_output_path)
 
 
+def test_publish_supports_destination_without_unix_modes_hardlinks_or_dir_fsync(
+        tmp_path, monkeypatch):
+    root, source, mounts, sys_block, release, info = _make_source(tmp_path)
+    project_dir = tmp_path / 'project'
+    project_dir.mkdir()
+    project = _project(info, project_dir / 'out.iso', project_dir)
+    plan = _plan(project, info, _config(project_dir))
+    _prepare_artifact(plan, b'portable-publication')
+    runner = FakeXorriso(plan)
+    verified = backend.verify_iso(plan, runner=runner)
+    real_fchmod = backend.os.fchmod
+    real_fsync = backend.os.fsync
+
+    def unsupported_fchmod(descriptor, mode):
+        if stat.S_ISREG(os.fstat(descriptor).st_mode):
+            raise OSError(errno.EOPNOTSUPP, 'operation not supported')
+        return real_fchmod(descriptor, mode)
+
+    def unsupported_link(*_args, **_kwargs):
+        raise OSError(errno.EPERM, 'operation not permitted')
+
+    def unsupported_directory_fsync(descriptor):
+        if stat.S_ISDIR(os.fstat(descriptor).st_mode):
+            raise OSError(errno.EINVAL, 'directory fsync not supported')
+        return real_fsync(descriptor)
+
+    monkeypatch.setattr(backend.os, 'fchmod', unsupported_fchmod)
+    monkeypatch.setattr(backend.os, 'link', unsupported_link)
+    monkeypatch.setattr(backend.os, 'fsync', unsupported_directory_fsync)
+
+    published = backend.publish_verified_output(plan, verified, runner=runner)
+
+    assert published == plan.output_path
+    with open(published, 'rb') as handle:
+        assert handle.read() == b'portable-publication'
+    assert os.path.exists(plan.partial_output_path)
+    assert not list(project_dir.glob('.minios-image-builder-publish-*'))
+
+
 def test_publish_reuses_capture_attestation_before_atomic_output(tmp_path):
     root, source, mounts, sys_block, release, info = _make_source(tmp_path)
     project_dir = tmp_path / 'project'
