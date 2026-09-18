@@ -121,6 +121,7 @@ if contains_arg -as "$@"; then
                     ;;
                 minios/image-customization.json | minios/*-image-overlay.sb | \
                 minios/boot/grub/*.cfg | minios/boot/syslinux/*.cfg | \
+                minios/boot/grub/minios-theme/*.txt | minios/boot/syslinux/help/modes_*.txt | \
                 minios/boot/bootlogo*.png)
                     mkdir -p "$state/files/${destination%/*}"
                     cp -- "$source_path" "$state/files/$destination"

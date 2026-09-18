@@ -1181,6 +1181,10 @@ def transform_grub(data, timeout, default_boot, kernel_args, boot_menu=None):
             references.append(match.group(1))
         elif re.match(r"^\s*(?:configfile|source)(?:\s|$)", body):
             fail("GRUB config reference uses unsupported syntax")
+    if (entries and not kernel_indexes and not references and
+            all(re.search(r'--id(?:=|\s+)minios-(?:help|separator)(?:\s|$)', declaration)
+                for unused_start, unused_end, declaration in entries)):
+        return data, references, False, 0
     session = bool(semantic_entries)
     enabled_entries = None
     if boot_menu is not None and session:
@@ -2229,11 +2233,60 @@ def clear_directory(directory_fd):
             os.unlink(name, dir_fd=directory_fd)
 
 
+def single_language_boot_payload(payload, kind):
+    """Remove language switching while preserving F1 and legacy encodings."""
+    output = []
+    grub_depth = 0
+    skip_label = False
+    skip_help = False
+    for line in payload.decode('latin-1').splitlines(True):
+        if kind == 'grub':
+            if grub_depth:
+                grub_depth += line.count('{') - line.count('}')
+                continue
+            if (re.match(r'^\s*menuentry\s', line) and
+                    re.search(r'--id(?:=|\s+)minios-language(?:\s|$)', line)):
+                grub_depth = line.count('{') - line.count('}')
+                continue
+            if re.match(r'^\s*echo\s+\$?"F2\s', line):
+                continue
+        elif kind == 'syslinux':
+            label = re.match(r'^\s*LABEL\s+(\S+)', line, re.I)
+            if label:
+                skip_label = label.group(1).lower() == 'minios-language'
+            if skip_label or re.match(
+                    r'^\s*(?:MENU\s+HIDDENKEY\s+F2\s|F2\s)', line, re.I):
+                continue
+        elif kind == 'help':
+            if line.startswith('F2 '):
+                skip_help = True
+            if not line.strip() or 'Tab' in line:
+                skip_help = False
+            if skip_help:
+                continue
+        if kind in ('syslinux', 'theme'):
+            line = re.sub(r'\[F2\][^"\[\r\n]*', '', line)
+        output.append(line)
+    if grub_depth:
+        fail('unterminated GRUB language menu entry')
+    return ''.join(output).encode('latin-1')
+
+
+def single_language_menu(source, destination, kind):
+    if kind not in ('grub', 'syslinux', 'theme', 'help'):
+        fail('unsupported single-language menu resource')
+    unused_metadata, payload = read_stable_regular(source, 4 * 1024 * 1024)
+    with open(destination, 'xb') as stream:
+        stream.write(single_language_boot_payload(payload, kind))
+
+
 def main(arguments):
     command = arguments[0]
     values = arguments[1:]
     if command == "validate-json" and len(values) == 1:
         validate_json_object(values[0])
+    elif command == "single-language-menu" and len(values) == 3:
+        single_language_menu(*values)
     elif command == "snapshot-file" and len(values) == 2:
         snapshot_file(*values)
     elif command == "inspect-output" and len(values) == 3:

@@ -2648,6 +2648,45 @@ def _po_translations(path):
     return translations or None
 
 
+def _single_language_boot_payload(payload, kind):
+    """Predict the composer's single-language transform byte for byte."""
+    output = []
+    grub_depth = 0
+    skip_label = False
+    skip_help = False
+    for line in payload.decode('latin-1').splitlines(True):
+        if kind == 'grub':
+            if grub_depth:
+                grub_depth += line.count('{') - line.count('}')
+                continue
+            if (re.match(r'^\s*menuentry\s', line) and
+                    re.search(r'--id(?:=|\s+)minios-language(?:\s|$)', line)):
+                grub_depth = line.count('{') - line.count('}')
+                continue
+            if re.match(r'^\s*echo\s+\$?"F2\s', line):
+                continue
+        elif kind == 'syslinux':
+            label = re.match(r'^\s*LABEL\s+(\S+)', line, re.I)
+            if label:
+                skip_label = label.group(1).lower() == 'minios-language'
+            if skip_label or re.match(
+                    r'^\s*(?:MENU\s+HIDDENKEY\s+F2\s|F2\s)', line, re.I):
+                continue
+        elif kind == 'help':
+            if line.startswith('F2 '):
+                skip_help = True
+            if not line.strip() or 'Tab' in line:
+                skip_help = False
+            if skip_help:
+                continue
+        if kind in ('syslinux', 'theme'):
+            line = re.sub(r'\[F2\][^"\[\r\n]*', '', line)
+        output.append(line)
+    if grub_depth:
+        raise ImageProjectError('unterminated GRUB language menu entry')
+    return ''.join(output).encode('latin-1')
+
+
 def _localized_grub_payload(source_path, language):
     translations = _po_translations(os.path.join(
         source_path, 'boot', 'grub', 'po', '{}.po'.format(language)))
@@ -2662,6 +2701,11 @@ def _localized_grub_payload(source_path, language):
     except (OSError, UnicodeError, ImageProjectError):
         return None
     english_texts = (
+        ('Start MiniOS', 'resume'),
+        ('Choose a saved session', 'choosesession'),
+        ('Start without saving', 'freshstart'),
+        ('Run from RAM', 'copyram'),
+        # Older source images use these titles.
         ('Resume previous session', 'resume'),
         ('Start a new session', 'newsession'),
         ('Choose session during startup', 'choosesession'),
@@ -2701,7 +2745,7 @@ def _localized_grub_payload(source_path, language):
     extra = extra_by_language.get(language)
     if extra:
         locale_parameters += ' ' + extra
-    lines = []
+    lines = ['set lang={}'.format(language), 'export lang']
     expression = re.compile(r'(linux .*/vmlinuz[^ ]* .*)')
     for line in content.splitlines():
         lines.append(expression.sub(
@@ -2757,6 +2801,9 @@ def _effective_boot_config_mapping(source_path, bootloader, menu_locale,
             os.path.join(source_path, syslinux_relative), 4 * 1024 * 1024)
         mapping[syslinux_root] = (syslinux_payload, 'syslinux')
         roots.append(syslinux_root)
+    if menu_locale != 'multilang':
+        mapping = dict((target, (_single_language_boot_payload(payload, kind), kind))
+                       for target, (payload, kind) in mapping.items())
     return mapping, tuple(roots)
 
 
@@ -3205,6 +3252,12 @@ def _transform_grub_payload(payload, timeout, default_boot, kernel_args,
             semantic_blocks.append((start, end, semantic))
         kernel_indexes.extend(entry_kernel_indexes)
     references = _boot_config_references_payload(payload, 'grub')
+    if (all_menu_entries and not kernel_indexes and not references and
+            all(re.search(r'--id(?:=|\s+)minios-(?:help|separator)(?:\s|$)', declaration)
+                for unused_start, unused_end, declaration in all_menu_entries)):
+        # The sourced F1 helper is not another boot menu. In particular, do
+        # not append a timeout here: it would override the caller's settings.
+        return payload, references, False
     session = bool(semantic_entries)
     boot_menu = _boot_menu_sequence(boot_menu_entries)
     enabled_entries = None

@@ -766,6 +766,63 @@ assert sys.argv[2] not in open(sys.argv[1], encoding="utf-8").read()
     [[ $(<"$STATE/files/minios/boot/grub/grub.cfg") == *'locales=de_DE.UTF-8'* ]]
 }
 
+prepare_new_navigation_fixture() {
+    prepare_custom_boot_fixture
+    local template
+    template=$(<"$SOURCE/boot/grub/main.cfg")
+    template=${template//Translated resume/Start MiniOS}
+    template+=$'\nsource /minios/boot/grub/navigation.cfg'
+    write_file "$SOURCE/boot/grub/grub.template.cfg" "$template"
+    write_file "$SOURCE/boot/grub/main.cfg" "$template"
+    write_file "$SOURCE/boot/grub/po/ru_RU.po" $'msgid "Start MiniOS"\nmsgstr "Запустить MiniOS"'
+    write_file "$SOURCE/boot/grub/po/en_US.po" $'msgid "Start MiniOS"\nmsgstr "Start MiniOS"'
+    write_file "$SOURCE/boot/grub/navigation.cfg" $'menuentry "$language_label" --class locale --hotkey=f2 --id minios-language {\n configfile /minios/boot/grub/languages.cfg\n}\nmenuentry " " --id minios-separator {\n true\n}\nmenuentry "$help_label" --class help --hotkey=f1 --id minios-help {\n echo $"F2 changes the menu and system language."\n echo $"Saving requires writable storage."\n read answer\n}'
+    write_file "$SOURCE/boot/grub/minios-theme/theme_ru_RU.txt" $'text = "[F1] Справка [F2] Язык [E] Параметры"\nfont = "Unifont Regular 16"'
+    for language in en_US ru_RU; do
+        printf '\nMENU HIDDENKEY F2 minios-language\nMENU TABMSG [F1] Help [F2] Language [Tab] Edit\nF1 help/modes_%s.txt\nLABEL minios-language\nMENU HIDE\nCONFIG lang/select_%s.cfg\n' \
+            "$language" "$language" >>"$SOURCE/boot/syslinux/lang/$language.cfg"
+        write_file "$SOURCE/boot/syslinux/help/modes_$language.txt" $'MiniOS\nF2 changes the language, keyboard\nand time zone.\nTab edits boot parameters.\n\nPress any key.'
+    done
+}
+
+@test "single-language output removes F2 navigation and hints but preserves F1" {
+    prepare_new_navigation_fixture
+    local language
+    for language in en_US ru_RU; do
+        run_compose --menu "$language" --boot-timeout 7 --default-boot toram
+        [ "$status" -eq 0 ]
+        grep -Fqx "set lang=$language" "$STATE/files/minios/boot/grub/grub.cfg"
+        grep -Fqx 'set default=4' "$STATE/files/minios/boot/grub/grub.cfg"
+        ! grep -Fq 'minios-language' "$STATE/files/minios/boot/grub/navigation.cfg"
+        ! grep -Fq 'F2' "$STATE/files/minios/boot/grub/navigation.cfg"
+        grep -Fq -- '--hotkey=f1' "$STATE/files/minios/boot/grub/navigation.cfg"
+        ! grep -Fq 'set timeout=7' "$STATE/files/minios/boot/grub/navigation.cfg"
+        ! grep -Fq '[F2]' "$STATE/files/minios/boot/grub/minios-theme/theme_ru_RU.txt"
+        grep -Fq '[F1]' "$STATE/files/minios/boot/grub/minios-theme/theme_ru_RU.txt"
+        ! grep -Fq 'F2' "$STATE/files/minios/boot/syslinux/syslinux.cfg"
+        ! grep -Fq 'CONFIG lang/select_' "$STATE/files/minios/boot/syslinux/syslinux.cfg"
+        grep -Fq "F1 help/modes_$language.txt" "$STATE/files/minios/boot/syslinux/syslinux.cfg"
+        ! grep -Fq 'F2' "$STATE/files/minios/boot/syslinux/help/modes_$language.txt"
+        grep -Fq 'Tab edits' "$STATE/files/minios/boot/syslinux/help/modes_$language.txt"
+        grep -Fq -- '--hotkey=f2' "$SOURCE/boot/grub/navigation.cfg"
+        grep -Fq 'MENU HIDDENKEY F2' "$SOURCE/boot/syslinux/lang/$language.cfg"
+        if [[ $language == ru_RU ]]; then
+            grep -Fq 'menuentry "Запустить MiniOS"' "$STATE/files/minios/boot/grub/grub.cfg"
+        fi
+        rm "$OUTPUT"
+    done
+}
+
+@test "multilingual output preserves new language navigation and hints" {
+    prepare_new_navigation_fixture
+    run_compose --menu multilang
+    [ "$status" -eq 0 ]
+    cmp "$SOURCE/boot/grub/navigation.cfg" "$STATE/files/minios/boot/grub/navigation.cfg"
+    cmp "$SOURCE/boot/grub/minios-theme/theme_ru_RU.txt" "$STATE/files/minios/boot/grub/minios-theme/theme_ru_RU.txt"
+    cmp "$SOURCE/boot/syslinux/lang/ru_RU.cfg" "$STATE/files/minios/boot/syslinux/lang/ru_RU.cfg"
+    cmp "$SOURCE/boot/syslinux/help/modes_ru_RU.txt" "$STATE/files/minios/boot/syslinux/help/modes_ru_RU.txt"
+}
+
 @test "all supported default boot modes map to GRUB classes and SYSLINUX semantics" {
     prepare_custom_boot_fixture
     local index mode expected_index expected_label

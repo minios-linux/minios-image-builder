@@ -4,7 +4,7 @@
 
 set -Eeuo pipefail
 
-VERSION="1.3.0"
+VERSION="1.4.0"
 SYSTEMNAME="MiniOS"
 export TEXTDOMAIN="minios-image-compose"
 
@@ -1992,6 +1992,10 @@ generate_localized_grub_config() {
     local extra_params=""
     local index
     local -a english_texts=(
+        "Start MiniOS"
+        "Choose a saved session"
+        "Start without saving"
+        "Run from RAM"
         "Resume previous session"
         "Start a new session"
         "Choose session during startup"
@@ -2000,7 +2004,7 @@ generate_localized_grub_config() {
         "Loading kernel and ramdisk..."
         "MiniOS"
     )
-    local -a variable_names=(resume newsession choosesession freshstart copyram loading OS)
+    local -a variable_names=(resume choosesession freshstart copyram resume newsession choosesession freshstart copyram loading OS)
 
     if ! translations_file=$(parse_po_file "$po_file"); then
         warning "$(gettext "No translations found; using source menu for:") $language"
@@ -2044,7 +2048,7 @@ generate_localized_grub_config() {
     if ! content=$(printf '%s\n' "$content" | sed -E "s|(linux .*/vmlinuz[^ ]* .*)|\\1 locales=${locale_utf}${extra_params}|g"); then
         return 1
     fi
-    printf '%s\n' "$content" >"$output_file"
+    printf 'set lang=%s\nexport lang\n%s\n' "$language" "$content" >"$output_file"
 }
 
 phase boot-copy "$(gettext "Preparing boot files and menu configuration")"
@@ -2125,6 +2129,30 @@ multilang)
     fi
     ;;
 esac
+
+if [[ $MENU_TYPE != multilang ]]; then
+    # Work on private copies: never change the source image or its translations.
+    single_menu_directory=$TEMP_DIR/single-language-menus
+    mkdir -p -- "$single_menu_directory" ||
+        die 4 "$(gettext "Cannot create temporary boot directory")"
+    single_menu_index=0
+    for destination in "${GRAFT_DESTINATIONS[@]}"; do
+        case $destination in
+        minios/boot/grub/*.cfg) single_menu_kind=grub ;;
+        minios/boot/syslinux/*.cfg) single_menu_kind=syslinux ;;
+        minios/boot/grub/minios-theme/*.txt) single_menu_kind=theme ;;
+        minios/boot/syslinux/help/modes_*.txt) single_menu_kind=help ;;
+        *) continue ;;
+        esac
+        single_menu_output=$single_menu_directory/$single_menu_index
+        if ! run_isolated_python single-language-menu \
+            "${GRAFT_SOURCES[$destination]}" "$single_menu_output" "$single_menu_kind"; then
+            die 2 "$(gettext "Effective boot configuration cannot represent the requested customization") $destination"
+        fi
+        replace_graft "$destination" "$single_menu_output"
+        single_menu_index=$((single_menu_index + 1))
+    done
+fi
 
 boot_records=""
 boot_plan=""
