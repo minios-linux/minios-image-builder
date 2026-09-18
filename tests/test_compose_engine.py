@@ -62,7 +62,10 @@ def test_readonly_module_snapshot_reuses_original_path(tmp_path, monkeypatch):
     ('help', b'MiniOS\nF2 changes the menu language, keyboard\nand time zone.\n'
      b'Tab edits parameters.\n\nPress any key.\n'),
 ])
-def test_single_language_resources_preserve_help_and_encodings(kind, payload):
+@pytest.mark.parametrize('bracketed', [False, True])
+def test_single_language_resources_preserve_help_and_encodings(kind, payload, bracketed):
+    if bracketed:
+        payload = payload.replace(b'F2 changes', b'[F2] changes')
     expected = image_project._single_language_boot_payload(payload, kind)
     assert engine.single_language_boot_payload(payload, kind) == expected
     assert b'F2' not in expected

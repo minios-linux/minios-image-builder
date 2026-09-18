@@ -2248,7 +2248,7 @@ def single_language_boot_payload(payload, kind):
                     re.search(r'--id(?:=|\s+)minios-language(?:\s|$)', line)):
                 grub_depth = line.count('{') - line.count('}')
                 continue
-            if re.match(r'^\s*echo\s+\$?"F2\s', line):
+            if re.match(r'^\s*echo\s+\$?"(?:F2|\[F2\])\s', line):
                 continue
         elif kind == 'syslinux':
             label = re.match(r'^\s*LABEL\s+(\S+)', line, re.I)
@@ -2258,7 +2258,7 @@ def single_language_boot_payload(payload, kind):
                     r'^\s*(?:MENU\s+HIDDENKEY\s+F2\s|F2\s)', line, re.I):
                 continue
         elif kind == 'help':
-            if line.startswith('F2 '):
+            if line.startswith(('F2 ', '[F2] ')):
                 skip_help = True
             if not line.strip() or 'Tab' in line:
                 skip_help = False

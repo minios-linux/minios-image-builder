@@ -1,3 +1,10 @@
+minios-image-builder (1.4.1) unstable; urgency=medium
+
+  * Recognize bracketed F2 navigation hints when producing single-language
+    boot media.
+
+ -- crims0n <crims0n@minios.dev>  Sat, 19 Sep 2026 02:41:12 +0300
+
 minios-image-builder (1.4.0) unstable; urgency=medium
 
   * Support the new F1 help and F2 language boot navigation while preserving
