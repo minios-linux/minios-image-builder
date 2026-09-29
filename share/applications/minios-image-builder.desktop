@@ -31,6 +31,6 @@ Keywords[de]=iso;Image;zusammenstellen;Änderungen speichern;erfassen;Sitzung;an
 Exec=/usr/bin/minios-image-builder
 Icon=isomaster
 Terminal=false
-Categories=GTK;System;
+Categories=GTK;System;X-MiniOS;
 NotShowIn=KDE;
 X-Ayatana-Appmenu-Show-Stubs=False
