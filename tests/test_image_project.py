@@ -4790,6 +4790,33 @@ def test_custom_boot_menu_round_trips_and_validates_multilingual_titles(tmp_path
             default_boot='toram', boot_menu_entries=_custom_boot_menu())
 
 
+def test_timeout_preflight_accepts_multilingual_navigation_back_to_main(tmp_path):
+    root, source, mounts, sys_block, release, _info = _make_source(tmp_path)
+    grub = source / 'boot/grub'
+    for name in ('grub.cfg', 'grub.multilang.cfg'):
+        _write(grub / name, b'configfile /minios/boot/grub/main.cfg\n')
+    _write(grub / 'main.cfg', _five_entry_grub_payload() +
+           b'source /minios/boot/grub/navigation.cfg\n')
+    _write(grub / 'navigation.cfg',
+           b'menuentry "Language" --id minios-language {\n'
+           b' configfile /minios/boot/grub/languages.cfg\n}\n')
+    _write(grub / 'languages.cfg',
+           b'set timeout=-1\nmenuentry "English" --id en_US {\n'
+           b' configfile /minios/boot/grub/main.cfg\n}\n')
+    info = backend.discover_running_source(
+        roots=(('livekit', str(root)),), mounts_path=str(mounts),
+        sys_block_root=str(sys_block), runtime_release_path=str(release))
+    project_dir = tmp_path / 'project'
+    project_dir.mkdir()
+    project = _project(info, project_dir / 'out.iso', project_dir,
+                       menu_locale='multilang', boot_timeout=7)
+    plan = _plan(project, info, _config(project_dir))
+    assert plan.buildable, [(item.code, item.message) for item in plan.errors]
+    payloads = backend._thaw(plan._boot_config_payloads)
+    assert b'set timeout=7\n' in payloads['minios/boot/grub/main.cfg']
+    assert payloads['minios/boot/grub/languages.cfg'].startswith(b'set timeout=-1\n')
+
+
 def test_boot_menu_transform_creates_custom_entries_and_per_entry_parameters():
     entries = _custom_boot_menu()
     grub, _references, session = backend._transform_grub_payload(

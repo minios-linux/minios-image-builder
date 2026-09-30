@@ -1128,6 +1128,12 @@ def rebuild_semantic_menu_blocks(lines, blocks, boot_menu, kind,
     return lines[:first_start] + rebuilt + lines[last_end + 1:], enabled_entries
 
 
+def boot_countdown_expression(kind):
+    return re.compile(
+        r"^\s*set\s+timeout\s*=\s*[1-9][0-9]*\s*$" if kind == "grub" else
+        r"^\s*TIMEOUT\s+[1-9][0-9]*\s*$", re.I | re.M)
+
+
 def transform_grub(data, timeout, default_boot, kernel_args, boot_menu=None):
     try:
         text = data.decode("utf-8", "strict")
@@ -1181,9 +1187,12 @@ def transform_grub(data, timeout, default_boot, kernel_args, boot_menu=None):
             references.append(match.group(1))
         elif re.match(r"^\s*(?:configfile|source)(?:\s|$)", body):
             fail("GRUB config reference uses unsupported syntax")
-    if (entries and not kernel_indexes and not references and
-            all(re.search(r'--id(?:=|\s+)minios-(?:help|separator)(?:\s|$)', declaration)
-                for unused_start, unused_end, declaration in entries)):
+    if entries and not kernel_indexes:
+        # Interactive help/language menus must keep their own timeout/default.
+        expression = boot_countdown_expression("grub")
+        if timeout is not None and expression.search(text):
+            data = "".join(replace_or_prepend(
+                lines, expression, "set timeout={}".format(timeout))).encode("utf-8")
         return data, references, False, 0
     session = bool(semantic_entries)
     enabled_entries = None
@@ -1210,7 +1219,10 @@ def transform_grub(data, timeout, default_boot, kernel_args, boot_menu=None):
         lines = replace_or_prepend(lines, re.compile(r"^\s*set\s+default\s*="),
                                    "set default={}".format(matches[0]))
     if timeout is not None:
-        lines = replace_or_prepend(lines, re.compile(r"^\s*set\s+timeout\s*="),
+        timeout_expression = r"^\s*set\s+timeout\s*="
+        if any('"$minios_interactive" = "1"' in line for line in lines):
+            timeout_expression += r"(?!\s*-1(?:\s|$))"
+        lines = replace_or_prepend(lines, re.compile(timeout_expression),
                                    "set timeout={}".format(timeout))
     if (default_boot or kernel_args or boot_menu is not None) and not session and not references:
         fail("effective GRUB config has neither a session menu nor a provable configfile chain")
@@ -1268,6 +1280,12 @@ def transform_syslinux(data, timeout, default_boot, kernel_args, boot_menu=None,
         semantic_entries.append((label, semantic))
         semantic_blocks.append((start, end - 1, semantic))
         append_indexes.append(appends[0][0])
+    if label_starts and not append_indexes:
+        expression = boot_countdown_expression("syslinux")
+        if timeout is not None and expression.search(text):
+            data = "".join(replace_or_prepend(
+                lines, expression, "TIMEOUT {}".format(timeout * 10))).encode("latin-1")
+        return data, references, False, 0
     session = bool(semantic_entries)
     enabled_entries = None
     if boot_menu is not None and session:
@@ -1346,13 +1364,80 @@ def resolve_boot_reference(current, reference, kind):
         fail("boot config reference uses unsupported syntax")
     if kind == "grub" and reference.startswith("/"):
         resolved = posixpath.normpath(reference[1:])
-    elif reference.startswith("/"):
+    elif kind == "syslinux":
         resolved = posixpath.normpath("minios/boot/syslinux/" + reference.lstrip("/"))
     else:
         resolved = posixpath.normpath(posixpath.join(posixpath.dirname(current), reference))
     if resolved.startswith("../") or resolved == ".." or not resolved.startswith("minios/boot/"):
         fail("boot config reference escapes the MiniOS boot tree")
     return resolved
+
+
+def boot_config_reference_edges(data, kind):
+    text = data.decode("utf-8", "strict" if kind == "grub" else "surrogateescape")
+    lines = text.splitlines()
+    deferred_lines = set()
+    if kind == "grub":
+        for start, end, _declaration in grub_menu_entries(lines):
+            deferred_lines.update(range(start + 1, end))
+        expression = re.compile(r"^\s*(?:configfile|source)\s+(\S+)\s*$")
+        prefix = re.compile(r"^\s*(?:configfile|source)(?:\s|$)")
+    else:
+        expression = re.compile(r"^\s*(?:CONFIG|INCLUDE)\s+(\S+)\s*$", re.I)
+        prefix = re.compile(r"^\s*(?:CONFIG|INCLUDE)(?:\s|$)", re.I)
+    edges = []
+    in_label = False
+    for index, line in enumerate(lines):
+        if kind == "syslinux" and re.match(r"^\s*LABEL\s+", line, re.I):
+            in_label = True
+        match = expression.match(line)
+        if match:
+            deferred = (index in deferred_lines if kind == "grub" else
+                        in_label and bool(re.match(r"^\s*CONFIG\s+", line, re.I)))
+            edges.append((match.group(1), deferred))
+        elif prefix.match(line):
+            fail("boot config reference uses unsupported syntax")
+    return edges
+
+
+def validate_boot_reference_graph(mapping, roots):
+    graph = {}
+    pending = list(roots)
+    while pending:
+        target = pending.pop()
+        if target in graph:
+            continue
+        if target not in mapping:
+            fail("effective boot config references an unavailable config")
+        data, kind = mapping[target]
+        graph[target] = [(resolve_boot_reference(target, reference, kind), deferred)
+                         for reference, deferred in boot_config_reference_edges(data, kind)]
+        pending.extend(reference for reference, _deferred in graph[target])
+    visiting, visited = set(), set()
+
+    def visit(target):
+        if target in visiting:
+            fail("effective boot config graph contains a cycle")
+        if target in visited:
+            return
+        visiting.add(target)
+        for reference, deferred in graph[target]:
+            if not deferred:
+                visit(reference)
+        visiting.remove(target)
+        visited.add(target)
+
+    for target in graph:
+        visit(target)
+    eager = set()
+    pending = list(roots)
+    while pending:
+        target = pending.pop()
+        if target not in eager:
+            eager.add(target)
+            pending.extend(reference for reference, deferred in graph[target]
+                           if not deferred)
+    return eager
 
 
 def load_boot_mapping(path):
@@ -1385,6 +1470,15 @@ def execute_boot_plan(plan, output_directory):
             fail("boot customization plan mapping is invalid")
         mapping[item["target"]] = item
     roots = plan["roots"]
+    source_inputs = {}
+    for target, item in mapping.items():
+        metadata, data = read_stable_regular(item["source"], 4 * 1024 * 1024)
+        if len(data) != item["source_size"] or hashlib.sha256(data).hexdigest() != item["source_sha256"]:
+            fail("boot customization plan source differs from immutable intent")
+        source_inputs[target] = (metadata, data)
+    eager = validate_boot_reference_graph(
+        {target: (source_inputs[target][1], item["kind"])
+         for target, item in mapping.items()}, roots)
     timeout = plan["timeout"]
     default_boot = plan["default_boot"] or ""
     kernel_args = plan["kernel_args"] or ""
@@ -1398,22 +1492,25 @@ def execute_boot_plan(plan, output_directory):
         if target in visited:
             return 0
         if target in visiting:
-            fail("effective boot config graph contains a cycle")
+            return 0  # Validated user-driven navigation back edge.
         item = mapping.get(target)
         if item is None:
             fail("effective boot config references an unavailable config")
         visiting.add(target)
-        source_metadata, source_data = read_stable_regular(item["source"], 4 * 1024 * 1024)
+        source_metadata, source_data = source_inputs[target]
         source_digest = hashlib.sha256(source_data).hexdigest()
         if len(source_data) != item["source_size"] or source_digest != item["source_sha256"]:
             fail("boot customization plan source differs from immutable intent")
+        config_timeout = (timeout if target in eager or
+                          boot_countdown_expression(item["kind"]).search(
+                              source_data.decode("latin-1")) else None)
         if item["kind"] == "grub":
             transformed, references, session, kernel_lines = transform_grub(
-                source_data, timeout, default_boot, kernel_args,
+                source_data, config_timeout, default_boot, kernel_args,
                 boot_menu=plan.get("boot_menu_entries"))
         else:
             transformed, references, session, kernel_lines = transform_syslinux(
-                source_data, timeout, default_boot, kernel_args,
+                source_data, config_timeout, default_boot, kernel_args,
                 boot_menu=plan.get("boot_menu_entries"),
                 menu_locale=syslinux_menu_locale_for_target(
                     target, plan.get("menu_locale") or "en_US"))

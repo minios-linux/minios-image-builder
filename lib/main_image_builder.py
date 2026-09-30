@@ -4836,7 +4836,7 @@ class ImageBuilderWindow(Gtk.ApplicationWindow):
              composition.get('deselected_source_modules', [])])
         self._review_list(
             self.review_content, _('Additional modules'),
-            [item.get('path', '') for item in
+            [item.get('basename', '') for item in
              composition.get('additional_modules', [])])
 
         self._section(self.review_content, _('Output and defaults'))

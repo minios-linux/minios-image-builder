@@ -2565,7 +2565,7 @@ def _resolve_boot_config_reference(current, reference, kind):
         raise ImageProjectError('boot config reference uses unsafe syntax')
     if kind == 'grub' and reference.startswith('/'):
         resolved = posixpath.normpath(reference[1:])
-    elif reference.startswith('/'):
+    elif kind == 'syslinux':
         resolved = posixpath.normpath(
             'minios/boot/syslinux/' + reference.lstrip('/'))
     else:
@@ -2578,13 +2578,22 @@ def _resolve_boot_config_reference(current, reference, kind):
 
 
 def _boot_config_references_payload(payload, kind):
+    return tuple(reference for reference, unused_deferred in
+                 _boot_config_reference_edges(payload, kind))
+
+
+def _boot_config_reference_edges(payload, kind):
     try:
         text = payload.decode(
             'utf-8', 'strict' if kind == 'grub' else 'surrogateescape')
     except UnicodeError:
         raise ImageProjectError('GRUB configuration is not valid UTF-8')
     references = []
+    lines = text.splitlines()
+    deferred_lines = set()
     if kind == 'grub':
+        for start, end, unused_declaration in _grub_menu_entries(lines):
+            deferred_lines.update(range(start + 1, end))
         expression = re.compile(r'^\s*(?:configfile|source)\s+(\S+)\s*$')
         prefix = re.compile(r'^\s*(?:configfile|source)(?:\s|$)')
     else:
@@ -2592,13 +2601,61 @@ def _boot_config_references_payload(payload, kind):
             r'^\s*(?:CONFIG|INCLUDE)\s+(\S+)\s*$', re.IGNORECASE)
         prefix = re.compile(
             r'^\s*(?:CONFIG|INCLUDE)(?:\s|$)', re.IGNORECASE)
-    for line in text.splitlines():
+    in_label = False
+    for index, line in enumerate(lines):
+        if kind == 'syslinux' and re.match(r'^\s*LABEL\s+', line, re.I):
+            in_label = True
         match = expression.match(line)
         if match:
-            references.append(match.group(1))
+            deferred = (index in deferred_lines if kind == 'grub' else
+                        in_label and bool(re.match(r'^\s*CONFIG\s+', line, re.I)))
+            references.append((match.group(1), deferred))
         elif prefix.match(line):
             raise ImageProjectError('boot config reference syntax is unsupported')
     return tuple(references)
+
+
+def _validate_boot_reference_graph(mapping, roots):
+    """Reject immediate include loops, but allow user-driven menu navigation."""
+    graph = {}
+    pending = list(roots)
+    while pending:
+        target = pending.pop()
+        if target in graph:
+            continue
+        if target not in mapping:
+            raise ImageProjectError(
+                'effective boot config references an unavailable config')
+        payload, kind = mapping[target]
+        graph[target] = tuple(
+            (_resolve_boot_config_reference(target, reference, kind), deferred)
+            for reference, deferred in _boot_config_reference_edges(payload, kind))
+        pending.extend(reference for reference, unused_deferred in graph[target])
+    visiting, visited = set(), set()
+
+    def visit(target):
+        if target in visiting:
+            raise ImageProjectError('effective boot config graph has a cycle')
+        if target in visited:
+            return
+        visiting.add(target)
+        for reference, deferred in graph[target]:
+            if not deferred:
+                visit(reference)
+        visiting.remove(target)
+        visited.add(target)
+
+    for target in graph:
+        visit(target)
+    eager = set()
+    pending = list(roots)
+    while pending:
+        target = pending.pop()
+        if target not in eager:
+            eager.add(target)
+            pending.extend(reference for reference, deferred in graph[target]
+                           if not deferred)
+    return eager
 
 
 def _po_translations(path):
@@ -2813,6 +2870,12 @@ def _boot_line_body(line):
     if line.endswith('\n'):
         return line[:-1], '\n'
     return line, ''
+
+
+def _boot_countdown_expression(kind):
+    return re.compile(
+        r'^\s*set\s+timeout\s*=\s*[1-9][0-9]*\s*$' if kind == 'grub' else
+        r'^\s*TIMEOUT\s+[1-9][0-9]*\s*$', re.I | re.M)
 
 
 def _boot_replace_or_prepend(lines, expression, replacement):
@@ -3252,11 +3315,14 @@ def _transform_grub_payload(payload, timeout, default_boot, kernel_args,
             semantic_blocks.append((start, end, semantic))
         kernel_indexes.extend(entry_kernel_indexes)
     references = _boot_config_references_payload(payload, 'grub')
-    if (all_menu_entries and not kernel_indexes and not references and
-            all(re.search(r'--id(?:=|\s+)minios-(?:help|separator)(?:\s|$)', declaration)
-                for unused_start, unused_end, declaration in all_menu_entries)):
-        # The sourced F1 helper is not another boot menu. In particular, do
-        # not append a timeout here: it would override the caller's settings.
+    if all_menu_entries and not kernel_indexes:
+        # F1/F2 helpers and language selectors are interactive navigation,
+        # not session menus. Preserve disabled timers, but keep older initial
+        # language selectors with a positive countdown customizable.
+        expression = _boot_countdown_expression('grub')
+        if timeout is not None and expression.search(text):
+            payload = ''.join(_boot_replace_or_prepend(
+                lines, expression, 'set timeout={}'.format(timeout))).encode('utf-8')
         return payload, references, False
     session = bool(semantic_entries)
     boot_menu = _boot_menu_sequence(boot_menu_entries)
@@ -3289,8 +3355,13 @@ def _transform_grub_payload(payload, timeout, default_boot, kernel_args,
             lines, re.compile(r'^\s*set\s+default\s*='),
             'set default={}'.format(matches[0]))
     if timeout is not None:
+        timeout_expression = r'^\s*set\s+timeout\s*='
+        if any('"$minios_interactive" = "1"' in line for line in lines):
+            # Keep the post-F2 interactive branch disabled; only change the
+            # automatic boot countdown in the other branch.
+            timeout_expression += r'(?!\s*-1(?:\s|$))'
         lines = _boot_replace_or_prepend(
-            lines, re.compile(r'^\s*set\s+timeout\s*='),
+            lines, re.compile(timeout_expression),
             'set timeout={}'.format(timeout))
     if (default_boot or kernel_args or boot_menu is not None) and not session and not references:
         raise ImageProjectError(
@@ -3353,6 +3424,12 @@ def _transform_syslinux_payload(payload, timeout, default_boot, kernel_args,
         semantic_entries.append((label, semantic))
         semantic_blocks.append((start, end - 1, semantic))
         append_indexes.append(appends[0][0])
+    if label_starts and not append_indexes:
+        expression = _boot_countdown_expression('syslinux')
+        if timeout is not None and expression.search(text):
+            payload = ''.join(_boot_replace_or_prepend(
+                lines, expression, 'TIMEOUT {}'.format(timeout * 10))).encode('latin-1')
+        return payload, references, False
     session = bool(semantic_entries)
     boot_menu = _boot_menu_sequence(boot_menu_entries)
     enabled_entries = None
@@ -3655,7 +3732,7 @@ def inspect_source_boot_menu(source_info, menu_locale):
         if target in visited:
             return
         if target in visiting:
-            raise SourceInspectionError('effective boot config graph has a cycle')
+            return  # Already validated: this back edge requires a menu action.
         item = mapping.get(target)
         if item is None:
             raise SourceInspectionError(
@@ -3674,6 +3751,7 @@ def inspect_source_boot_menu(source_info, menu_locale):
         visited.add(target)
 
     try:
+        eager = _validate_boot_reference_graph(mapping, roots)
         for root in roots:
             visit(root, root, set(), set())
     except ImageProjectError as error:
@@ -3681,6 +3759,7 @@ def inspect_source_boot_menu(source_info, menu_locale):
     if not candidates:
         raise SourceInspectionError(
             'effective boot config graph has no recognized MiniOS menu')
+    candidates = [item for item in candidates if item[1] in eager] or candidates
 
     if menu_locale == 'multilang':
         for unused_root, unused_target, unused_kind, result in candidates:
@@ -3741,6 +3820,7 @@ def _expected_boot_customization_records(
         default_boot, kernel_args, boot_menu_entries=None):
     mapping, roots = _effective_boot_config_mapping(
         source_path, bootloader, menu_locale, included_relative)
+    eager = _validate_boot_reference_graph(mapping, roots)
     visiting = set()
     visited = set()
     records = []
@@ -3750,19 +3830,22 @@ def _expected_boot_customization_records(
         if target in visited:
             return 0
         if target in visiting:
-            raise ImageProjectError('effective boot config graph has a cycle')
+            return 0  # A user-driven navigation cycle, not recursive inclusion.
         item = mapping.get(target)
         if item is None:
             raise ImageProjectError(
                 'effective boot config references an unavailable config')
         visiting.add(target)
+        config_timeout = (timeout if target in eager or
+                          _boot_countdown_expression(item[1]).search(
+                              item[0].decode('latin-1')) else None)
         if item[1] == 'grub':
             transformed, references, session = _transform_grub_payload(
-                item[0], timeout, default_boot, kernel_args,
+                item[0], config_timeout, default_boot, kernel_args,
                 boot_menu_entries=boot_menu_entries)
         else:
             transformed, references, session = _transform_syslinux_payload(
-                item[0], timeout, default_boot, kernel_args,
+                item[0], config_timeout, default_boot, kernel_args,
                 boot_menu_entries=boot_menu_entries,
                 menu_locale=_syslinux_menu_locale_for_target(
                     target, menu_locale))

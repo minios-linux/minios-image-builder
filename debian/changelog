@@ -1,3 +1,11 @@
+minios-image-builder (1.4.3) unstable; urgency=medium
+
+  * Preserve interactive boot menu navigation while customizing timeout and
+    validating effective GRUB and SYSLINUX configuration references.
+  * Show additional module filenames in the composition review.
+
+ -- crims0n <crims0n@minios.dev>  Wed, 30 Sep 2026 21:39:08 +0300
+
 minios-image-builder (1.4.2) unstable; urgency=medium
 
   * Group the Image Builder launcher in the MiniOS desktop category.
