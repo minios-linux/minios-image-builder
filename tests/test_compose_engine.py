@@ -17,6 +17,28 @@ engine = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(engine)
 
 
+@pytest.mark.parametrize('ram', ('toram', 'toram=trim', 'toram=full'))
+def test_ram_policy_does_not_conflict_with_session_selection(ram):
+    arguments = 'boot=live perchdir=resume {} perchtoram=full'.format(ram)
+    assert engine.boot_semantic(arguments) == 'resume'
+    assert image_project._boot_semantic(arguments) == 'resume'
+    for transform in (engine.kernel_arguments_for_base,
+                      image_project._kernel_arguments_for_base):
+        changed = transform(arguments, 'choose')
+        assert 'perchdir=ask' in changed.split()
+        assert ram in changed.split()
+        assert 'perchtoram=full' in changed.split()
+
+
+def test_constructor_keeps_perchtoram_as_an_independent_argument():
+    assert image_project._constructor_arguments(
+        'boot=live perchdir=resume perchtoram=trim') == 'perchtoram=trim'
+    for value in ('trim', 'full', 'off'):
+        assert engine.managed_boot_argument('perchtoram=' + value)
+        assert image_project._managed_boot_argument('perchtoram=' + value)
+    assert not engine.managed_boot_argument('perchtoram=invalid')
+
+
 def test_readonly_module_snapshot_reuses_original_path(tmp_path, monkeypatch):
     module = tmp_path / '01-kernel.sb'
     module.write_bytes(b'module-bytes-must-not-be-read')

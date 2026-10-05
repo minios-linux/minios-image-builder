@@ -2306,6 +2306,10 @@ def _loop_backing_path(device, options, sys_block_root):
         value = value[:-10]
     if value and not os.path.isabs(value):
         value = os.sep + value
+    if value and value.startswith('/memory/') and not os.path.exists(value):
+        relocated = '/run/initramfs' + value
+        if os.path.exists(relocated):
+            value = relocated
     return value or None
 
 
@@ -2342,14 +2346,14 @@ def _active_module_backing_paths(mounts_path, sys_block_root):
     return tuple(paths), tuple(diagnostics)
 
 
-def _copy_module_active(module, active):
+def _copy_module_active(module, active, source_category=None):
     return ModuleInfo(
         path=module.path, relative_path=module.relative_path,
         size=module.size, sha256=module.sha256,
         order_prefix=module.order_prefix, role=module.role,
         friendly_name=module.friendly_name,
         description=module.description,
-        source_category=module.source_category, required=module.required,
+        source_category=source_category or module.source_category, required=module.required,
         core=module.core, active=active, architecture=module.architecture,
         kernel_version=module.kernel_version,
         is_symlink=module.is_symlink, link_target=module.link_target)
@@ -2363,7 +2367,27 @@ def _map_active_modules(source_modules, mounts_path, sys_block_root):
     for path in backing_paths:
         backing_by_real.setdefault(os.path.realpath(path), path)
     source_real = set(item.real_path for item in source_modules)
+    source_identity = {}
+    for item in source_modules:
+        try:
+            source_identity.setdefault(_identity(os.stat(item.path)), []).append(item)
+        except OSError:
+            continue
+    replacements = set()
+    for real_path, path in backing_by_real.items():
+        if real_path in source_real:
+            continue
+        try:
+            aliases = source_identity.get(_identity(os.stat(path)), ())
+        except OSError:
+            continue
+        # Initramfs bind-mounts external replacements at the original paths.
+        for item in aliases:
+            replacements.add(item.real_path)
+            source_real.add(real_path)
     mapped_source = tuple(
+        _copy_module_active(item, True, 'runtime-replacement')
+        if item.real_path in replacements else
         _copy_module_active(item, True)
         if item.real_path in backing_by_real else item
         for item in source_modules)
@@ -2903,7 +2927,8 @@ def _boot_semantic(arguments):
         modes.append('new')
     if 'perchdir=ask' in tokens:
         modes.append('choose')
-    if 'toram' in tokens:
+    if not modes and any(token in ('toram', 'toram=trim', 'toram=full')
+                         for token in tokens):
         modes.append('toram')
     if len(modes) > 1:
         raise ImageProjectError(
@@ -2982,7 +3007,7 @@ _MANAGED_BOOT_ARGUMENT_FLAGS = frozenset((
     'text', 'nomodeset', 'automount', 'nozram', 'quiet', 'debug',
 ))
 _MANAGED_BOOT_ARGUMENT_KEYS = frozenset((
-    'perchmode', 'perchsize', 'perchreserve', 'load', 'noload',
+    'perchmode', 'perchsize', 'perchreserve', 'perchtoram', 'load', 'noload',
     'zramcomp', 'zramsize', 'locales', 'timezone', 'keyboard-layouts',
     'default-target', 'default_target',
 ))
@@ -3002,6 +3027,7 @@ def _managed_boot_argument(token):
     if not value or name not in _MANAGED_BOOT_ARGUMENT_KEYS:
         return False
     allowed = {
+        'perchtoram': frozenset(('trim', 'full', 'off')),
         'perchmode': frozenset((
             'native', 'dynfilefs', 'raw', 'luks', 'squashfs')),
         'zramcomp': frozenset(('lzo', 'lzo-rle', 'lz4', 'lz4hc', 'zstd')),
@@ -3042,6 +3068,8 @@ def _kernel_arguments_for_base(arguments, base_mode, replace_managed=False,
                         _managed_locale_argument(token)))]
     if selector:
         tokens.append(selector)
+    if base_mode in ('resume', 'new', 'choose') and 'toram' in source_tokens:
+        tokens.append('toram')
     return ' '.join(tokens)
 
 

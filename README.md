@@ -16,6 +16,22 @@ The application runs inside MiniOS and never source-builds MiniOS or modifies so
 
 Projects are JSON documents created by `ImageProject.save()` and reopened by `ImageProject.load()`. Source paths and fingerprints remain explicit so a changed or unrelated selected source blocks a build rather than being silently accepted.
 
+When initramfs exposes an external replacement module through a file bind mount
+at its original system path, the running-session source includes that replacement.
+Discovery matches the active backing file by device and inode, so it retains the
+module's system role instead of treating it as a conflicting optional module.
+The composer reads the replacement through the source path and verifies it with
+the other build inputs. Unrelated external modules still require selection.
+
+With an initramfs supporting `perchtoram`, boot entries can independently choose
+system and session RAM copying. `perchtoram=trim` copies the selected session,
+`full` copies supported sessions, and `off` keeps persistence on storage. With
+persistence enabled, the default is `trim` when `toram` is present and `off`
+otherwise. Native session trees are not copied. The initial implementation has
+no write-back from RAM to the original store; session changes are temporary.
+The boot-menu constructor preserves `perchtoram` alongside the session selector
+and system `toram` options.
+
 ## Session capture
 
 Four capture profiles are available when `minios-tools` exposes the required contract:

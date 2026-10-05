@@ -761,6 +761,30 @@ def test_active_external_basename_collision_is_reported(tmp_path):
         item.code for item in info.diagnostics)
 
 
+def test_bound_external_replacement_is_a_selected_source_module(tmp_path):
+    root, source, mounts, sys_block, release, first = _make_source(tmp_path)
+    system = source / '04-xfce-desktop-amd64.sb'
+    external = _fake_module(tmp_path / 'external' / system.name)
+    # Hard links reproduce file-bind identity without privileged test mounts.
+    system.unlink()
+    os.link(str(external), str(system))
+    backing = sys_block / 'loop8' / 'loop' / 'backing_file'
+    _write(backing, str(external).encode('utf-8') + b'\n')
+    mounts.write_text(
+        '/dev/loop8 /run/initramfs/memory/bundles/04-xfce-desktop-amd64.sb '
+        'squashfs ro 0 0\n', encoding='utf-8')
+    info = backend.discover_running_source(
+        roots=(('livekit', str(root)),), mounts_path=str(mounts),
+        sys_block_root=str(sys_block), runtime_release_path=str(release))
+    module = next(item for item in info.modules if item.basename == system.name)
+    assert module.active is True
+    assert module.source_category == 'runtime-replacement'
+    assert module.path == str(system)
+    assert not info.active_external_modules
+    assert 'runtime_source_basename_collision' not in {
+        item.code for item in info.diagnostics}
+
+
 def test_unsafe_or_dangling_source_symlink_is_an_inspection_error(tmp_path):
     root, source, mounts, sys_block, release, first = _make_source(tmp_path)
     link = source / 'modules' / 'escape.sb'

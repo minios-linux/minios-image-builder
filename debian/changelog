@@ -1,3 +1,13 @@
+minios-image-builder (1.5.0) unstable; urgency=medium
+
+  * Preserve independent system and session RAM boot options, including
+    perchtoram, when constructing session boot entries.
+  * Include active external replacement modules with their original system
+    role and recognize relocated initramfs backing paths.
+  * Refresh running-session discovery and boot composition regression tests.
+
+ -- crims0n <crims0n@minios.dev>  Mon, 05 Oct 2026 14:05:46 +0300
+
 minios-image-builder (1.4.3) unstable; urgency=medium
 
   * Preserve interactive boot menu navigation while customizing timeout and

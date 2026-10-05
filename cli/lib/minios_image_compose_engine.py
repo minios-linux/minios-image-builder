@@ -759,7 +759,7 @@ MANAGED_BOOT_ARGUMENT_FLAGS = {
     "text", "nomodeset", "automount", "nozram", "quiet", "debug",
 }
 MANAGED_BOOT_ARGUMENT_KEYS = {
-    "perchmode", "perchsize", "perchreserve", "load", "noload",
+    "perchmode", "perchsize", "perchreserve", "perchtoram", "load", "noload",
     "zramcomp", "zramsize", "locales", "timezone", "keyboard-layouts",
     "default-target", "default_target",
 }
@@ -853,7 +853,8 @@ def boot_semantic(arguments):
         modes.append("new")
     if "perchdir=ask" in tokens:
         modes.append("choose")
-    if "toram" in tokens:
+    if not modes and any(token in ("toram", "toram=trim", "toram=full")
+                         for token in tokens):
         modes.append("toram")
     if len(modes) > 1:
         fail("boot entry has conflicting MiniOS session arguments")
@@ -898,6 +899,7 @@ def managed_boot_argument(token):
     if not value or name not in MANAGED_BOOT_ARGUMENT_KEYS:
         return False
     allowed = {
+        "perchtoram": {"trim", "full", "off"},
         "perchmode": {"native", "dynfilefs", "raw", "luks", "squashfs"},
         "zramcomp": {"lzo", "lzo-rle", "lz4", "lz4hc", "zstd"},
         "default-target": {
@@ -933,6 +935,8 @@ def kernel_arguments_for_base(arguments, base_mode, replace_managed=False,
                    not (preserve_locale and managed_locale_argument(token)))]
     if selector:
         tokens.append(selector)
+    if base_mode in ("resume", "new", "choose") and "toram" in source_tokens:
+        tokens.append("toram")
     return " ".join(tokens)
 
 

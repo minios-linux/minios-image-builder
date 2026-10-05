@@ -386,7 +386,7 @@ BOOT_PARAMETER_SUGGESTIONS = (
     'from=askdisk', 'perch', 'perchdir=resume', 'perchdir=setup',
     'perchdir=ask', 'perchdir=', 'perchmode=native',
     'perchmode=dynfilefs', 'perchmode=dynblk', 'perchmode=vmdk', 'perchmode=raw',
-    'perchmode=squashfs',
+    'perchmode=squashfs', 'perchtoram=trim', 'perchtoram=full', 'perchtoram=off',
     'perchencrypt=luks', 'perchsize=', 'perchreserve=', 'load=', 'noload=',
     'locales=', 'timezone=', 'keyboard-layouts=',
     'nomodeset', 'quiet', 'debug',
