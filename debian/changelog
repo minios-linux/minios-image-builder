@@ -1,3 +1,9 @@
+minios-image-builder (1.5.1) unstable; urgency=medium
+
+  * Show the Image Builder desktop entry in KDE application menus.
+
+ -- crims0n <crims0n@minios.dev>  Tue, 13 Oct 2026 19:56:12 +0300
+
 minios-image-builder (1.5.0) unstable; urgency=medium
 
   * Preserve independent system and session RAM boot options, including
